@@ -54,7 +54,6 @@ public class Account {
         this.user = user;
     }
 
-
     @PrePersist
     private void GenerateCreationDate(){
         DateTimeFormatter formateador = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
