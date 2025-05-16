@@ -4,6 +4,8 @@ import com.EDJ.ArCash.Models.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
     /*ACA NO AGREGAMOS NADA, JPA MANEJA LAS OPERACIONES CRUD CON METODOS PREDEFINIDOS
@@ -16,4 +18,11 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     //este metodo nos va a servir para verificar si el alias existe en la base de datos antes de que se cargue una nueva cuenta
     boolean existsByAccountNickname(String account_nickname);
+/// METODO PARA ENCONTRAR UNA CUENTA CON UN ALIAS
+    Optional<Account>findByAccountNickname(String option1);
+/// METODO PARA ENCONTRAR UNA CUENTA CON UN CVU
+    Optional<Account>findByAccountCvu(String option1);
+
+
+
 }
