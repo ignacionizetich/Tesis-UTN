@@ -1,5 +1,5 @@
 :root {
-    --bg-body: rgba(218, 218, 218, 0.85);
+    --bg-body: #DADADAD8;
     --bg-form: #aeaeae;
     --text-primary: #000000;
     --text-secondary: #000000;
@@ -40,7 +40,6 @@ body{
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
 }
 
 .main{
@@ -217,7 +216,7 @@ button[type="submit"]:hover {
     align-items: center;
     gap: 5px;
     z-index: 10;
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: background-color 0.4s ease, color 0.4s ease;
     will-change: background-color, color; /* Optimización para el navegador */
 }
 
@@ -225,7 +224,7 @@ button[type="submit"]:hover {
     color: var(--text-secondary);
     text-decoration: none;
     font-weight: bold;
-    transition: color 0.3s ease;
+    transition: color 0.4s ease;
 }
 
 .global-footer a:hover {
@@ -300,8 +299,8 @@ button[type="submit"]:hover {
 }
 
 .back-circle {
-    fill: #ffffff;
-    stroke: #dddddd;
+    fill: #DADADAD8;
+    stroke: #DADADAD8;
     stroke-width: 1;
 }
 
