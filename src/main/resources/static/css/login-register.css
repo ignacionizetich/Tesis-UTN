@@ -6,6 +6,9 @@
     --border-color: #636363;
     --accent-color: #2A4D7A;
     --accent-hover-color: #444444;
+    --back-circle-fill: #DADADAD8;
+    --back-circle-stroke: #dddddd;
+    --back-arrow-color: #333333;
 }
 
 [data-theme="dark"] {
@@ -17,6 +20,9 @@
     --accent-color: #2A4D7A;
     --accent-hover-color: #636363;
     transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+    --back-circle-fill: #1e1e1e;
+    --back-circle-stroke: #1e1e1e;
+    --back-arrow-color: #ffffff;
 }
 
 *{
@@ -299,21 +305,13 @@ button[type="submit"]:hover {
 }
 
 .back-circle {
-    fill: #DADADAD8;
-    stroke: #DADADAD8;
+    fill: var(--back-circle-fill);
+    stroke: var(--back-circle-fill);
     stroke-width: 1;
+    transition: fill 0.4s ease, stroke 0.4s ease;
 }
 
 .back-arrow {
-    stroke: #333333;
-}
-
-/* Tema oscuro */
-body.dark-mode .back-circle {
-    fill: #2a2a2a;
-    stroke: #444444;
-}
-
-body.dark-mode .back-arrow {
-    stroke: #ffffff;
+    stroke: var(--back-arrow-color);
+    transition: stroke 0.4s ease;
 }
