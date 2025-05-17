@@ -163,7 +163,7 @@ button[type="submit"] {
 }
 
 button[type="submit"]:hover {
-    background: #3a89c6 radial-gradient(circle, transparent 1%, #47a7f5 1%) center/15000%;
+    background: #3f82b8 radial-gradient(circle, transparent 1%, #3c86bf 1%) center/15000%;
     color: white;
     box-shadow: 1px 1px #214f9e, 2px 2px #254885, 3px 3px #273e67;
     transform: translateX(-3px);
