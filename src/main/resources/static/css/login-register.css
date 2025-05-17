@@ -4,7 +4,7 @@
     --text-primary: #000000;
     --text-secondary: #000000;
     --border-color: #636363;
-    --accent-color: #2A4D7A;
+    --accent-color: #16263E;
     --accent-hover-color: #444444;
     --back-circle-fill: #DADADAD8;
     --back-circle-stroke: #dddddd;
@@ -17,7 +17,7 @@
     --text-primary: #ffffff;
     --text-secondary: #b1b0b0;
     --border-color: #636363;
-    --accent-color: #2A4D7A;
+    --accent-color: #16263E;
     --accent-hover-color: #636363;
     transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
     --back-circle-fill: #1e1e1e;
@@ -157,14 +157,24 @@ button[type="submit"] {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    background-color: #2A4D7A;
+    background-color: #16263E;
     color: #ffffff;
     transition: background-color 0.3s ease;
 }
 
 button[type="submit"]:hover {
-    background-color: #444444;
+    background: #3a89c6 radial-gradient(circle, transparent 1%, #47a7f5 1%) center/15000%;
+    color: white;
+    box-shadow: 1px 1px #214f9e, 2px 2px #254885, 3px 3px #273e67;
+    transform: translateX(-3px);
 }
+
+button[type="submit"]:active{
+    background-color:#292d3e;
+    background-size: 100%;
+    transition: background 0s;
+}
+
 
 .theme-control {
     position: fixed;
