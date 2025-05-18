@@ -41,21 +41,45 @@
             <div class="formulario">
                 <h2>Registrarse</h2>
                 <form id="Register" method="post" th:action="@{/create}">
-                    <label>Nombre</label>
-                    <input type="text" name="nombre" title="ingrese un nombre valido" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}">
+                    <div class="input-container">
+                        <label>Nombre</label>
+                        <div class="input-wrapper">
+                            <input class="effect-1" type="text" name="nombre" title="ingrese un nombre valido" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}">
+                            <span class="focus-border"></span>
+                        </div>
+                    </div>
 
-                    <label>Apellido</label>
-                    <input type="text" name="apellido" title="ingrese un apellido valido" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}">
+                    <div class="input-container">
+                        <label>Apellido</label>
+                        <div class="input-wrapper">
+                            <input class="effect-1" type="text" name="apellido" title="ingrese un apellido valido" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}">
+                            <span class="focus-border"></span>
+                        </div>
+                    </div>
 
-                    <label>D.N.I</label>
-                    <input type="text" name="dni" required maxlength="8" pattern="\d{8}">
+                    <div class="input-container">
+                        <label>D.N.I</label>
+                        <div class="input-wrapper">
+                            <input class="effect-1" type="text" name="dni" required maxlength="8" pattern="\d{8}">
+                            <span class="focus-border"></span>
+                        </div>
+                    </div>
 
-                    <label>Email</label>
-                    <input type="email" name="email" required title="Ingrese un Email Valido">
+                    <div class="input-container">
+                        <label>Email</label>
+                        <div class="input-wrapper">
+                            <input class="effect-1" type="email" name="email" required title="Ingrese un Email Valido">
+                            <span class="focus-border"></span>
+                        </div>
+                    </div>
 
-                    <label>Nombre de usuario</label>
-                    <input type="text" name="alias" required maxlength="10">
-
+                    <div class="input-container">
+                        <label>Nombre de usuario</label>
+                        <div class="input-wrapper">
+                            <input class="effect-1" type="text" name="alias" required maxlength="10">
+                            <span class="focus-border"></span>
+                        </div>
+                    </div>
                     <button type="submit">Enviar</button>
 
                     <pre id="respuesta"></pre>

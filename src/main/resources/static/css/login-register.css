@@ -4,7 +4,7 @@
     --text-primary: #000000;
     --text-secondary: #000000;
     --border-color: #636363;
-    --accent-color: #16263E;
+    --accent-color: #3363b1;
     --accent-hover-color: #444444;
     --back-circle-fill: #DADADAD8;
     --back-circle-stroke: #dddddd;
@@ -17,7 +17,7 @@
     --text-primary: #ffffff;
     --text-secondary: #b1b0b0;
     --border-color: #636363;
-    --accent-color: #16263E;
+    --accent-color: #3f8cff;
     --accent-hover-color: #636363;
     transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
     --back-circle-fill: #1e1e1e;
@@ -67,12 +67,12 @@ body{
 }
 
 .right-panel{
-    height: 95%;
+    height: auto;
     width: 35%;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 4rem;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 4.8rem;
 }
 
 .logo{
@@ -324,4 +324,65 @@ button[type="submit"]:active{
 .back-arrow {
     stroke: var(--back-arrow-color);
     transition: stroke 0.4s ease;
+}
+/* EFECTOS EN EL IMPUT NO TOCAR, TUCU lcdtm*/
+
+.input-container {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+
+.input-wrapper {
+    position: relative;
+}
+
+.effect-1 {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    padding: 12px 0;
+    font-size: 18px;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.effect-1:focus {
+    border-bottom-color: transparent;
+}
+
+.focus-border {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--accent-color);
+    transition: width 0.4s ease;
+    z-index: 2;
+}
+
+.effect-1:focus ~ .focus-border {
+    width: 100%;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 12px 0;
+    margin-bottom: 0;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 18px;
+    outline: none;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+    border-bottom-color: transparent;
 }
