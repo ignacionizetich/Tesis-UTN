@@ -34,7 +34,7 @@
                 <span class="label">Ingresar</span>
             </div>
 
-            <div class="butto-transerir">
+            <div class="button-transerir">
                 <button class="action-button tranferir">
                     <span>🔁</span>
                 </button>
@@ -48,8 +48,25 @@
                 <span class="label">Ver Alias/CVU</span>
             </div>
         </div>
+
+        <div id="transfer-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>Transferir Dinero</h2>
+                <form id="transfer-form">
+                    <label for="destinatario">Alias o CVU:</label>
+                    <input type="text" id="destinatario" name="destinatario" required>
+
+                    <label for="monto">Monto:</label>
+                    <input type="number" id="monto" name="monto" min="100" step="1" placeholder="$" required>
+
+                    <button type="submit">Confirmar</button>
+                </form>
+            </div>
+        </div>
     </main>
 
 <script th:src="@{/js/theme.js}"></script>
+<script th:src="@{/js/dashboard.js}"></script>
 </body>
 </html>
