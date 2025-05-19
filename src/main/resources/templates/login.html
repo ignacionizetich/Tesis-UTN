@@ -45,19 +45,28 @@
             <div class="formulario">
                 <h2>Iniciar Sesion</h2>
                 <form id="login" method="post" th:action="@{/api/auth/login}">
-                    <label id="Usuario">Username</label>
-                    <input type="text" name="username" required>
+                    <div class="input-container">
+                        <label for="username">Username</label>
+                        <div class="input-wrapper">
+                            <input class="effect-1" type="text" id="username" name="username" required>
+                            <span class="focus-border"></span>
+                        </div>
+                    </div>
 
-                    <label id="Password"> Password</label>
-                    <input type="password" name="password" required>
-
+                    <div class="input-container">
+                        <label for="password">Password</label>
+                        <div class="input-wrapper">
+                            <input class="effect-1" type="password" id="password" name="password" required>
+                            <span class="focus-border"></span>
+                        </div>
+                    </div>
                     <button type="submit">Iniciar Sesion</button>
                 </form>
             </div>
         </div>
 
       <div class="global-footer">
-          <p>ArCash™ | Virtual Wallet <a href="ArCash:helparcash2025@gmail.com" class="email-link">helparcash2025@gmail.com</a></p>
+          <p>ArCash™ | Virtual Wallet <a href="https://mail.google.com/mail/?view=cm&fs=1&to=helparcash2025@gmail.com" target="_blank" class="email-link">helparcash2025@gmail.com</a></p>
       </div>
   </div>
   <script th:src="@{/js/login.js}"></script>

@@ -1,11 +1,14 @@
 :root {
-    --bg-body: rgba(218, 218, 218, 0.85);
+    --bg-body: #DADADAD8;
     --bg-form: #aeaeae;
     --text-primary: #000000;
     --text-secondary: #000000;
     --border-color: #636363;
-    --accent-color: #2A4D7A;
+    --accent-color: #3363b1;
     --accent-hover-color: #444444;
+    --back-circle-fill: #DADADAD8;
+    --back-circle-stroke: #dddddd;
+    --back-arrow-color: #333333;
 }
 
 [data-theme="dark"] {
@@ -14,9 +17,12 @@
     --text-primary: #ffffff;
     --text-secondary: #b1b0b0;
     --border-color: #636363;
-    --accent-color: #2A4D7A;
+    --accent-color: #3f8cff;
     --accent-hover-color: #636363;
     transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+    --back-circle-fill: #1e1e1e;
+    --back-circle-stroke: #1e1e1e;
+    --back-arrow-color: #ffffff;
 }
 
 *{
@@ -40,7 +46,6 @@ body{
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
 }
 
 .main{
@@ -62,12 +67,12 @@ body{
 }
 
 .right-panel{
-    height: 95%;
+    height: auto;
     width: 35%;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 4rem;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 4.8rem;
 }
 
 .logo{
@@ -137,7 +142,7 @@ input[type="password"] {
 }
 
 input[type="text"]:focus,
-input[type="email"],
+input[type="email"]:focus,
 input[type="password"]:focus {
     border-color: var(--accent-color);
 }
@@ -152,14 +157,24 @@ button[type="submit"] {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    background-color: #2A4D7A;
+    background-color: #16263E;
     color: #ffffff;
     transition: background-color 0.3s ease;
 }
 
 button[type="submit"]:hover {
-    background-color: #444444;
+    background: #3f82b8 radial-gradient(circle, transparent 1%, #3c86bf 1%) center/15000%;
+    color: white;
+    box-shadow: 1px 1px #214f9e, 2px 2px #254885, 3px 3px #273e67;
+    transform: translateX(-3px);
 }
+
+button[type="submit"]:active{
+    background-color:#292d3e;
+    background-size: 100%;
+    transition: background 0s;
+}
+
 
 .theme-control {
     position: fixed;
@@ -217,7 +232,7 @@ button[type="submit"]:hover {
     align-items: center;
     gap: 5px;
     z-index: 10;
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: background-color 0.4s ease, color 0.4s ease;
     will-change: background-color, color; /* Optimización para el navegador */
 }
 
@@ -225,7 +240,7 @@ button[type="submit"]:hover {
     color: var(--text-secondary);
     text-decoration: none;
     font-weight: bold;
-    transition: color 0.3s ease;
+    transition: color 0.4s ease;
 }
 
 .global-footer a:hover {
@@ -300,21 +315,74 @@ button[type="submit"]:hover {
 }
 
 .back-circle {
-    fill: #ffffff;
-    stroke: #dddddd;
+    fill: var(--back-circle-fill);
+    stroke: var(--back-circle-fill);
     stroke-width: 1;
+    transition: fill 0.4s ease, stroke 0.4s ease;
 }
 
 .back-arrow {
-    stroke: #333333;
+    stroke: var(--back-arrow-color);
+    transition: stroke 0.4s ease;
+}
+/* EFECTOS EN EL IMPUT NO TOCAR, TUCU lcdtm*/
+
+.input-container {
+    position: relative;
+    margin-bottom: 25px;
 }
 
-/* Tema oscuro */
-body.dark-mode .back-circle {
-    fill: #2a2a2a;
-    stroke: #444444;
+
+.input-wrapper {
+    position: relative;
 }
 
-body.dark-mode .back-arrow {
-    stroke: #ffffff;
+.effect-1 {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    padding: 12px 0;
+    font-size: 18px;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.effect-1:focus {
+    border-bottom-color: transparent;
+}
+
+.focus-border {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--accent-color);
+    transition: width 0.4s ease;
+    z-index: 2;
+}
+
+.effect-1:focus ~ .focus-border {
+    width: 100%;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 12px 0;
+    margin-bottom: 0;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 18px;
+    outline: none;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+    border-bottom-color: transparent;
 }
