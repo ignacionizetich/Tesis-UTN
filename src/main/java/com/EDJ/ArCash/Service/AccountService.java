@@ -4,7 +4,10 @@ import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -32,12 +35,30 @@ public class AccountService {
     }
 
 
+    public boolean updateBalance(double balanceToAdd, Long id){
+        Optional<Account> optionalAccount = accountRepository.findByIdAccount(id);
+
+        if (optionalAccount.isEmpty()) {
+            return false;
+        } else {
+            Account account = optionalAccount.get();
+            double newBalance = account.getBalance() + balanceToAdd;
+            account.setBalance(newBalance);
+            accountRepository.save(account);
+            return true;
+        }
+    }
+
+   public  Optional<Account> findAccountByID(long id){
+        return accountRepository.findByIdAccount(id);
+    }
+
 
 
 
     /// -----------------------METODOS PRIVATE PARA GENERAR UN ALIAS ALEATORIO Y EL CVU DE LA CUENTA -----------------------
 
-    public String generateUniqueNickname() {
+    private String generateUniqueNickname() {
         String account_nickname;
         do {
             account_nickname = generateRandomNickname();

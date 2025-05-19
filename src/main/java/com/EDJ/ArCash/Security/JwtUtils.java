@@ -1,5 +1,7 @@
 package com.EDJ.ArCash.Security;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtParserBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,12 +19,18 @@ public class JwtUtils {
         secretKey = Keys.hmacShaKeyFor(signedJwt.getBytes(StandardCharsets.UTF_8));
     }
 
-    public static String generateToken(String username) {
+    public static String generateToken(String idUser) {
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(idUser)
+                .claim("userID",idUser)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 3600000))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public static Claims getClaimJWT(String token){
+        JwtParserBuilder parserBuilder = Jwts.parser();
+        return parserBuilder.setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
     }
 }

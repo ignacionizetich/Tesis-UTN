@@ -2,10 +2,12 @@ package com.EDJ.ArCash.Models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,6 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name = "transactions")
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,32 +28,30 @@ public class Transaction {
 
 
     @ManyToOne
-    @JoinColumn(name = "id_Origin")
+    @JoinColumn(name = "id_origin")
     private Account id_origin;
 
     @ManyToOne
-    @JoinColumn(name = "id_Destination")
+    @JoinColumn(name = "id_destination")
     private Account id_destination;
 
-    @NotBlank(message = "El monto no puede estar vacio ni tampoco puede ser negativo")
+    @NotNull("El monto no puede estar vacío")
+    @Positive(message = "El monto debe ser positivo")
     private Double balance;
 
-    @NotBlank(message = "El estado de la transaccion no puede estar vacia")
+    @NotNull("El estado de la transacción no puede estar vacío")
     private String state;
 
 
-  private String transaction_date;
+    private String transaction_date;
 
 
     @PrePersist
-    private void prePersist(){
+    private void prePersist() {
         generateUUID();
         verifyAmount();
         createDate();
     }
-
-
-
 
 
     //-------------------METODOS PRIVATE DE VALIDACION Y CREACION DE VALORES DE FORMA AUTOMATICA---------------------
@@ -60,13 +61,13 @@ public class Transaction {
         }
     }
 
-    private void verifyAmount(){
-        if(balance < 0){
+    private void verifyAmount() {
+        if (balance < 0) {
             throw new IllegalArgumentException("El monto no puede ser negativo");
         }
     }
 
-    private void createDate(){
+    private void createDate() {
         DateTimeFormatter formateador = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime fechaActual = LocalDateTime.now();
         this.transaction_date = fechaActual.format(formateador);

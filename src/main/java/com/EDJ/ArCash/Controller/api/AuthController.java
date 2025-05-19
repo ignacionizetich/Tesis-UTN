@@ -9,7 +9,6 @@ import com.EDJ.ArCash.Security.JwtUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,7 +52,7 @@ public class AuthController {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                 .body(new LoginResponse(false, "Usuario no habilitado", null));
                     }
-                    String token = JwtUtils.generateToken(credentials.getUsername());
+                    String token = JwtUtils.generateToken(String.valueOf(usuario.getId_user()));
                     return ResponseEntity.ok(new LoginResponse(true, "Login exitoso", token));
                 }
                 else {
