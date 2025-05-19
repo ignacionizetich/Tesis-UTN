@@ -86,10 +86,26 @@ body{
     width: 300px;
     max-width: 90%;
 }
+.modal-content.alias-modal {
+    width: 350px;
+}
 
 .modal-content h2 {
     margin-top: 0;
     color: var(--text-primary);
+}
+.modal-content p {
+    margin: 12px 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.close-alias {
+    float: right;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-primary);
+    cursor: pointer;
 }
 
 .modal-content label {
