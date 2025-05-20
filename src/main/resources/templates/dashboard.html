@@ -1,0 +1,84 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{css/color-palet.css}">
+    <link rel="stylesheet" th:href="@{css/dashboard.css}">
+    <title>DashBoard</title>
+</head>
+<body>
+<div class="theme-control">
+    <button id="theme-switcher">
+        <svg width="22" height="22" viewBox="0 0 24 24">
+            <path class="sun" d="M12 6a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm0-2a8 8 0 1 0 0 16 8 8 0 0 0 0-16z"/>
+            <path class="sun-ray" d="M12 2v2m0 16v2M4 12H2m20 0h-2m3-7l-2 2m-13 13l-2 2m17-15l2 2M3 19l2 2"/>
+        </svg>
+    </button>
+</div>
+
+    <main class="dashboard">
+        <h1>Hola,Usuario</h1>
+        <div class="balance">
+            <h3>Saldo Actual</h3>
+            <h3>
+                <p class="saldo-actual">$<span id="balance">0.00</span></p>
+            </h3>
+        </div>
+
+        <div class="button-container">
+            <div class="button-ingresar">
+                <button class="action-button ingresar">
+                    <span>➕</span>
+                </button>
+                <span class="label">Ingresar</span>
+            </div>
+
+            <div class="button-transerir">
+                <button class="action-button tranferir">
+                    <span>🔁</span>
+                </button>
+                <span class="label">Transferir</span>
+            </div>
+
+            <div class="button-alias">
+                <button class="action-button Alias-CVU">
+                    <span>📄</span>
+                </button>
+                <span class="label">Ver Alias/CVU</span>
+            </div>
+        </div>
+
+        <div id="transfer-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>Transferir Dinero</h2>
+                <form id="transfer-form">
+                    <label for="destinatario">Alias o CVU:</label>
+                    <input type="text" id="destinatario" name="destinatario" required>
+
+                    <label for="monto">Monto:</label>
+                    <input type="number" id="monto" name="monto" min="0" step="1" placeholder="$" required>
+
+                    <button type="submit">Confirmar</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="alias-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-alias">&times;</span>
+                <h2>Mi Alias y CVU</h2>
+
+                <div class="info-alias-cvu">
+                    <p><strong>Alias:</strong> <span id="alias-value">mi.alias.ejemplo</span></p>
+                    <p><strong>CVU:</strong> <span id="cvu-value">0001234567891234567890</span></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+<script th:src="@{/js/theme.js}"></script>
+<script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>
