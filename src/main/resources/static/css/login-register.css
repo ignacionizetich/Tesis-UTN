@@ -1,3 +1,4 @@
+
 *{
     margin: 0;
     padding: 0;
@@ -151,7 +152,7 @@ button[type="submit"]:active{
 
 .theme-control {
     position: fixed;
-    top: 2rem;
+    top: 1rem;
     right: 2rem;
     z-index: 100;
 }

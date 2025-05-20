@@ -8,24 +8,43 @@
     <title>DashBoard</title>
 </head>
 <body>
-<div class="theme-control">
+/*Header a continuar*/
+<header class="app-header">
+    <button id="menu-toggle" class="menu-button" aria-label="Abrir menú">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 6h18M3 12h18M3 18h18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </button>
+    <div class="theme-control">
     <button id="theme-switcher">
         <svg width="22" height="22" viewBox="0 0 24 24">
             <path class="sun" d="M12 6a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm0-2a8 8 0 1 0 0 16 8 8 0 0 0 0-16z"/>
             <path class="sun-ray" d="M12 2v2m0 16v2M4 12H2m20 0h-2m3-7l-2 2m-13 13l-2 2m17-15l2 2M3 19l2 2"/>
         </svg>
     </button>
-</div>
+    </div>
+    <h1 class="app-title">ARcash</h1>
+</header>
 
-    <main class="dashboard">
+<nav id="sidebar" class="sidebar hidden">
+    <ul>
+        <li><a th:href="@{/dashboard}">Inicio</a></li>
+        <li><a th:href="@{/perfil}">Atras</a></li>
+    </ul>
+</nav>
+
+<main class="dashboard">
+    <div class="dashboard-name">
         <h1>Hola,Usuario</h1>
         <div class="balance">
-            <h3>Saldo Actual</h3>
-            <h3>
-                <p class="saldo-actual">$<span id="balance">0.00</span></p>
-            </h3>
-        </div>
 
+        </div>
+    </div>
+    <div class="dashboard-button-cointainer">
+        <h3>Saldo Actual</h3>
+        <h3>
+            <p class="saldo-actual">$<span id="balance">0.00</span></p>
+        </h3>
         <div class="button-container">
             <div class="button-ingresar">
                 <button class="action-button ingresar">
@@ -45,11 +64,28 @@
                 <button class="action-button Alias-CVU">
                     <span>📄</span>
                 </button>
-                <span class="label">Ver Alias/CVU</span>
+                <span class="label">Ver CVU</span>
             </div>
         </div>
+    </div>
+    <div class="movimientos-recientes">
+        <h3>Últimos Movimientos</h3>
+        <ul class="movimientos-lista">
+            <li><span class="fecha">20/05/2025</span><span class="descripcion">Depósito bancario</span><span class="monto positivo">$+100000</span></li>
+            <li><span class="fecha">19/05/2025</span><span class="descripcion">Transferencia a Pedro</span><span class="monto negativo">$-15000</span></li>
+            <li><span class="fecha">18/05/2025</span><span class="descripcion">Compra en tienda</span><span class="monto negativo">$-5000</span></li>
+            <li><span class="fecha">17/05/2025</span><span class="descripcion">Ingreso por freelance</span><span class="monto positivo">$+20000</span></li>
+            <li><span class="fecha">16/05/2025</span><span class="descripcion">Pago de servicio</span><span class="monto negativo">$-3000</span></li>
+            <li><span class="fecha">15/05/2025</span><span class="descripcion">Transferencia a Juan</span><span class="monto negativo">$-12000</span></li>
+            <li><span class="fecha">14/05/2025</span><span class="descripcion">Recarga celular</span><span class="monto negativo">$-2000</span></li>
+            <li><span class="fecha">13/05/2025</span><span class="descripcion">Ingreso por venta</span><span class="monto positivo">$+2500</span></li>
+            <li><span class="fecha">12/05/2025</span><span class="descripcion">Pago de suscripción</span><span class="monto negativo">$-6890</span></li>
+            <li><span class="fecha">11/05/2025</span><span class="descripcion">Retiro de efectivo</span><span class="monto negativo">$-1000</span></li>
+        </ul>
+    </div>
 
-        <div id="transfer-modal" class="modal hidden">
+
+    <div id="transfer-modal" class="modal hidden">
             <div class="modal-content">
                 <span class="close-button">&times;</span>
                 <h2>Transferir Dinero</h2>
@@ -76,7 +112,9 @@
                 </div>
             </div>
         </div>
-    </main>
+
+
+</main>
 
 <script th:src="@{/js/theme.js}"></script>
 <script th:src="@{/js/dashboard.js}"></script>

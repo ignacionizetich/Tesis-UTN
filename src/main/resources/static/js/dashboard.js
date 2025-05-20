@@ -63,3 +63,14 @@ document.addEventListener("DOMContentLoaded",() => {
         }
     });
 })
+/*script header pa*/
+document.addEventListener("DOMContentLoaded", () => {
+    const menuButton = document.getElementById("menu-toggle");
+    const sidebar = document.getElementById("sidebar");
+
+    if (menuButton && sidebar) {
+        menuButton.addEventListener("click", () => {
+            sidebar.classList.toggle("hidden");
+        });
+    }
+});
