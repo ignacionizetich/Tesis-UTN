@@ -1,20 +1,30 @@
 package com.EDJ.ArCash.DTO;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@AllArgsConstructor
 public class LoginResponse {
     private boolean success;
     private String message;
-    private String token;
+    private String AccessToken;
+    private String RefreshToken;
 
-    public LoginResponse(boolean success, String message, String token) {
+
+    public LoginResponse(boolean success, String message){
         this.success = success;
         this.message = message;
-        this.token = token;
+
     }
 
-
+    @Override
+    public String toString() {
+        return "LoginResponse{" +
+                "message='" + message + '\'' +
+                ", success=" + success +
+                '}';
+    }
 }
