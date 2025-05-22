@@ -1,5 +1,4 @@
-
-*{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -11,9 +10,9 @@ html, body {
     overflow-x: hidden;
 }
 
-body{
+body {
     font-family: Arial, sans-serif;
-    background-color: var(--bg-body);
+    background-color: var(--bg-primary);
     color: var(--text-primary);
     height: 100vh;
     margin: 0;
@@ -22,7 +21,7 @@ body{
     align-items: center;
 }
 
-.main{
+.main {
     display: flex;
     justify-content: space-between;
     width: 100%;
@@ -31,7 +30,7 @@ body{
     text-align: center;
 }
 
-.left-panel{
+.left-panel {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -40,7 +39,7 @@ body{
     text-align: center;
 }
 
-.right-panel{
+.right-panel {
     height: auto;
     width: 35%;
     display: flex;
@@ -49,14 +48,14 @@ body{
     padding: 4.8rem;
 }
 
-.logo{
+.logo {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 15px;
 }
 
-.logo h1{
+.logo h1 {
     color: var(--text-primary);
     font-family: 'Unna', serif;
     font-size: 48px;
@@ -64,12 +63,12 @@ body{
     margin: 0;
 }
 
-.logo span{
-    color: var(--accent-color);
+.logo span {
+    color: var(--text-accent);
 }
 
-.logo h4{
-    color: var(--text-secondary);
+.logo h4 {
+    color: var(--text-primary);
     font-family: 'Manrope', sans-serif;
     margin: 0;
     font-size: 1rem;
@@ -78,16 +77,16 @@ body{
 }
 
 .formulario {
-    background-color: var(--bg-form);
+    background-color: var(--bg-primary);
     padding: 50px;
     border-radius: 10px;
     box-shadow: 0 10px 10px rgba(0, 0, 0, 0.5);
     width: 100%;
-    border: 2px solid #4285f4;
+    border: 2px solid var(--text-accent);
     position: relative;
 }
 
-.formulario h2{
+.formulario h2 {
     text-align: center;
     margin-bottom: 30px;
     font-weight: bold;
@@ -97,7 +96,7 @@ body{
 label {
     display: block;
     margin-bottom: 5px;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     font-size: 16px;
 }
 
@@ -106,10 +105,10 @@ input[type="email"],
 input[type="password"] {
     width: 100%;
     padding: 12px 0;
-    margin-bottom: 20px;
+    margin-bottom: 0;
     background-color: transparent;
     border: none;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 2px solid var(--text-primary);
     color: var(--text-primary);
     font-size: 18px;
     outline: none;
@@ -118,9 +117,8 @@ input[type="password"] {
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus {
-    border-color: var(--accent-color);
+    border-bottom-color: transparent;
 }
-
 
 button[type="submit"] {
     width: 100%;
@@ -131,24 +129,23 @@ button[type="submit"] {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    background-color: #16263E;
-    color: #ffffff;
+    background-color: var(--text-accent);
+    color: var(--titanium);
     transition: background-color 0.3s ease;
 }
 
 button[type="submit"]:hover {
-    background: #3f82b8 radial-gradient(circle, transparent 1%, #3c86bf 1%) center/15000%;
-    color: white;
-    box-shadow: 1px 1px #214f9e, 2px 2px #254885, 3px 3px #273e67;
+    background: var(--text-accent) radial-gradient(circle, transparent 1%, #3c86bf 1%) center/15000%;
+    color: var(--titanium);
+    box-shadow: 1px 1px var(--text-accent), 2px 2px var(--text-accent), 3px 3px var(--text-accent);
     transform: translateX(-3px);
 }
 
-button[type="submit"]:active{
-    background-color:#292d3e;
+button[type="submit"]:active {
+    background-color: var(--carbon);
     background-size: 100%;
     transition: background 0s;
 }
-
 
 .theme-control {
     position: fixed;
@@ -198,8 +195,8 @@ button[type="submit"]:active{
     width: 100%;
     text-align: center;
     padding: 10px;
-    background-color: var(--bg-body);
-    color: var(--text-secondary);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     font-size: 13px;
     display: flex;
     justify-content: center;
@@ -207,11 +204,11 @@ button[type="submit"]:active{
     gap: 5px;
     z-index: 10;
     transition: background-color 0.4s ease, color 0.4s ease;
-    will-change: background-color, color; /* Optimización para el navegador */
+    will-change: background-color, color;
 }
 
 .global-footer a {
-    color: var(--text-secondary);
+    color: var(--text-primary);
     text-decoration: none;
     font-weight: bold;
     transition: color 0.4s ease;
@@ -222,14 +219,14 @@ button[type="submit"]:active{
 }
 
 @media (max-width: 768px) {
-    .main{
+    .main {
         flex-direction: column;
         text-align: center;
         justify-content: flex-start;
         padding: 20px 10px;
     }
 
-    .left-panel, .right-panel{
+    .left-panel, .right-panel {
         flex: none;
         width: 100%;
         height: auto;
@@ -237,11 +234,11 @@ button[type="submit"]:active{
         margin-bottom: 30px;
     }
 
-    .logo h1{
+    .logo h1 {
         font-size: 36px;
     }
 
-    .formulario{
+    .formulario {
         padding: 30px 20px;
         max-width: 100%;
         box-shadow: none;
@@ -261,6 +258,7 @@ button[type="submit"]:active{
         gap: 5px;
     }
 }
+
 #back-button {
     position: fixed;
     top: 20px;
@@ -299,13 +297,12 @@ button[type="submit"]:active{
     stroke: var(--back-arrow-color);
     transition: stroke 0.4s ease;
 }
-/* EFECTOS EN EL IMPUT NO TOCAR, TUCU lcdtm*/
 
+/* EFECTOS EN EL INPUT NO TOCAR, TUCU lcdtm */
 .input-container {
     position: relative;
     margin-bottom: 25px;
 }
-
 
 .input-wrapper {
     position: relative;
@@ -332,31 +329,11 @@ button[type="submit"]:active{
     left: 0;
     width: 0;
     height: 2px;
-    background-color: var(--accent-color);
+    background-color: var(--text-accent);
     transition: width 0.4s ease;
     z-index: 2;
 }
 
 .effect-1:focus ~ .focus-border {
     width: 100%;
-}
-
-input[type="text"],
-input[type="email"],
-input[type="password"] {
-    width: 100%;
-    padding: 12px 0;
-    margin-bottom: 0;
-    background-color: transparent;
-    border: none;
-    border-bottom: 2px solid var(--border-color);
-    color: var(--text-primary);
-    font-size: 18px;
-    outline: none;
-}
-
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus {
-    border-bottom-color: transparent;
 }

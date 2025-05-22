@@ -1,25 +1,32 @@
 :root {
-    --bg-body: #DADADAD8;
-    --bg-form: #aeaeae;
-    --text-primary: #000000;
-    --text-secondary: #000000;
-    --border-color: #636363;
-    --accent-color: #16263E;
-    --accent-hover-color: #444444;
+    --obsidian: #0A0A0A;
+    --carbon: #1E1E1E;
+    --titanium: #E8E8E8;
+    --platinum: rgba(255, 255, 255, 0.85);
+    --naval: #16263E;
+    --cobalt: #2A4D7A;
+
+    /* Modo claro */
+    --bg-primary: var(--platinum);
+    --bg-secondary: white;
+    --text-primary: var(--obsidian);
+    --text-accent: var(--naval);
+    --border-light: rgba(0, 0, 0, 0.08);
+    --border: #ccc;
+
     --back-circle-fill: #DADADAD8;
     --back-circle-stroke: #dddddd;
     --back-arrow-color: #333333;
 }
 
 [data-theme="dark"] {
-    --bg-body: #1e1e1e;
-    --bg-form: #1f1f1f;
-    --text-primary: #ffffff;
-    --text-secondary: #b1b0b0;
-    --border-color: #636363;
-    --accent-color: #2A4D7A;
-    --accent-hover-color: #636363;
     transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+    --bg-primary: var(--carbon);
+    --bg-secondary: var(--obsidian);
+    --text-primary: var(--titanium);
+    --text-accent: var(--cobalt);
+    --border-light: rgba(255, 255, 255, 0.08);
+
     --back-circle-fill: #1e1e1e;
     --back-circle-stroke: #1e1e1e;
     --back-arrow-color: #ffffff;
