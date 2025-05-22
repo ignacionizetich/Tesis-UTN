@@ -7,7 +7,7 @@
 
 body{
     font-family: Arial, sans-serif;
-    background-color: var(--bg-body);
+    background-color: var(--bg-primary);
     color: var(--text-primary);
     height: 100vh;
     margin: 0;
@@ -59,7 +59,7 @@ body{
     height: 50px;
     border-radius: 50%;
     border: none;
-    background-color: var(--accent-color);
+    background-color: var(--text-accent);
     color: white;
     font-size: 28px;
     display: flex;
@@ -71,7 +71,7 @@ body{
 }
 
 .action-button:hover {
-    background-color: var(--accent-hover-color);
+    background-color: var(--border-light);
 }
 
 /* Etiqueta debajo del botón */
@@ -102,7 +102,7 @@ body{
 
 
 .modal-content {
-    background-color: var(--bg-form);
+    background-color: var(--bg-primary);
     padding: 20px 30px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -150,7 +150,7 @@ body{
     margin-top: 15px;
     width: 100%;
     padding: 10px;
-    background-color: var(--accent-color);
+    background-color: var(--text-accent);
     color: white;
     border: none;
     border-radius: 6px;
@@ -159,7 +159,7 @@ body{
 }
 
 .modal-content button:hover {
-    background-color: var(--accent-hover-color);
+    background-color: var(--border-light);
 }
 
 /* Botón de cierre */
@@ -232,7 +232,7 @@ body{
         margin: 0;
         color: var(--text-primary);
         font-size: 1.2rem;
-        background-color: var(--bg-form);
+        background-color: var(--bg-primary);
         border-bottom: 1px solid var(--border-color);
         flex-shrink: 0;
     }
@@ -244,7 +244,7 @@ body{
         overflow-y: auto;
         flex-grow: 1;
         scrollbar-width: thin;
-        scrollbar-color: var(--accent-color) transparent;
+        scrollbar-color: var(--text-accent) transparent;
     }
 
 /* Scrollbar */
@@ -258,9 +258,9 @@ body{
     }
 
 .movimientos-lista::-webkit-scrollbar-thumb {
-        background-color: var(--accent-color);
+        background-color: var(--bg-primary);
         border-radius: 8px;
-        border: 2px solid var(--bg-form);
+        border: 2px solid var(--bg-primary);
     }
 
 .movimientos-lista li {
@@ -278,7 +278,7 @@ body{
 
 .movimientos-lista .fecha {
         flex: 1;
-        color: var(--text-secondary);
+        color: var(--text-primary);
     }
 
 .movimientos-lista .descripcion {
@@ -306,7 +306,7 @@ body{
     left: 0;
     height: 60px;
     width: 100%;
-    background-color: var(--accent-color);
+    background-color: var(--text-accent);
     color: white;
     display: flex;
     align-items: center;
@@ -330,7 +330,7 @@ body{
 }
 
 .menu-button:hover svg path {
-    stroke: var(--text-secondary, #ccc);
+    stroke: var(--text-accent, #ccc);
 }
 
 .app-title {
@@ -344,7 +344,7 @@ body{
     left: 0;
     width: 170px;
     height: calc(100% - 60px);
-    background-color: var(--bg-form);
+    background-color: var(--bg-primary);
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     overflow-y: auto;
     z-index: 1000;
@@ -374,7 +374,7 @@ body{
 }
 
 .sidebar a:hover {
-    background-color: var(--accent-hover-color);
+    background-color: var(--text-accent);
     color: white;
 }
 
