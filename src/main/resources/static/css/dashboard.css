@@ -29,6 +29,7 @@ body{
 }
 .dashboard-button-cointainer{
     height: 150px;
+    width: 475px;
     text-align: left;
     align-items: flex-start;
     position: absolute;
@@ -380,7 +381,11 @@ body{
 
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+    .dashboard-button-cointainer{
+        width: 80%;
+        margin-right: 0;
+    }
     .movimientos-recientes {
         margin-left: 0;
         width: 90%;
