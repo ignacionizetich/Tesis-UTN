@@ -101,6 +101,22 @@ body{
     display: none;
 }
 
+.close-tax {
+    position: absolute;
+    padding-left: 230px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+}
+
+.close-tax:hover {
+    color: #ff0000;
+    transform: scale(1);
+}
 
 .modal-content {
     background-color: var(--bg-primary);
@@ -162,6 +178,7 @@ body{
 .modal-content button:hover {
     background-color: var(--border-light);
 }
+
 
 /* Botón de cierre */
 .close-button {

@@ -74,3 +74,58 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Abrir modal
+    document.getElementById('abrir-calculadora').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('tax-modal').classList.remove('hidden');
+    });
+
+    // Manejo selección calculadora
+    document.querySelectorAll(".tax-select-button").forEach(button => {
+        button.addEventListener("click", () => {
+            const target = button.getAttribute("data-target");
+            document.getElementById("tax-options").classList.add("hidden");
+            document.querySelectorAll(".tax-form").forEach(form => form.classList.add("hidden"));
+            document.getElementById(`${target}-form`).classList.remove("hidden");
+        });
+    });
+
+    // Cerrar modal y resetear vista
+    document.querySelector(".close-tax").addEventListener("click", () => {
+        document.getElementById("tax-modal").classList.add("hidden");
+        document.getElementById("tax-options").classList.remove("hidden");
+        document.querySelectorAll(".tax-form").forEach(form => form.classList.add("hidden"));
+    });
+
+    // Calcular IVA
+    document.getElementById('calcular-iva').addEventListener('click', () => {
+        const monto = parseFloat(document.getElementById('iva-monto').value);
+        if (isNaN(monto) || monto < 0) {
+            alert("Por favor ingrese un monto válido.");
+            return;
+        }
+        const iva = monto * 0.21;
+        const total = monto + iva;
+
+        document.getElementById('ivaResultado').textContent = iva.toFixed(2);
+        document.getElementById('ivaTotal').textContent = total.toFixed(2);
+    });
+
+    // Calcular Impuesto PAIS
+    document.getElementById('calcular-pais').addEventListener('click', () => {
+        const monto = parseFloat(document.getElementById('pais-monto').value);
+        if (isNaN(monto) || monto < 0) {
+            alert("Por favor ingrese un monto válido.");
+            return;
+        }
+        const impuesto = monto * 0.40;
+        const total = monto + impuesto;
+
+        document.getElementById('paisResultado').textContent = impuesto.toFixed(2);
+        document.getElementById('paisTotal').textContent = total.toFixed(2);
+    });
+
+});
+
