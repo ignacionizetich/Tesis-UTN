@@ -46,14 +46,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Ingresar Dinero
     const ingresarModal = document.getElementById("ingresar-modal");
-    const ingresarButton = document.getElementById("btn-ingresar");
-
+    const ingresarButton = document.querySelector(".ingresar");
     const closeIngresar = document.querySelector(".close-ingresar");
     const ingresarForm = document.getElementById("ingresar-form");
 
     if (ingresarButton) {
         ingresarButton.addEventListener("click", () => {
-            console.log("Click en boton ingresar");
             ingresarModal.classList.remove("hidden");
         });
     }

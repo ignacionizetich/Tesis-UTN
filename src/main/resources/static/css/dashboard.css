@@ -27,11 +27,9 @@ body{
     margin: 0;
     padding: 0;
 }
-.dashboard-button-cointainer{
+.dashboard-button-container {
     height: 150px;
     width: 475px;
-    text-align: left;
-    align-items: flex-start;
     position: absolute;
     top: 155px;
     left: 195px;
@@ -39,16 +37,22 @@ body{
     border-radius: 20px;
     padding: 8px;
     box-sizing: content-box;
-}
-.button-container {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 30px;
-    flex-wrap: wrap;
+    flex-direction: column; /* Cambiado a columna */
+    align-items: center; /* Centrado horizontal */
 }
 
-.button-container > div {
+/* Contenedor de los botones */
+.button-row {
+    display: flex;
+    justify-content: center;
+    gap: 30px; /* Espacio entre botones */
+    margin-top: 30px;
+}
+
+/* Estilos para cada botón (manteniendo los existentes) */
+.button-ingresar,
+.button-transerir,
+.button-alias {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -399,7 +403,7 @@ body{
 
 /* Responsive */
 @media (max-width: 768px) {
-    .dashboard-button-cointainer{
+    .dashboard-button-container{
         width: 80%;
         margin-right: 0;
     }
