@@ -228,7 +228,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Calculadora Impuestos
+
+
+// Calculadora Impuestos
     const abrirCalculadora = document.getElementById('abrir-calculadora');
     const taxModal = document.getElementById('tax-modal');
     const closeTax = document.querySelector(".close-tax");
@@ -257,80 +259,79 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Calculadora de impuestos simple (elegir moneda → pedir monto → mostrar resultado)
     let selectedCurrency = "ARS";
 
-    document.querySelectorAll(".currency-button").forEach(btn => {
-        btn.addEventListener("click", () => {
-            selectedCurrency = btn.getAttribute("data-currency");
-            document.getElementById("selected-currency-label").textContent = selectedCurrency;
-            document.getElementById("tax-form").classList.remove("hidden");
-            document.getElementById("tax-result").textContent = "";
+    const currencyButtons = document.querySelectorAll(".currency-button");
+    const taxForm = document.getElementById("tax-form");
+    const selectedCurrencyLabel = document.getElementById("selected-currency-label");
+    const calcularBtn = document.getElementById("calcular-tax");
+    const taxResult = document.getElementById("tax-result");
+    const taxMonto = document.getElementById("tax-monto");
+
+    currencyButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            selectedCurrency = button.getAttribute("data-currency");
+            selectedCurrencyLabel.textContent = selectedCurrency;
+            taxForm.classList.remove("hidden");
+            taxResult.textContent = "";
+            taxMonto.value = "";
         });
     });
 
-    document.addEventListener("DOMContentLoaded", () => {
-        const currencyButtons = document.querySelectorAll(".currency-button");
-        const taxForm = document.getElementById("tax-form");
-        const selectedCurrencyLabel = document.getElementById("selected-currency-label");
-        const calcularBtn = document.getElementById("calcular-tax");
-        console.log("calcularBtn:", calcularBtn);
-        const taxResult = document.getElementById("tax-result");
+    calcularBtn.addEventListener("click", async () => {
+        const monto = parseFloat(taxMonto.value);
 
-        let selectedCurrency = "ARS";
+        if (isNaN(monto) || monto <= 0) {
+            alert("Por favor, ingrese un monto válido.");
+            return;
+        }
 
-        currencyButtons.forEach(button => {
-            button.addEventListener("click", () => {
-                selectedCurrency = button.getAttribute("data-currency");
-                selectedCurrencyLabel.textContent = selectedCurrency;
-                taxForm.classList.remove("hidden");
-                taxResult.textContent = "";
-                document.getElementById("tax-monto").value = "";
-            });
-        });
+        let url = "";
+        if (selectedCurrency === "ARS") {
+            url = `/api/impuestos/calculateARS?montoARS=${monto}`;
+        } else if (selectedCurrency === "USD") {
+            url = `/api/impuestos/calculateUSD?montoUSD=${monto}`;
+        } else {
+            alert("Moneda no válida.");
+            return;
+        }
 
-        calcularBtn.addEventListener("click", async () => {
-            console.log("Click en Calcular");
-            const montoInput = document.getElementById("tax-monto");
-            const monto = parseFloat(montoInput.value);
-
-            if (isNaN(monto) || monto <= 0) {
-                alert("Por favor, ingrese un monto válido.");
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                const errorText = await response.text();
+                alert("Error al calcular impuestos: " + errorText);
                 return;
             }
 
-            let url = "";
-            if (selectedCurrency === "ARS") {
-                url = `/api/impuestos/calculateARS?montoARS=${monto}`;
-            } else if (selectedCurrency === "USD") {
-                url = `/api/impuestos/calculateUSD?montoUSD=${monto}`;
+            const data = await response.json();
+            console.log("Respuesta del servidor:", data);
+            if (data && typeof data.totalFinal === "number") {
+                let detalle = `<strong>Monto sin impuestos:</strong> ${data.montoOriginal.toFixed(2)} ARS<br>`;
+
+                if (selectedCurrency === "ARS") {
+                    detalle += `<strong>IVA 21%:</strong> ${data.iva.toFixed(2)} ARS<br>`;
+                } else if (selectedCurrency === "USD") {
+                    detalle += `<strong>IVA 21%:</strong> ${data.iva.toFixed(2)} ARS<br>`;
+                    detalle += `<strong>Percepción Ganancias 30%:</strong> ${data.percepcionGanancias.toFixed(2)} ARS<br>`;
+                    detalle += `<strong>Cotización dólar tarjeta:</strong> $${data.precioDolar.toFixed(2)} ARS<br>`;
+                }
+
+                detalle += `<strong>Total con impuestos:</strong> ${data.totalFinal.toFixed(2)} ARS`;
+                taxResult.innerHTML = detalle;
             } else {
-                alert("Moneda no válida.");
-                return;
+                taxResult.textContent = "No se pudo obtener el resultado del cálculo.";
             }
 
-            try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    alert("Error al calcular impuestos: " + errorText);
-                    return;
-                }
 
-                const data = await response.json();
 
-                if (data && typeof data.totalFinal === "number") {
-                    taxResult.textContent = `Total con impuestos (${selectedCurrency}): ${data.totalFinal.toFixed(2)}`;
-                } else {
-                    taxResult.textContent = "No se pudo obtener el resultado del cálculo.";
-                }
 
-            } catch (error) {
-                alert("Error al conectar con el servidor.");
-                console.error(error);
-            }
-        });
+        } catch (error) {
+            alert("Error al conectar con el servidor.");
+            console.error(error);
+        }
     });
+
 
     // Perfil dropdown
     const profilePhoto = document.querySelector('.profile-photo');
