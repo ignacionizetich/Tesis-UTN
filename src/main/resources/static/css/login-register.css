@@ -337,3 +337,43 @@ button[type="submit"]:active {
 .effect-1:focus ~ .focus-border {
     width: 100%;
 }
+<<<<<<< Updated upstream
+=======
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 12px 0;
+    margin-bottom: 0;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 18px;
+    outline: none;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+    border-bottom-color: transparent;
+}
+
+
+#passwordHelp {
+    color: red;
+    opacity: 0;               /* inicialmente invisible */
+    transition: opacity 0.5s ease;  /* transición suave de 0.5 segundos */
+    font-size: 0.9em;
+    margin-top: 5px;
+    font-weight: 600;
+    height: 1.2em;            /* para evitar salto al aparecer/desaparecer */
+    /* display:block para que ocupe espacio incluso invisible */
+    display: block;
+}
+
+#passwordHelp.visible {
+    opacity: 1;               /* cuando visible, totalmente opaco */
+}
+>>>>>>> Stashed changes

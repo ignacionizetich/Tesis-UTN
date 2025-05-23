@@ -28,12 +28,12 @@ public class UserService {
     }
 
 
-    public void insertarUsuario(User user) throws MessagingException, UnsupportedEncodingException {
+    public void insertarUsuario(User user, String rawPassword) throws MessagingException, UnsupportedEncodingException {
         user.setName(user.getName().substring(0,1).toUpperCase() + user.getName().substring(1).toLowerCase());
         user.setLastName(user.getLastName().substring(0,1).toUpperCase() + user.getLastName().substring(1).toLowerCase());
         user.setEnabled(false);
         userRepository.save(user);
-        credentialsService.createCredentials(user);
+        credentialsService.createCredentials(user, rawPassword);
         String token = validationTokenService.createValidationToken(user);
         emailService.testEmail(user, token);
     }

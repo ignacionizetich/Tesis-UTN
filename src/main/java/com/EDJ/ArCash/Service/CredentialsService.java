@@ -18,11 +18,10 @@ public class CredentialsService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Credentials createCredentials(User user){
+    public Credentials createCredentials(User user, String rawPassword){
         Credentials credentials = new Credentials();
         credentials.setUsername(user.getAlias());
-        String passEncoded = passwordEncoder.encode(user.getDni());
-        credentials.setPass(passEncoded);
+        credentials.setPass(passwordEncoder.encode(rawPassword));
         credentials.setUser(user);
         credentials.setPermissions("USER");
         return credentialRepository.save(credentials);

@@ -1,6 +1,7 @@
 package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.RegisterResponse;
+import com.EDJ.ArCash.DTO.RegistrerRequest;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Service.UserService;
 import jakarta.mail.MessagingException;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.UnsupportedEncodingException;
 
 @RestController
-//@RequestMapping(produces = "application/json")
+
 public class UserController {
 
     @Autowired
@@ -22,8 +23,9 @@ public class UserController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<RegisterResponse> register(@RequestBody User user) throws MessagingException, UnsupportedEncodingException {
-        userService.insertarUsuario(user);
-        return ResponseEntity.ok(new RegisterResponse(true,"Usuario registrado correctamente"));
+    public ResponseEntity<RegisterResponse> register(@RequestBody RegistrerRequest dto) throws MessagingException, UnsupportedEncodingException {
+        User user = new User(dto.getName(), dto.getLastName(), dto.getDni(), dto.getEmail(), dto.getAlias());
+        userService.insertarUsuario(user, dto.getPassword());
+        return ResponseEntity.ok(new RegisterResponse(true, "Usuario registrado correctamente"));
     }
 }
