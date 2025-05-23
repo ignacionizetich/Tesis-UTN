@@ -27,13 +27,16 @@ document.addEventListener("DOMContentLoaded", () => {
             const userNameEl = document.getElementById("user-name");
             const userEmailEl = document.getElementById("user-email");
             const userAliasEl = document.getElementById("user-alias");
+            const userBalanceEl = document.getElementById("user-balance");
+            const userNameTopbar = document.getElementById("user-name-topbar");
 
-            if (userNameEl) userNameEl.textContent = `${data.name} ${data.lastName}`;
+
+            if (userNameEl) userNameEl.textContent = `${data.name} ${data.lastName} 👋`;
             if (userEmailEl) userEmailEl.textContent = data.email;
-            if (userAliasEl) userAliasEl.textContent = data.alias;
-
-            // Actualizo saldo apenas cargo los datos del usuario
-            actualizarSaldo();
+            if (userAliasEl) userAliasEl.textContent = `Alias: ${data.alias}`;
+            if (userBalanceEl) userBalanceEl.textContent = data.balance.toFixed(2);
+            if (userNameTopbar) userNameTopbar.textContent = data.alias;
+            document.querySelector(".dashboard").classList.add("loaded");
         })
         .catch(err => {
             console.error("Error al validar token:", err);
@@ -307,21 +310,24 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
             console.log("Respuesta del servidor:", data);
             if (data && typeof data.totalFinal === "number") {
-                let detalle = `<strong>Monto sin impuestos:</strong> ${data.montoOriginal.toFixed(2)} ARS<br>`;
+                let detalle = `<p><strong class="label">Monto sin impuestos:</strong> <span class="value">$${data.montoOriginal.toFixed(2)} ARS</span></p>`;
 
                 if (selectedCurrency === "ARS") {
-                    detalle += `<strong>IVA 21%:</strong> ${data.iva.toFixed(2)} ARS<br>`;
+                    detalle += `<p><strong class="label">IVA 21%:</strong> <span class="value">$${data.iva.toFixed(2)} ARS</span></p>`;
                 } else if (selectedCurrency === "USD") {
-                    detalle += `<strong>IVA 21%:</strong> ${data.iva.toFixed(2)} ARS<br>`;
-                    detalle += `<strong>Percepción Ganancias 30%:</strong> ${data.percepcionGanancias.toFixed(2)} ARS<br>`;
-                    detalle += `<strong>Cotización dólar tarjeta:</strong> $${data.precioDolar.toFixed(2)} ARS<br>`;
+                    detalle += `<p><strong class="label">IVA 21%:</strong> <span class="value">$${data.iva.toFixed(2)} ARS</span></p>`;
+                    detalle += `<p><strong class="label">Percepción Ganancias 30%:</strong> <span class="value">$${data.percepcionGanancias.toFixed(2)} ARS</span></p>`;
+                    detalle += `<p><strong class="label">Cotización dólar oficial:</strong> <span class="value">$${data.precioDolar.toFixed(2)} ARS</span></p>`;
                 }
 
-                detalle += `<strong>Total con impuestos:</strong> ${data.totalFinal.toFixed(2)} ARS`;
+                detalle += `<p><strong class="label">Total con impuestos:</strong> <span class="value strong">$${data.totalFinal.toFixed(2)} ARS</span></p>`;
+
                 taxResult.innerHTML = detalle;
             } else {
                 taxResult.textContent = "No se pudo obtener el resultado del cálculo.";
             }
+
+
 
 
 

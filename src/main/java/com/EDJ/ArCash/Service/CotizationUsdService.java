@@ -10,7 +10,7 @@ import org.springframework.web.client.RestTemplate;
 public class CotizationUsdService {
     private final RestTemplate restTemplate = new RestTemplate();
     private Double cachedVenta = null;
-    private final String URL = "https://dolarapi.com/v1/dolares/tarjeta";
+    private final String URL = "https://dolarapi.com/v1/dolares/oficial";
 
 
     public double obtenerCotizacionVenta(){
