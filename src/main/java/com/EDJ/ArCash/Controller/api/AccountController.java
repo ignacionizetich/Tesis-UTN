@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping(value = "/accounts", produces = "application/json")
+@RequestMapping(value = "/api/accounts", produces = "application/json")
 public class AccountController {
 
     @Autowired

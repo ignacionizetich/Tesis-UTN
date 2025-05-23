@@ -4,7 +4,6 @@ import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
