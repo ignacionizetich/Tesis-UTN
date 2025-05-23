@@ -1,4 +1,51 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // 🔐 Validar JWT y cargar datos del usuario
+    const token = localStorage.getItem("JWT");
+
+    if (!token) {
+        window.location.href = "/PreLogin";
+        return;
+    }
+
+    fetch("/api/user/data", {
+        method: "GET",
+        headers: {
+            "Authorization": "Bearer " + token
+        }
+    })
+        .then(async response => {
+            if (!response.ok) {
+                localStorage.removeItem("JWT");
+                window.location.href = "/PreLogin";
+                return;
+            }
+
+            const data = await response.json();
+
+            // Mostrar datos en el DOM si querés
+            const userNameEl = document.getElementById("user-name");
+            const userEmailEl = document.getElementById("user-email");
+            const userAliasEl = document.getElementById("user-alias");
+
+            if (userNameEl) userNameEl.textContent = `${data.name} ${data.lastName}`;
+            if (userEmailEl) userEmailEl.textContent = data.email;
+            if (userAliasEl) userAliasEl.textContent = data.alias;
+        })
+        .catch(err => {
+            console.error("Error al validar token:", err);
+            localStorage.removeItem("JWT");
+            window.location.href = "/PreLogin";
+        });
+
+    // Logout
+    const logoutButton = document.getElementById("logout-button");
+    if (logoutButton) {
+        logoutButton.addEventListener("click", () => {
+            localStorage.removeItem("JWT");
+            window.location.href = "/PreLogin";
+        });
+    }
+
     // Transferencia
     const modal = document.getElementById("transfer-modal");
     const openButton = document.querySelector(".tranferir");
@@ -27,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (transferForm) {
         transferForm.addEventListener("submit", (e) => {
-            e.preventDefault(); // Prevenir envío siempre
+            e.preventDefault();
 
             const montoInput = document.getElementById("monto");
             const valor = parseFloat(montoInput.value);

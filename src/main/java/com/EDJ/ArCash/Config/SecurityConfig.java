@@ -25,8 +25,8 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())  // Deshabilitar CSRF si no lo necesitas
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/home", "/register", "/css/*", "/js/*", "/create", "/api/auth/login", "/error", "/validate", "api/impuestos/calculateARS", "api/impuestos/calculateUSD").permitAll() // Endpoints libres
-                        .anyRequest().authenticated() // Los demás requieren login
+                        .requestMatchers("/", "/home", "/register", "/css/*", "/js/*", "/create", "/api/auth/login", "/error", "/validate", "api/impuestos/calculateARS", "api/impuestos/calculateUSD", "/dashboard","/api/user/data").permitAll() // Endpoints libres
+                        .anyRequest().authenticated()/// Los demás requieren login
                 )
                 .formLogin(form -> form
                         .loginPage("/PreLogin") // Tu endpoint de login personalizado (opcional)

@@ -13,18 +13,10 @@ public class LoginResponse {
     private String AccessToken;
     private String RefreshToken;
 
+public LoginResponse (boolean success, String message){
+    this.success = success;
+    this.message = message;
+}
 
-    public LoginResponse(boolean success, String message){
-        this.success = success;
-        this.message = message;
 
-    }
-
-    @Override
-    public String toString() {
-        return "LoginResponse{" +
-                "message='" + message + '\'' +
-                ", success=" + success +
-                '}';
-    }
 }

@@ -10,23 +10,28 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.Collections;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final Key secretKey;
+    private final UserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(@Value("${spring.jwt.secret}") String signedJwt) {
+    public JwtAuthenticationFilter(
+            @Value("${spring.jwt.secret}") String signedJwt,
+            UserDetailsService userDetailsService
+    ) {
         this.secretKey = Keys.hmacShaKeyFor(signedJwt.getBytes(StandardCharsets.UTF_8));
+        this.userDetailsService = userDetailsService;
     }
 
     @Override
@@ -38,15 +43,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
             try {
-
                 JwtParserBuilder parserBuilder = Jwts.parser();
                 Claims claims = parserBuilder.setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
 
                 String username = claims.getSubject();
 
-                if (username != null) {
-                    Authentication auth = new UsernamePasswordAuthenticationToken(
-                            username, null, Collections.emptyList());
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    // Cargar usuario desde DB
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                    // Autenticación con usuario completo
+                    UsernamePasswordAuthenticationToken auth =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
 

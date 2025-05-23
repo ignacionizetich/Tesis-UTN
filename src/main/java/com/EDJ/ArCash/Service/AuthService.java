@@ -45,7 +45,7 @@ public class AuthService {
 
             if (passwordEncoder.matches(loginRequest.getPassword(), credentials.getPass())) {
                 if (!usuario.isEnabled()) {
-                    return new LoginResponse(false, "Usuario no habilitado");
+                    return new LoginResponse(false, "Usuario no habilitado",null,null);
                 }
 
                 // Generar el access token
@@ -55,13 +55,13 @@ public class AuthService {
                 String refreshToken = jwtUtils.generateRefreshToken(String.valueOf(usuario.getId_user()));
                 saveRefreshToken(usuario, refreshToken);
 
-                return new LoginResponse(true, "Login exitoso");
+                return new LoginResponse(true, "Login exitoso", accessToken,refreshToken);
             } else {
-                return new LoginResponse(false, "Credenciales incorrectas");
+                return new LoginResponse(false, "Credenciales incorrectas",null,null);
             }
         }
 
-        return new LoginResponse(false, "Usuario no encontrado");
+        return new LoginResponse(false, "Usuario no encontrado",null,null);
     }
 
     // Método para guardar el refresh token en la base de datos

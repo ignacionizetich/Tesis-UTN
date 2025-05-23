@@ -12,4 +12,6 @@ public class RegistrerRequest {
     private String email;
     private String password;
     private String alias;
+
+
 }

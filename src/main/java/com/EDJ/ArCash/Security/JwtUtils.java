@@ -51,11 +51,19 @@ public class JwtUtils {
         try {
             Claims claims = getClaimJWT(refreshToken);
             Date expiration = claims.getExpiration();
+
+            // Check if token exists and is not revoked
+            Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByRefreshToken(refreshToken);
+            if (tokenOpt.isEmpty() || tokenOpt.get().isRevoked()) {
+                return false;
+            }
+
             return expiration.after(new Date());
         } catch (Exception e) {
             return false;
         }
     }
+
     public void revokeRefreshToken(String refreshToken) {
         Optional<RefreshToken> tokenOptional = refreshTokenRepository.findByRefreshToken(refreshToken);
         if (tokenOptional.isPresent()) {

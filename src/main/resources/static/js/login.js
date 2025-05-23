@@ -69,12 +69,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 return response.json();
             })
             .then(data => {
+                console.log('Respuesta login:', data);
                 if (data.success) {
                     alert('Inicio de sesión exitoso');
                     form.reset();
-                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('JWT', data.accessToken);
+                    console.log('Redirigiendo al dashboard...'); // 🔍
+                    window.location.href = '/dashboard';
                 } else {
-                    alert(data.message);
+                    alert(data.message || 'Credenciales incorrectas');
                 }
             })
             .catch(error => {
