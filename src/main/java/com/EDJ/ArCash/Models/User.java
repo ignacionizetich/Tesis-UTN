@@ -21,7 +21,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_user")
-    private Long id_user;
+    private Long iduser;
 
     /// un usuario puede tener una credencial, una credencial corresponde a un usuario
     @OneToOne(mappedBy = "user",cascade = CascadeType.ALL)

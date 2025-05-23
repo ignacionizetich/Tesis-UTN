@@ -7,6 +7,8 @@
     --naval: #16263E;
     --cobalt: #2A4D7A;
 
+    /* Variables faltantes */
+    --text-secondary: #6e6e6e; /* un gris medio para textos secundarios */
     /* Modo claro */
     --bg-primary: var(--platinum);
     --bg-secondary: white;

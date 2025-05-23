@@ -74,6 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     alert('Inicio de sesión exitoso');
                     form.reset();
                     localStorage.setItem('JWT', data.accessToken);
+                    localStorage.setItem('accountId', data.accountId);
                     console.log('Redirigiendo al dashboard...'); // 🔍
                     window.location.href = '/dashboard';
                 } else {

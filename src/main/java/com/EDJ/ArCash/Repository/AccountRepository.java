@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -34,6 +35,9 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     /// METODO PAR ENCONTRAR UNA CUENTA CON SU ID
     Optional<Account> findByIdAccount(Long id);
+
+    /// METODO PAR ENCONTRAR UNA CUENTA CON EL ID DEL USUARIO
+    Optional<Account> findByUserIduser(Long userId);
 
     /// METODO  PARA ACTUALIZAR EL BALANCE DE UNA CUENTA EN ESPECIFICO POR SU ID
     @Modifying

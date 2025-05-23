@@ -10,4 +10,5 @@ import lombok.Setter;
 public class AccountResponse {
     private boolean success;
     private String message;
+    private double newBalance;
 }

@@ -337,8 +337,7 @@ button[type="submit"]:active {
 .effect-1:focus ~ .focus-border {
     width: 100%;
 }
-<<<<<<< Updated upstream
-=======
+
 
 input[type="text"],
 input[type="email"],
@@ -376,4 +375,4 @@ input[type="password"]:focus {
 #passwordHelp.visible {
     opacity: 1;               /* cuando visible, totalmente opaco */
 }
->>>>>>> Stashed changes
+

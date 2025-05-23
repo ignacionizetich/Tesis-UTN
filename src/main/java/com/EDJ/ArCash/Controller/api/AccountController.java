@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -32,14 +34,14 @@ public class AccountController {
 
         if (accountRequest.getBalance() < 0) {
             return ResponseEntity.badRequest()
-                    .body(new AccountResponse(false, "El monto a ingresar no puede ser negativo."));
+                    .body(new AccountResponse(false, "El monto a ingresar no puede ser negativo.", accountRequest.getBalance()));
         }
 
 
         // 1. Obtener token de la cabecera Authorization
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(498).body(new AccountResponse(false, "Token no proporcionado"));
+            return ResponseEntity.status(498).body(new AccountResponse(false, "Token no proporcionado", 0));
         }
         String token = authHeader.substring(7);
 
@@ -49,29 +51,59 @@ public class AccountController {
         Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
 
         if (userId == null) {
-            return ResponseEntity.status(498).body(new AccountResponse(false, "Token inválido o sin userId"));
+            return ResponseEntity.status(498).body(new AccountResponse(false, "Token inválido o sin userId",0));
         }
 
         Optional<Account> optionalAccount = accountService.findAccountByID(id);
 
         if (optionalAccount.isEmpty()) {
-            return ResponseEntity.status(404).body(new AccountResponse(false, "La cuenta no existe."));
+            return ResponseEntity.status(404).body(new AccountResponse(false, "La cuenta no existe.",0));
         } else {
             Account account = optionalAccount.get();
 
-            if (account.getUser().getId_user().equals(userId)) {
+            if (account.getUser().getIduser().equals(userId)) {
                 boolean success = accountService.updateBalance(accountRequest.getBalance(), id);
                 if (!success) {
                     return ResponseEntity.badRequest()
-                            .body(new AccountResponse(false, "No se pudo actualizar el balance. Verifique el ID ingresado."));
+                            .body(new AccountResponse(false, "No se pudo actualizar el balance. Verifique el ID ingresado.",0));
                 }
 
-                return ResponseEntity.ok(new AccountResponse(true, "Ingreso de dinero realizado correctamente."));
+                return ResponseEntity.ok(new AccountResponse(true, "Ingreso de dinero realizado correctamente.", account.getBalance()));
             } else {
-                return ResponseEntity.status(498).body(new AccountResponse(false, "El usuario no es propietario legitimo de la cuenta"));
+                return ResponseEntity.status(498).body(new AccountResponse(false, "El usuario no es propietario legitimo de la cuenta", 0));
             }
         }
     }
+
+
+    @GetMapping("/{id}/showBalance")
+    public ResponseEntity<Map<String, Object>> getAccount(@PathVariable Long id, HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String token = authHeader.substring(7);
+        Claims claims = JwtUtils.getClaimJWT(token);
+        String userIdStr = claims.get("userID", String.class);
+        Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
+
+        Optional<Account> optionalAccount = accountService.findAccountByID(id);
+        if (optionalAccount.isPresent() && optionalAccount.get().getUser().getIduser().equals(userId)) {
+            Account account = optionalAccount.get();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("balance", account.getBalance());
+            response.put("alias", account.getAccountNickname());
+            response.put("cvu", account.getAccountCvu());
+
+            return ResponseEntity.ok(response);
+        }
+
+        return ResponseEntity.status(403).build();
+    }
+
+
 
 
 }

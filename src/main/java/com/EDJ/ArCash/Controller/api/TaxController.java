@@ -17,21 +17,21 @@ public class TaxController {
 
 
     @GetMapping("/calculateARS")
-    public ResponseEntity<?> calcularARS(@RequestBody TaxPesosRequest pesosRequest) {
-        if (pesosRequest.getMontoARS() <= 0) {
+    public ResponseEntity<?> calcularARS(@RequestParam double montoARS) {
+        if (montoARS <= 0) {
             return ResponseEntity.badRequest().body("El monto en ARS no puede ser cero o negativo.");
         }
-        TaxPesosResponse resultado = taxService.calcularPesos(pesosRequest.getMontoARS());
+        TaxPesosResponse resultado = taxService.calcularPesos(montoARS);
         return ResponseEntity.ok(resultado);
     }
 
     @GetMapping("/calculateUSD")
-    public ResponseEntity<?> calcularUSD(@RequestBody TaxUsdRequest usdRequest) {
-        if (usdRequest.getMontoUSD() <= 0) {
+    public ResponseEntity<?> calcularUSD(@RequestParam double montoUSD) {
+        if (montoUSD <= 0) {
             return ResponseEntity.badRequest().body("El monto en USD no puede ser cero.");
         }
 
-        TaxUsdResponse taxUsdResponse = taxService.calcularUSD(usdRequest.getMontoUSD());
+        TaxUsdResponse taxUsdResponse = taxService.calcularUSD(montoUSD);
         return ResponseEntity.ok(taxUsdResponse);
     }
 }

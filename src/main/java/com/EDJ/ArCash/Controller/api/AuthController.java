@@ -2,8 +2,10 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.LoginRequest;
 import com.EDJ.ArCash.DTO.LoginResponse;
+import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.User;
+import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.CredentialRepository;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AuthService;
@@ -38,6 +40,8 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+
+
     @Autowired
     private AuthService authService;
 
@@ -65,6 +69,7 @@ public class AuthController {
                     response.addCookie(cookie);
                 }
 
+
                 // Devolver el access token al cliente
                 return ResponseEntity.ok(loginResponse);
             } else {
@@ -73,7 +78,7 @@ public class AuthController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new LoginResponse(false, "Error interno del servidor",null,null));
+                    .body(new LoginResponse(false, "Error interno del servidor",null,null,null));
         }
     }
 
