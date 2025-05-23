@@ -1,70 +1,72 @@
-document.addEventListener("DOMContentLoaded",() => {
+document.addEventListener("DOMContentLoaded", () => {
+    // Transferencia
     const modal = document.getElementById("transfer-modal");
     const openButton = document.querySelector(".tranferir");
     const closeButton = document.querySelector(".close-button");
-    const tranferForm = document.getElementById("transfer-form");
-    const aliasModal = document.getElementById('alias-modal');
-    const aliasButton = document.querySelector('.Alias-CVU');
-    const closeAlias = document.querySelector('.close-alias');
+    const transferForm = document.getElementById("transfer-form");
 
-    if (openButton){
-        openButton.addEventListener('click', () => {
-            modal.classList.remove('hidden');
+    if (openButton) {
+        openButton.addEventListener("click", () => {
+            modal.classList.remove("hidden");
         });
     }
 
-    if (closeButton){
-        closeButton.addEventListener('click',() =>{
-            modal.classList.add('hidden');
-            tranferForm.reset();
+    if (closeButton) {
+        closeButton.addEventListener("click", () => {
+            modal.classList.add("hidden");
+            transferForm.reset();
         });
     }
 
-    window.addEventListener('click', (e) => {
-        if (e.target === modal){
-            modal.classList.add('hidden');
-            tranferForm.reset();
+    window.addEventListener("click", (e) => {
+        if (e.target === modal) {
+            modal.classList.add("hidden");
+            transferForm.reset();
         }
     });
 
-    if (tranferForm){
-        tranferForm.addEventListener('submit', (e) =>{
-            const montoInput = document.getElementById("monto");
-            const valor = parseInt(montoInput.value);
+    if (transferForm) {
+        transferForm.addEventListener("submit", (e) => {
+            e.preventDefault(); // Prevenir envío siempre
 
-            if (isNaN(valor) || valor < 0){
-                e.preventDefault();
-                alert("Por Favor, ingresa un monto mayor o igual a $1");
+            const montoInput = document.getElementById("monto");
+            const valor = parseFloat(montoInput.value);
+
+            if (isNaN(valor) || valor <= 0) {
+                alert("Por favor, ingresa un monto mayor o igual a $1");
                 montoInput.focus();
-            }else {
-                e.preventDefault();
-                alert("Transferencia Enviada con Exito");
-                tranferForm.reset();
-                modal.classList.add('hidden');
+            } else {
+                alert("Transferencia enviada con éxito");
+                transferForm.reset();
+                modal.classList.add("hidden");
             }
-        })
+        });
     }
 
+    // Alias Modal
+    const aliasModal = document.getElementById("alias-modal");
+    const aliasButton = document.querySelector(".Alias-CVU");
+    const closeAlias = document.querySelector(".close-alias");
+
     if (aliasButton) {
-        aliasButton.addEventListener('click', () => {
-            aliasModal.classList.remove('hidden');
+        aliasButton.addEventListener("click", () => {
+            aliasModal.classList.remove("hidden");
         });
     }
 
     if (closeAlias) {
-        closeAlias.addEventListener('click', () => {
-            aliasModal.classList.add('hidden');
+        closeAlias.addEventListener("click", () => {
+            aliasModal.classList.add("hidden");
         });
     }
 
-    window.addEventListener('click', (e) => {
+    window.addEventListener("click", (e) => {
         if (e.target === aliasModal) {
-            aliasModal.classList.add('hidden');
+            aliasModal.classList.add("hidden");
         }
     });
-})
-/*script header pa*/
-document.addEventListener("DOMContentLoaded", () => {
+
+    // Sidebar toggle
     const menuButton = document.getElementById("menu-toggle");
     const sidebar = document.getElementById("sidebar");
 
@@ -73,16 +75,19 @@ document.addEventListener("DOMContentLoaded", () => {
             sidebar.classList.toggle("hidden");
         });
     }
-});
-document.addEventListener('DOMContentLoaded', () => {
 
-    // Abrir modal
-    document.getElementById('abrir-calculadora').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('tax-modal').classList.remove('hidden');
-    });
+    // Calculadora Impuestos
+    const abrirCalculadora = document.getElementById('abrir-calculadora');
+    const taxModal = document.getElementById('tax-modal');
+    const closeTax = document.querySelector(".close-tax");
 
-    // Manejo selección calculadora
+    if (abrirCalculadora) {
+        abrirCalculadora.addEventListener("click", (e) => {
+            e.preventDefault();
+            taxModal.classList.remove("hidden");
+        });
+    }
+
     document.querySelectorAll(".tax-select-button").forEach(button => {
         button.addEventListener("click", () => {
             const target = button.getAttribute("data-target");
@@ -92,40 +97,60 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Cerrar modal y resetear vista
-    document.querySelector(".close-tax").addEventListener("click", () => {
-        document.getElementById("tax-modal").classList.add("hidden");
-        document.getElementById("tax-options").classList.remove("hidden");
-        document.querySelectorAll(".tax-form").forEach(form => form.classList.add("hidden"));
-    });
+    if (closeTax) {
+        closeTax.addEventListener("click", () => {
+            taxModal.classList.add("hidden");
+            document.getElementById("tax-options").classList.remove("hidden");
+            document.querySelectorAll(".tax-form").forEach(form => form.classList.add("hidden"));
+        });
+    }
 
-    // Calcular IVA
-    document.getElementById('calcular-iva').addEventListener('click', () => {
-        const monto = parseFloat(document.getElementById('iva-monto').value);
-        if (isNaN(monto) || monto < 0) {
-            alert("Por favor ingrese un monto válido.");
-            return;
-        }
-        const iva = monto * 0.21;
-        const total = monto + iva;
+    // IVA
+    const calcularIva = document.getElementById('calcular-iva');
+    if (calcularIva) {
+        calcularIva.addEventListener("click", () => {
+            const monto = parseFloat(document.getElementById('iva-monto').value);
+            if (isNaN(monto) || monto < 0) {
+                alert("Por favor ingrese un monto válido.");
+                return;
+            }
+            const iva = monto * 0.21;
+            const total = monto + iva;
+            document.getElementById('ivaResultado').textContent = iva.toFixed(2);
+            document.getElementById('ivaTotal').textContent = total.toFixed(2);
+        });
+    }
 
-        document.getElementById('ivaResultado').textContent = iva.toFixed(2);
-        document.getElementById('ivaTotal').textContent = total.toFixed(2);
-    });
+    // Impuesto PAIS
+    const calcularPais = document.getElementById('calcular-pais');
+    if (calcularPais) {
+        calcularPais.addEventListener("click", () => {
+            const monto = parseFloat(document.getElementById('pais-monto').value);
+            if (isNaN(monto) || monto < 0) {
+                alert("Por favor ingrese un monto válido.");
+                return;
+            }
+            const impuesto = monto * 0.40;
+            const total = monto + impuesto;
+            document.getElementById('paisResultado').textContent = impuesto.toFixed(2);
+            document.getElementById('paisTotal').textContent = total.toFixed(2);
+        });
+    }
 
-    // Calcular Impuesto PAIS
-    document.getElementById('calcular-pais').addEventListener('click', () => {
-        const monto = parseFloat(document.getElementById('pais-monto').value);
-        if (isNaN(monto) || monto < 0) {
-            alert("Por favor ingrese un monto válido.");
-            return;
-        }
-        const impuesto = monto * 0.40;
-        const total = monto + impuesto;
+    // Perfil dropdown
+    const profilePhoto = document.querySelector('.profile-photo');
+    const profileMenu = document.getElementById('profileMenu');
 
-        document.getElementById('paisResultado').textContent = impuesto.toFixed(2);
-        document.getElementById('paisTotal').textContent = total.toFixed(2);
-    });
+    if (profilePhoto && profileMenu) {
+        profilePhoto.addEventListener("click", (e) => {
+            e.stopPropagation();
+            profileMenu.style.display = (profileMenu.style.display === 'flex') ? 'none' : 'flex';
+        });
 
+        document.addEventListener("click", (e) => {
+            if (!profilePhoto.contains(e.target) && !profileMenu.contains(e.target)) {
+                profileMenu.style.display = 'none';
+            }
+        });
+    }
 });
-
