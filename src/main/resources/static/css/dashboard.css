@@ -101,6 +101,22 @@ body{
     display: none;
 }
 
+.close-tax {
+    position: absolute;
+    padding-left: 230px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+}
+
+.close-tax:hover {
+    color: #ff0000;
+    transform: scale(1);
+}
 
 .modal-content {
     background-color: var(--bg-primary);
@@ -162,6 +178,7 @@ body{
 .modal-content button:hover {
     background-color: var(--border-light);
 }
+
 
 /* Botón de cierre */
 .close-button {
@@ -404,4 +421,64 @@ body{
         text-align: left;
         padding: 2px 0;
     }
+}
+
+.user-menu-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: Arial, sans-serif;
+    user-select: none;
+}
+
+.profile-photo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%; /* círculo */
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid #444;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile-photo svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Menú desplegable */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 10px;
+    border-radius: 8px;
+    z-index: 100;
+    flex-direction: column;
+}
+
+.dropdown-menu a {
+    text-decoration: none;
+    color: #333;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+.dropdown-menu a:hover {
+    background-color: #f0f0f0;
+    color: #000;
 }
