@@ -42,7 +42,7 @@
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#666"/>
                 </svg>
             </div>
-            <div class="user-name" id="user-name-topbar">Usuario</div>
+            <div class="user-name" id="user-name-topbar">Cargando...</div>
             <div class="dropdown-menu" id="profileMenu">
                 <a href="/profile">Mi Perfil</a>
                 <a href="/logout">Cerrar sesión</a>
@@ -52,7 +52,7 @@
 
     <main class="dashboard">
         <div class="dashboard-name">
-            <h2>Bienvenido, <span id="user-name"></span></h2>
+            <h2>Bienvenido, <span id="user-name">Cargando...</span></h2>
         </div>
         <div class="dashboard-button-container">
             <h3>Saldo Actual</h3>
@@ -125,21 +125,36 @@
             </div>
         </div>
 
-        <div id="transfer-modal" class="modal hidden">
-            <div class="modal-content">
-                <span class="close-button">&times;</span>
-                <h2>Transferir Dinero</h2>
-                <form id="transfer-form">
-                    <label for="destinatario">Alias o CVU:</label>
-                    <input type="text" id="destinatario" name="destinatario" required>
+<div id="transfer-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Transferir Dinero</h2>
+        
+        <!-- Paso 1: Búsqueda de cuenta -->
+        <div id="search-account-step">
+    <div class="form-group">
+        <input type="text" id="destinatario" required placeholder=" ">
+        <label for="destinatario">Alias o CVU</label>
+    </div>
+    <button id="buscar-cuenta">Buscar cuenta</button>
+</div>
 
-                    <label for="monto">Monto:</label>
-                    <input type="number" id="monto" name="monto" min="0" step="1" placeholder="$" required>
-
-                    <button type="submit">Confirmar</button>
-                </form>
-            </div>
+        <!-- Paso 2: Confirmación de cuenta (inicialmente oculto) -->
+        <div id="confirm-account-step" class="hidden">
+            <h3>Datos de la cuenta destino:</h3>
+            <div id="account-details"></div>
+            <button id="confirmar-cuenta">Confirmar cuenta</button>
+            <button id="cancelar-busqueda">Cancelar</button>
         </div>
+
+        <!-- Paso 3: Ingreso de monto (inicialmente oculto) -->
+        <div id="amount-step" class="hidden">
+            <input type="number" id="monto" name="monto" min="0" step="1" placeholder="$" required>
+            <button id="confirmar-transferencia">Transferir</button>
+            <button id="volver-busqueda">Volver</button>
+        </div>
+    </div>
+</div>
 
         <div id="alias-modal" class="modal hidden">
             <div class="modal-content">
@@ -147,8 +162,8 @@
                 <h2>Mi Alias y CVU</h2>
 
                 <div class="info-alias-cvu">
-                    <p><strong>Alias:</strong> <span id="alias-value">mi.alias.ejemplo</span></p>
-                    <p><strong>CVU:</strong> <span id="cvu-value">0001234567891234567890</span></p>
+                    <p><strong>Alias:</strong> <span id="alias-value">Cargando...</span></p>
+                    <p><strong>CVU:</strong> <span id="cvu-value">Cargando...</span></p>
                 </div>
             </div>
         </div>

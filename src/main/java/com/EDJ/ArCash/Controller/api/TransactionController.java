@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -66,6 +68,30 @@ public class TransactionController {
 
         }
 
+    }
+
+    @GetMapping("/search/{input}")
+    public ResponseEntity<?> searchAccount(@PathVariable String input) {
+        Optional<Account> account = accountService.encontrarCuentaPorAlias(input);
+        if (account.isEmpty()) {
+            account = accountService.encontrarCuentaPorCvu(input);
+        }
+
+        if (account.isPresent()) {
+            Account acc = account.get();
+            Map<String, Object> result = new HashMap<>();
+            result.put("idaccount", acc.getIdAccount());
+            result.put("alias", acc.getAccountNickname());
+            result.put("cvu", acc.getAccountCvu());
+            result.put("user", Map.of(
+                    "nombre", acc.getUser().getName(),
+                    "apellido", acc.getUser().getLastName(),
+                    "dni", acc.getUser().getDni()
+            ));
+            return ResponseEntity.ok(result);
+        } else {
+            return ResponseEntity.status(404).body("Cuenta no encontrada.");
+        }
     }
 
 

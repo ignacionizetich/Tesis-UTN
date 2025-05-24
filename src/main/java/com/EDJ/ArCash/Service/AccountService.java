@@ -52,6 +52,14 @@ public class AccountService {
         return accountRepository.findByIdAccount(id);
     }
 
+    public Optional<Account> encontrarCuentaPorAlias(String alias){
+        return accountRepository.findByAccountNickname(alias);
+    }
+
+    public Optional<Account> encontrarCuentaPorCvu(String cvu){
+        return accountRepository.findByAccountCvu(cvu);
+    }
+
 
 
 

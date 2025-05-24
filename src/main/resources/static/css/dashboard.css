@@ -101,6 +101,7 @@ body{
 }
 
 
+
 .hidden {
     display: none;
 }
@@ -536,4 +537,204 @@ body{
 .dashboard.loaded {
     opacity: 1;
     pointer-events: auto;
+}
+/* Base común para el modal de transferencia */
+#transfer-modal .modal-content {
+    background-color: var(--platinum);
+    padding: 35px;
+    border-radius: 15px;
+    width: 400px;
+    position: relative;
+}
+
+[data-theme="dark"] #transfer-modal .modal-content {
+    background-color: var(--carbon);
+}
+
+/* Paso 1: Búsqueda de cuenta */
+#search-account-step {
+    position: relative;
+    margin-top: 15px;
+}
+
+#search-account-step .form-group {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+#search-account-step input {
+    width: 100%;
+    padding: 10px 0;
+    font-size: 16px;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-light);
+    outline: none;
+    transition: 0.3s;
+}
+
+#search-account-step label {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    font-size: 16px;
+    color: var(--text-primary);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+/* Animación del label y la línea */
+#search-account-step input:focus ~ label,
+#search-account-step input:not(:placeholder-shown) ~ label {
+    top: -20px;
+    font-size: 14px;
+    color: var(--text-accent);
+}
+
+#search-account-step .form-group::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--text-accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+#search-account-step input:focus ~ .form-group::after {
+    transform: scaleX(1);
+}
+
+#confirm-account-step {
+    background-color: transparent; /* Elimina el fondo gris */
+    padding: 10px 0;
+}
+
+[data-theme="dark"] #confirm-account-step {
+    background-color: transparent;
+}
+
+
+#account-details {
+    background-color: transparent;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 3px;
+    color: var(--text-primary);
+}
+
+
+[data-theme="dark"] #account-details {
+    background-color: transparent;
+    border-color: var(--carbon); /* Asegurar contraste en modo oscuro */
+}
+
+/* Paso 3: Ingreso de monto - Versión mejorada */
+#amount-step {
+    background-color: transparent; /* Elimina el fondo gris */
+    padding: 10px 0;
+}
+
+#amount-step .form-group {
+    position: relative;
+    margin: 30px 0;
+    background-color: transparent; /* Asegura transparencia */
+}
+
+#amount-step input {
+    width: 100%;
+    padding: 10px 0;
+    font-size: 16px;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-light);
+    outline: none;
+    transition: 0.3s;
+}
+
+/* Ajustes para tema oscuro */
+[data-theme="dark"] #amount-step {
+    background-color: transparent;
+}
+
+[data-theme="dark"] #amount-step input {
+    border-bottom-color: var(--carbon);
+}
+
+#amount-step .form-group {
+    position: relative;
+    margin: 30px 0;
+}
+
+#amount-step input {
+    width: 100%;
+    padding: 10px 0;
+    font-size: 16px;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-light);
+    outline: none;
+    transition: 0.3s;
+}
+
+#amount-step label {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    font-size: 16px;
+    color: var(--text-primary);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+/* Botones para todos los pasos */
+#transfer-modal button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--text-accent);
+    color: var(--titanium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#transfer-modal button:hover {
+    background-color: var(--cobalt);
+}
+
+#transfer-modal button.secondary {
+    background-color: transparent;
+    border: 1px solid var(--text-accent);
+    color: var(--text-primary);
+}
+
+#transfer-modal button.secondary:hover {
+    background-color: var(--border-light);
+}
+/* Estilos comunes que se mantienen igual para ambos temas */
+#search-account-step input,
+#amount-step input {
+    color: var(--text-primary);
+}
+
+#search-account-step label,
+#amount-step label {
+    color: var(--text-primary);
+}
+
+#search-account-step input:focus ~ label,
+#search-account-step input:not(:placeholder-shown) ~ label,
+#amount-step input:focus ~ label,
+#amount-step input:not(:placeholder-shown) ~ label {
+    color: var(--text-accent);
 }
