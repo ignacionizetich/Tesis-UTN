@@ -4,6 +4,7 @@ package com.EDJ.ArCash.Controller.api;
 import com.EDJ.ArCash.DTO.TransactionResponse;
 import com.EDJ.ArCash.DTO.TranscationRequest;
 import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.Models.Transaction;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.TransactionService;
@@ -61,7 +62,9 @@ public class TransactionController {
 
 
             if(transactionService.transaction(id1, id2, transcationRequest.getBalance())){
+                Transaction transaction = new Transaction();
                 return ResponseEntity.ok(new TransactionResponse(true, "Transferencia realizada correctamente"));
+
             }else{
                 return ResponseEntity.status(403).body(new TransactionResponse(false, "Not enough cash, stranger."));
             }
@@ -93,6 +96,7 @@ public class TransactionController {
             return ResponseEntity.status(404).body("Cuenta no encontrada.");
         }
     }
+
 
 
 }

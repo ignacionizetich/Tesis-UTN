@@ -1,9 +1,11 @@
 package com.EDJ.ArCash.Service;
 
+import com.EDJ.ArCash.DTO.AliasResponse;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -48,7 +50,7 @@ public class AccountService {
         }
     }
 
-   public  Optional<Account> findAccountByID(long id){
+   public Optional<Account> findAccountByID(long id){
         return accountRepository.findByIdAccount(id);
     }
 
@@ -58,6 +60,26 @@ public class AccountService {
 
     public Optional<Account> encontrarCuentaPorCvu(String cvu){
         return accountRepository.findByAccountCvu(cvu);
+    }
+
+    public ResponseEntity<AliasResponse> changeAlias(String newAlias, Long id, Object responseEntity){
+        Optional<Account> optionalAccount = accountRepository.findByIdAccount(id);
+
+        if(optionalAccount.isEmpty()){
+            return ResponseEntity.status(498).body(new AliasResponse(false, "Cuenta no encontrada."));
+        }
+        Account acc = optionalAccount.get();
+
+        if(acc.getUser().getIduser().equals(responseEntity)){
+        if(!accountRepository.existsByAccountNickname(newAlias)){
+            acc.setAccountNickname(newAlias);
+            accountRepository.save(acc);
+            return ResponseEntity.status(200).body(new AliasResponse(true, "Alias actualizado exitosamente."));
+        }
+        }else{
+            return ResponseEntity.status(403).body(new AliasResponse(false, "No tienes permisos para hacer eso."));
+        }
+        return ResponseEntity.status(403).body(new AliasResponse(false, "Alias actualmente en uso."));
     }
 
 

@@ -3,10 +3,13 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.AccountRequest;
 import com.EDJ.ArCash.DTO.AccountResponse;
+import com.EDJ.ArCash.DTO.AliasRequest;
+import com.EDJ.ArCash.DTO.AliasResponse;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AccountService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwt;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -38,20 +41,10 @@ public class AccountController {
         }
 
 
-        // 1. Obtener token de la cabecera Authorization
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(498).body(new AccountResponse(false, "Token no proporcionado", 0));
-        }
-        String token = authHeader.substring(7);
+        Object responseEntity = jwtUtils.validateAccessToken(request).getBody();
 
-        // 2. Extraer claims
-        Claims claims = JwtUtils.getClaimJWT(token);
-        String userIdStr = claims.get("userID", String.class);
-        Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
-
-        if (userId == null) {
-            return ResponseEntity.status(498).body(new AccountResponse(false, "Token inválido o sin userId",0));
+        if(responseEntity == null){
+            return ResponseEntity.status(498).body(new AccountResponse(false ,"Usuario invalido",0));
         }
 
         Optional<Account> optionalAccount = accountService.findAccountByID(id);
@@ -61,7 +54,7 @@ public class AccountController {
         } else {
             Account account = optionalAccount.get();
 
-            if (account.getUser().getIduser().equals(userId)) {
+            if (account.getUser().getIduser().equals(responseEntity)) {
                 boolean success = accountService.updateBalance(accountRequest.getBalance(), id);
                 if (!success) {
                     return ResponseEntity.badRequest()
@@ -103,8 +96,16 @@ public class AccountController {
         return ResponseEntity.status(403).build();
     }
 
+    @PutMapping("/{id}/changeAlias")
+    public ResponseEntity<AliasResponse> changeAlias(@PathVariable Long id, @RequestBody AliasRequest aliasRequest, HttpServletRequest request){
+        Object responseEntity = jwtUtils.validateAccessToken(request).getBody();
 
+        if(responseEntity == null){
+            return ResponseEntity.status(498).body(new AliasResponse(false, "Usuario invalido."));
+        }
 
+        return accountService.changeAlias(aliasRequest.getNewAlias(), id, responseEntity);
+    }
 
 }
 

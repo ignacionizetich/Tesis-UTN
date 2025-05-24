@@ -1,13 +1,17 @@
 package com.EDJ.ArCash.Security;
 
+import com.EDJ.ArCash.DTO.AccountResponse;
 import com.EDJ.ArCash.Models.RefreshToken;
 import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParserBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -77,5 +81,27 @@ public class JwtUtils {
     public static Claims getClaimJWT(String token){
         JwtParserBuilder parserBuilder = Jwts.parser();
         return parserBuilder.setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
+    }
+
+
+    public ResponseEntity<?> validateAccessToken(HttpServletRequest request){
+
+        // 1. Obtener token de la cabecera Authorization
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(498).body(new AccountResponse(false, "Token no proporcionado", 0));
+        }
+        String token = authHeader.substring(7);
+
+        // 2. Extraer claims
+        Claims claims = JwtUtils.getClaimJWT(token);
+        String userIdStr = claims.get("userID", String.class);
+        Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
+
+        if (userId == null) {
+            return ResponseEntity.status(498).body(new AccountResponse(false, "Token inválido o sin userId",0));
+        }
+
+       return ResponseEntity.status(200).body(userId);
     }
 }
