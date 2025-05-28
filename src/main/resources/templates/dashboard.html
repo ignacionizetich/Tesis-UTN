@@ -162,8 +162,26 @@
                 <h2>Mi Alias y CVU</h2>
 
                 <div class="info-alias-cvu">
-                    <p><strong>Alias:</strong> <span id="alias-value">Cargando...</span></p>
-                    <p><strong>CVU:</strong> <span id="cvu-value">Cargando...</span></p>
+                    <div class="info-line">
+                        <div class="info-text">
+                            <strong>Alias:</strong> <span id="alias-value">Cargando...</span>
+                        </div>
+                        <button class="copy-button" id="copy-alias" title="Copiar Alias">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 9h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zm0 11h-9v-9h9v9zm-4-17H6c-1.1 0-2 .9-2 2v9h2V5h10V3z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="info-line">
+                        <div class="info-text">
+                            <strong>CVU:</strong> <span id="cvu-value">Cargando...</span>
+                        </div>
+                        <button class="copy-button" id="copy-cvu" title="Copiar CVU">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 9h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zm0 11h-9v-9h9v9zm-4-17H6c-1.1 0-2 .9-2 2v9h2V5h10V3z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -191,8 +209,8 @@
         </div>
     </main>
 
-<script th:src="@{/js/theme.js}"></script>
-<script th:src="@{/js/dashboard.js}"></script>
+    <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/dashboard.js}"></script>
 
 </body>
 </html>

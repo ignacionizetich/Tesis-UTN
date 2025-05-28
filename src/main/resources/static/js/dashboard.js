@@ -193,17 +193,50 @@ document.addEventListener("DOMContentLoaded", () => {
     const aliasModal = document.getElementById("alias-modal");
     const aliasButton = document.querySelector(".Alias-CVU");
     const closeAlias = document.querySelector(".close-alias");
+    const copyAliasButton = document.getElementById("copy-alias");
+    const copyCvuButton = document.getElementById("copy-cvu");
 
     if (aliasButton) {
         aliasButton.addEventListener("click", () => {
-            // Obtener alias y cvu del localStorage
             const alias = localStorage.getItem("alias") || "No disponible";
             const cvu = localStorage.getItem("cvu") || "No disponible";
 
-            // Actualizar el texto en el modal
             document.getElementById("alias-value").textContent = alias;
             document.getElementById("cvu-value").textContent = cvu;
             aliasModal.classList.remove("hidden");
+        });
+    }
+
+    // Función para copiar texto
+    async function copyText(text, button) {
+        try {
+            await navigator.clipboard.writeText(text);
+            
+            // Feedback visual
+            button.classList.add('success');
+            
+            setTimeout(() => {
+                button.classList.remove('success');
+            }, 2000);
+        } catch (err) {
+            console.error('Error al copiar:', err);
+            alert('No se pudo copiar el texto');
+        }
+    }
+
+    // Copiar Alias
+    if (copyAliasButton) {
+        copyAliasButton.addEventListener("click", () => {
+            const aliasText = document.getElementById("alias-value").textContent;
+            copyText(aliasText, copyAliasButton);
+        });
+    }
+
+    // Copiar CVU
+    if (copyCvuButton) {
+        copyCvuButton.addEventListener("click", () => {
+            const cvuText = document.getElementById("cvu-value").textContent;
+            copyText(cvuText, copyCvuButton);
         });
     }
 

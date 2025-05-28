@@ -125,8 +125,8 @@ body{
 
 .modal-content {
     background-color: var(--bg-primary);
-    padding: 20px 30px;
     border-radius: 12px;
+    padding: 20px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     width: 300px;
     max-width: 90%;
@@ -737,4 +737,97 @@ body{
 #amount-step input:focus ~ label,
 #amount-step input:not(:placeholder-shown) ~ label {
     color: var(--text-accent);
+}
+.copy-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.copy-container p {
+    margin: 0;
+    flex-grow: 1;
+}
+
+.info-alias-cvu {
+    padding: 10px 0;
+}
+
+.info-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding-right: 10px;
+    color: var(--text-primary); /* Color del texto que se ajusta según el tema */
+}
+
+.info-line p {
+    margin: 0;
+    flex-grow: 1;
+    padding-right: 20px;
+    color: var(--text-primary);
+}
+
+
+
+/* Texto del Alias/CVU */
+.info-text {
+    flex-grow: 1;
+    white-space: nowrap;
+}
+
+
+
+.copy-button:hover {
+    background-color: var(--border-light);
+}
+
+
+.copy-button:active {
+    transform: scale(0.95);
+}
+
+
+.copy-button svg {
+    width: 20px;
+    height: 20px;
+    transition: color 0.3s ease;
+}
+
+
+#copy-alias,
+#copy-cvu {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--cobalt);
+    margin-left: 8px;
+    border-radius: 3px;
+}
+/* Estilo para modo oscuro */
+[data-theme="dark"] #copy-alias, #copy-cvu {
+    color: var(--cobalt); /* Color para modo oscuro */
+}
+
+
+/* ICONOS IDÉNTICOS */
+#copy-alias svg,
+#copy-cvu svg {
+    width: 16px;
+    height: 16px;
+}
+
+
+/* AJUSTE DE ALINEACIÓN VERTICAL */
+#copy-cvu,#copy-alias {
+    margin-top: -1px; /* Mismo ajuste que el alias */
 }
