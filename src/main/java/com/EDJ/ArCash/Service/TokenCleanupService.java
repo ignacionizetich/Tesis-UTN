@@ -4,13 +4,15 @@ import com.EDJ.ArCash.Models.ValidationToken;
 import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.Repository.ValidationTokenRepository;
 import jakarta.transaction.Transactional;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+@Slf4j
 @Service
 public class TokenCleanupService {
 
@@ -20,25 +22,26 @@ public class TokenCleanupService {
     @Autowired
     private UserRepository userRepository;
 
+    @PostConstruct
+    public void init() {
+        removeExpiredUnvalidatedUsers();
+    }
+
     @Transactional
-    @Scheduled(fixedRate = 3600000) //TIEMPO PARA LIMPIAR TOKENS Y USUARIOS NO VALIDADOS
+    @Scheduled(cron = "0 0 * * * ?")
     public void removeExpiredUnvalidatedUsers() {
         LocalDateTime now = LocalDateTime.now();
         System.out.println("Buscando tokens expirados antes de: " + now);
 
         List<ValidationToken> expiredTokensAndUsers = validationTokenRepository.findAllByUsedFalseAndExpirationDateBefore(now);
         System.out.println("Tokens encontrados: " + expiredTokensAndUsers.size());
+        
         for (ValidationToken token : expiredTokensAndUsers) {
             userRepository.delete(token.getUser());
         }
 
         List<ValidationToken> expiredTokens = validationTokenRepository.findAllByUsedTrueAndExpirationDateBefore(now);
         validationTokenRepository.deleteAllInBatch(expiredTokens);
-        System.out.println("Token eliminado:" + expiredTokens);
+        System.out.println("Token eliminado:[" + (expiredTokens.size() > 0 ? "OK" : "") + "]");
     }
 }
-
-
-
-
-

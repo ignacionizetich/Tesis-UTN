@@ -28,7 +28,7 @@ public class CotizationUsdService {
 
                if(apiUsdResponse != null && apiUsdResponse.getVenta() > 0){
                    cachedVenta = apiUsdResponse.getVenta();
-                   System.out.println("Cotizacion del dolar actualizada: "+cachedVenta + "A la hora: "+ apiUsdResponse.getFechaActualizacion());
+
 
                }else {
                    System.err.println("Respuesta invalida al actualizar cotizacion dolar.");

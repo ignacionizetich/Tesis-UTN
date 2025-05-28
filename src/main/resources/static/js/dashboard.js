@@ -491,6 +491,47 @@ confirmarTransferenciaBtn.addEventListener('click', async () => {
     }
 });
 });
+// Busca el enlace de cerrar sesión
+const logoutLink = document.querySelector('a[href="/logout"]');
+
+if (logoutLink) {
+    logoutLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        try {
+            const token = localStorage.getItem('JWT');
+            if (!token) {
+                // Si no hay token, simplemente redirigir
+                window.location.href = '/PreLogin';
+                return;
+            }
+
+            const response = await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            // Limpiar localStorage independientemente de la respuesta
+            localStorage.clear();
+
+            // Esperar un momento antes de redirigir para asegurar que la limpieza se complete
+            setTimeout(() => {
+                window.location.href = '/PreLogin';
+            }, 100);
+
+        } catch (error) {
+            console.error('Error durante el logout:', error);
+            // En caso de error, también limpiar y redirigir
+            localStorage.clear();
+            window.location.href = '/PreLogin';
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Función para manejar el comportamiento de los modales
     function setupModal(modalId) {

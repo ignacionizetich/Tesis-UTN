@@ -2,12 +2,9 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.LoginRequest;
 import com.EDJ.ArCash.DTO.LoginResponse;
-import com.EDJ.ArCash.Models.Account;
-import com.EDJ.ArCash.Models.Credentials;
-import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Repository.AccountRepository;
+import com.EDJ.ArCash.DTO.LogoutResponse;
+import com.EDJ.ArCash.Models.Imp.LogoutStatus;
 import com.EDJ.ArCash.Repository.CredentialRepository;
-import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,12 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
+import java.util.Map;
 
 
 @RestController
@@ -82,10 +76,77 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<LogoutResponse> logout(
+            @RequestHeader(value = "Authorization") String authHeader,
+            HttpServletResponse response) {
+        try {
+            // Extraer el access token del header de autorización
+            String accessToken = authHeader.substring(7);
+
+            // Llamar al método de logout con solo el access token
+            LogoutStatus status = authService.logout(accessToken);
+
+            switch (status) {
+                case SUCCESS:
+                    // Eliminar la cookie del refresh token
+                    Cookie cookie = new Cookie("refreshToken", null);
+                    cookie.setHttpOnly(true);
+                    cookie.setSecure(true);
+                    cookie.setPath("/");
+                    cookie.setMaxAge(0);
+                    response.addCookie(cookie);
+
+                    return ResponseEntity.ok()
+                            .body(new LogoutResponse(true, "Sesión cerrada correctamente."));
+
+                case ALREADY_REVOKED:
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new LogoutResponse(false, "El token ya ha sido revocado previamente"));
+
+                case ERROR:
+                default:
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new LogoutResponse(false, "Error al cerrar sesión."));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new LogoutResponse(false, "Error al procesar la solicitud"));
+        }
+    }
+
+    @GetMapping("/check-session")
+    public ResponseEntity<?> checkSession(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+
+                // Verificar si el token es válido y no está revocado
+                boolean isValidSession = authService.isValidSession(token);
+
+                if (isValidSession) {
+                    return ResponseEntity.ok()
+                            .body(Map.of(
+                                    "status", "ACTIVE",
+                                    "message", "Sesión activa"
+                            ));
+                }
+            }
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of(
+                            "status", "INACTIVE",
+                            "message", "No hay sesión activa"
+                    ));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "status", "ERROR",
+                            "message", "Error al verificar la sesión"
+                    ));
+        }
+    }
+
 
 }
-
-
-
-
-

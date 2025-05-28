@@ -2,6 +2,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById('login');
     const usuarioInput = form.querySelector('input[name="username"]');
     const passwordInput = form.querySelector('input[name="password"]');
+// Verificar si hay una sesión activa
+    const token = localStorage.getItem('JWT');
+    if (token) {
+        // Si hay un token, redirigir al dashboard
+        window.location.href = '/dashboard';
+        return;
+    }
 
     form.addEventListener('submit', function (event) {
         event.preventDefault();
