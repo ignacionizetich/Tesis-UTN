@@ -8,8 +8,8 @@ import com.EDJ.ArCash.DTO.AliasResponse;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AccountService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwt;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -70,7 +70,7 @@ public class AccountController {
 
 
     @GetMapping("/{id}/showBalance")
-    public ResponseEntity<Map<String, Object>> getAccount(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<?> getAccount(@PathVariable Long id, HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(401).build();
@@ -86,7 +86,7 @@ public class AccountController {
             Account account = optionalAccount.get();
 
             Map<String, Object> response = new HashMap<>();
-            response.put("balance", account.getBalance());
+            response.put("balance", Double.valueOf(account.getBalance()));
             response.put("alias", account.getAccountNickname());
             response.put("cvu", account.getAccountCvu());
 
@@ -106,6 +106,8 @@ public class AccountController {
 
         return accountService.changeAlias(aliasRequest.getNewAlias(), id, responseEntity);
     }
+
+
 
 }
 

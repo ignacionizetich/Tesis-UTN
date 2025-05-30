@@ -1,6 +1,7 @@
 package com.EDJ.ArCash.Controller.api;
 
 
+import com.EDJ.ArCash.DTO.TransactionDTO;
 import com.EDJ.ArCash.DTO.TransactionResponse;
 import com.EDJ.ArCash.DTO.TranscationRequest;
 import com.EDJ.ArCash.Models.Account;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -95,6 +97,11 @@ public class TransactionController {
         } else {
             return ResponseEntity.status(404).body("Cuenta no encontrada.");
         }
+    }
+
+    @GetMapping("/{id}/getTransactions")
+    public List<TransactionDTO> getTransactions (@PathVariable long id){
+        return transactionService.listaTransacciones(id);
     }
 
 

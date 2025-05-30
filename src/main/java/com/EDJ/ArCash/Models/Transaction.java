@@ -1,7 +1,6 @@
 package com.EDJ.ArCash.Models;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,11 +28,11 @@ public class Transaction {
 
     @ManyToOne
     @JoinColumn(name = "id_origin")
-    private Account id_origin;
+    private Account idOrigin;
 
     @ManyToOne
     @JoinColumn(name = "id_destination")
-    private Account id_destination;
+    private Account idDestination;
 
     @NotNull("El monto no puede estar vacío")
     @Positive(message = "El monto debe ser positivo")
@@ -53,6 +52,18 @@ public class Transaction {
         createDate();
     }
 
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "id_transaction=" + id_transaction +
+                ", id_operation='" + id_operation + '\'' +
+                ", idOrigin=" + idOrigin +
+                ", idDestination=" + idDestination +
+                ", balance=" + balance +
+                ", state='" + state + '\'' +
+                ", transaction_date='" + transaction_date + '\'' +
+                '}';
+    }
 
     //-------------------METODOS PRIVATE DE VALIDACION Y CREACION DE VALORES DE FORMA AUTOMATICA---------------------
     private void generateUUID() {

@@ -1,5 +1,6 @@
 package com.EDJ.ArCash.Service;
 
+import com.EDJ.ArCash.DTO.TransactionDTO;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Transaction;
 import com.EDJ.ArCash.Repository.AccountRepository;
@@ -7,7 +8,11 @@ import com.EDJ.ArCash.Repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TransactionService {
@@ -38,8 +43,8 @@ public class TransactionService {
         Account cuentaDestino = optionalDestino.get();
         Transaction transaction = new Transaction();
         if (cuentaOrigen.getBalance() < monto) {
-            transaction.setId_origin(cuentaOrigen);
-            transaction.setId_destination(cuentaDestino);
+            transaction.setIdOrigin(cuentaOrigen);
+            transaction.setIdDestination(cuentaDestino);
             transaction.setBalance(monto);
             transaction.setState("FAILED");
             transactionRepository.save(transaction);
@@ -47,8 +52,8 @@ public class TransactionService {
         } else {
             cuentaOrigen.setBalance(cuentaOrigen.getBalance() - monto);
             cuentaDestino.setBalance(cuentaDestino.getBalance() + monto);
-            transaction.setId_origin(cuentaOrigen);
-            transaction.setId_destination(cuentaDestino);
+            transaction.setIdOrigin(cuentaOrigen);
+            transaction.setIdDestination(cuentaDestino);
             transaction.setBalance(monto);
             transaction.setState("COMPLETED");
             accountRepository.save(cuentaOrigen);
@@ -57,5 +62,19 @@ public class TransactionService {
             return true;
         }
     }
+
+    public List<TransactionDTO> listaTransacciones(Long id){
+
+        Optional<Account> accountOptional = accountRepository.findByIdAccount(id);
+        if(accountOptional.isPresent()){
+            List<Transaction> lista = transactionRepository.findByIdOriginOrIdDestination(accountOptional.get(), accountOptional.get());
+            List<TransactionDTO> dtoList = lista.stream()
+                    .map(TransactionDTO::new)
+                    .collect(Collectors.toList());
+            return dtoList;
+        }
+        return Collections.emptyList();
+    }
+
 
 }
