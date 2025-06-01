@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Optional;
 import java.util.List;
@@ -33,7 +34,8 @@ public class JwtUtils {
     private UserRepository userRepository;
 
     public JwtUtils(@Value("${spring.jwt.secret}") String signedJwt) {
-        secretKey = Keys.hmacShaKeyFor(signedJwt.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = Base64.getDecoder().decode(signedJwt);
+        secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
 
@@ -58,7 +60,7 @@ public class JwtUtils {
     }
 
     public static Claims getClaimJWT(String token){
-        JwtParserBuilder parserBuilder = Jwts.parser();
+        JwtParserBuilder parserBuilder = Jwts.parserBuilder();
         return parserBuilder.setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
     }
 

@@ -51,36 +51,36 @@ public class AuthService {
             Credentials credentials = credentialsOptional.get();
             User usuario = credentials.getUser();
 
-            // Verificar si ya tiene una sesión activa usando List en lugar de Optional
+            if (!passwordEncoder.matches(loginRequest.getPassword(), credentials.getPass())) {
+                return new LoginResponse(false, "Credenciales incorrectas", null, null, null);
+            }
+
+            if (!usuario.isEnabled()) {
+                return new LoginResponse(false, "Usuario no habilitado", null, null, null);
+            }
+
+
             List<RefreshToken> activeTokens = refreshTokenRepository.findAllByUserAndRevokedFalse(usuario);
+            String refreshToken;
             if (!activeTokens.isEmpty()) {
-                return new LoginResponse(false, "Ya existe una sesión activa para este usuario", null, null, null);
-            }
-
-            if (passwordEncoder.matches(loginRequest.getPassword(), credentials.getPass())) {
-                if (!usuario.isEnabled()) {
-                    return new LoginResponse(false, "Usuario no habilitado", null, null, null);
-                }
-
-                // Generar el access token
-                String accessToken = jwtUtils.generateToken(String.valueOf(usuario.getIduser()));
-
-                // Generar el refresh token y guardarlo en la base de datos
-                String refreshToken = jwtUtils.generateRefreshToken(String.valueOf(usuario.getIduser()));
+                refreshToken = activeTokens.get(0).getRefreshToken();
+            } else {
+                /// genera un nuevo refresh token si no hay ninguno activo
+                refreshToken = JwtUtils.generateRefreshToken(String.valueOf(usuario.getIduser()));
                 saveRefreshToken(usuario, refreshToken);
-
-                Optional<Account> optionalAccount = accountRepository.findByUserIduser(usuario.getIduser());
-                if (optionalAccount.isPresent()) {
-                    Account account = optionalAccount.get();
-                    return new LoginResponse(true, "Login exitoso", accessToken, refreshToken, account.getIdAccount());
-                }
-                return new LoginResponse(false, "Cuenta no encontrada", null, null, null);
             }
-            return new LoginResponse(false, "Credenciales incorrectas", null, null, null);
+
+            String accessToken = JwtUtils.generateToken(String.valueOf(usuario.getIduser()));
+
+            Optional<Account> optionalAccount = accountRepository.findByUserIduser(usuario.getIduser());
+            if (optionalAccount.isPresent()) {
+                Account account = optionalAccount.get();
+                return new LoginResponse(true, "Login exitoso", accessToken, refreshToken, account.getIdAccount());
+            }
+            return new LoginResponse(false, "Cuenta no encontrada", null, null, null);
         }
         return new LoginResponse(false, "Usuario no encontrado", null, null, null);
     }
-
 
 
     public LogoutStatus logout(String accessToken) {
@@ -136,7 +136,7 @@ public class AuthService {
 
 
     // Método para guardar el refresh token en la base de datos
-    private void saveRefreshToken(User usuario, String refreshToken) {
+    public void saveRefreshToken(User usuario, String refreshToken) {
 
         RefreshToken token = new RefreshToken();
         token.setUser(usuario);
@@ -146,6 +146,8 @@ public class AuthService {
         token.setRevoked(false);
         refreshTokenRepository.save(token);
     }
+
+
 
 
 }

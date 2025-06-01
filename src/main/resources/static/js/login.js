@@ -59,6 +59,8 @@ document.addEventListener("DOMContentLoaded", function () {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json'
+
             },
             body: JSON.stringify(loginData)
         })
@@ -76,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return response.json();
             })
             .then(data => {
-                console.log('Respuesta login:', data);
+
                 if (data.success) {
                     alert('Inicio de sesión exitoso');
                     form.reset();

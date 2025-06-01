@@ -6,5 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+    User findByAlias(String alias);
     /// aca no agregamos nada, JPA maneja las operaciones CRUD con metodos predefinidos
 }
