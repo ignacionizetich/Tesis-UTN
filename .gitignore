@@ -5,7 +5,7 @@ target/
 !**/src/test/**/target/
 
 # git ignora el application-test.properties para que no se filtre datos sensibles
-**/src/main/java/resources/application-test.properties
+src/main/resources/application-test.properties
 ### STS ###
 .apt_generated
 .classpath
