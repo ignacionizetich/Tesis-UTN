@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Base64;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -26,11 +26,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final Key secretKey;
     private final UserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(
-            @Value("${spring.jwt.secret}") String signedJwt,
-            UserDetailsService userDetailsService
-    ) {
-        this.secretKey = Keys.hmacShaKeyFor(signedJwt.getBytes(StandardCharsets.UTF_8));
+    public JwtAuthenticationFilter(@Value("${spring.jwt.secret}") String signedJwt, UserDetailsService userDetailsService) {
+        // Decodificar la clave secreta desde Base64
+        byte[] keyBytes = Base64.getDecoder().decode(signedJwt);
+        secretKey = Keys.hmacShaKeyFor(keyBytes);
         this.userDetailsService = userDetailsService;
     }
 
@@ -43,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
             try {
-                JwtParserBuilder parserBuilder = Jwts.parser();
+                JwtParserBuilder parserBuilder = Jwts.parserBuilder();
                 Claims claims = parserBuilder.setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
 
                 String username = claims.getSubject();

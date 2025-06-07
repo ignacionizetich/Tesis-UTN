@@ -1,10 +1,7 @@
 package com.EDJ.ArCash.Models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Entity
 @Table(name = "refresh_tokens")
+@ToString
 public class RefreshToken {
 
     @Id
@@ -36,4 +34,6 @@ public class RefreshToken {
 
     @Column(name = "revoked")
     private boolean revoked;
+
+
 }

@@ -5,6 +5,7 @@ import com.EDJ.ArCash.DTO.TaxPesosResponse;
 import com.EDJ.ArCash.DTO.TaxUsdRequest;
 import com.EDJ.ArCash.DTO.TaxUsdResponse;
 import com.EDJ.ArCash.Service.TaxService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ public class TaxController {
 
     @GetMapping("/calculateARS")
     public ResponseEntity<?> calcularARS(@RequestParam double montoARS) {
+
         if (montoARS <= 0) {
             return ResponseEntity.badRequest().body("El monto en ARS no puede ser cero o negativo.");
         }

@@ -1,4 +1,4 @@
-package com.EDJ.ArCash.Controller.api;
+package com.EDJ.ArCash.Controller.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;

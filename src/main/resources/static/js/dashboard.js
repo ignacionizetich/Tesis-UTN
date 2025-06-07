@@ -142,9 +142,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-
-
-
     // Transferencia
     const modal = document.getElementById("transfer-modal");
     const openButton = document.querySelector(".tranferir");
@@ -211,10 +208,10 @@ document.addEventListener("DOMContentLoaded", () => {
     async function copyText(text, button) {
         try {
             await navigator.clipboard.writeText(text);
-            
+
             // Feedback visual
             button.classList.add('success');
-            
+
             setTimeout(() => {
                 button.classList.remove('success');
             }, 2000);
@@ -261,7 +258,6 @@ document.addEventListener("DOMContentLoaded", () => {
             sidebar.classList.toggle("hidden");
         });
     }
-
 
 
 // Calculadora Impuestos
@@ -357,11 +353,6 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 taxResult.textContent = "No se pudo obtener el resultado del cálculo.";
             }
-
-
-
-
-
 
         } catch (error) {
             alert("Error al conectar con el servidor.");
@@ -478,7 +469,7 @@ volverBusquedaBtn.addEventListener('click', () => {
 // Realizar transferencia
 confirmarTransferenciaBtn.addEventListener('click', async () => {
     const monto = parseFloat(document.getElementById('monto').value);
-    
+
     if (isNaN(monto) || monto <= 0) {
         alert('Por favor ingrese un monto válido');
         return;
@@ -511,7 +502,7 @@ confirmarTransferenciaBtn.addEventListener('click', async () => {
             amountStep.classList.add('hidden');
             confirmAccountStep.classList.add('hidden');
             modal.classList.add('hidden');
-            
+
             // Actualizar saldo
             actualizarSaldo();
         } else {
@@ -523,7 +514,7 @@ confirmarTransferenciaBtn.addEventListener('click', async () => {
         console.error(error);
     }
 });
-});
+
 // Busca el enlace de cerrar sesión
 const logoutLink = document.querySelector('a[href="/logout"]');
 
@@ -565,12 +556,12 @@ if (logoutLink) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+
     // Función para manejar el comportamiento de los modales
     function setupModal(modalId) {
         const modal = document.getElementById(modalId);
         const closeButton = modal.querySelector('.close-button');
-        
+
         // Prevenir que el modal se cierre al hacer click afuera
         modal.addEventListener('click', function(event) {
             event.stopPropagation();
