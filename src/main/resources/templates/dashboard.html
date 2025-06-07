@@ -27,11 +27,7 @@
 
     <nav id="sidebar" class="sidebar hidden">
         <ul>
-            <li><a th:href="@{/dashboard}">Inicio</a></li>
-            <li><a th:href="@{/perfil}">Atras</a></li>
-            <li><a th:href="@{/perfil}">Caja de ahorro $Dolar</a></li>
             <li><a href="#" id="abrir-calculadora">Calculadora Impuestos</a></li>
-            <li><a th:href="@{/perfil}">Tarjetas </a></li>
         </ul>
 
         <div class="user-menu-container">
@@ -100,19 +96,25 @@
         <div class="movimientos-recientes">
             <h3>Últimos Movimientos</h3>
             <ul class="movimientos-lista">
-                <li><span class="fecha">20/05/2025</span><span class="descripcion">Depósito bancario</span><span class="monto positivo">$+100000</span></li>
-                <li><span class="fecha">19/05/2025</span><span class="descripcion">Transferencia a Pedro</span><span class="monto negativo">$-15000</span></li>
-                <li><span class="fecha">18/05/2025</span><span class="descripcion">Compra en tienda</span><span class="monto negativo">$-5000</span></li>
-                <li><span class="fecha">17/05/2025</span><span class="descripcion">Ingreso por freelance</span><span class="monto positivo">$+20000</span></li>
-                <li><span class="fecha">16/05/2025</span><span class="descripcion">Pago de servicio</span><span class="monto negativo">$-3000</span></li>
-                <li><span class="fecha">15/05/2025</span><span class="descripcion">Transferencia a Juan</span><span class="monto negativo">$-12000</span></li>
-                <li><span class="fecha">14/05/2025</span><span class="descripcion">Recarga celular</span><span class="monto negativo">$-2000</span></li>
-                <li><span class="fecha">13/05/2025</span><span class="descripcion">Ingreso por venta</span><span class="monto positivo">$+2500</span></li>
-                <li><span class="fecha">12/05/2025</span><span class="descripcion">Pago de suscripción</span><span class="monto negativo">$-6890</span></li>
-                <li><span class="fecha">11/05/2025</span><span class="descripcion">Retiro de efectivo</span><span class="monto negativo">$-1000</span></li>
             </ul>
         </div>
 
+        <!-- Modal para ver la informacion de la transferencia -->
+        <div id="modalTransferencia" class="modal hidden">
+            <div class="modal-content">
+                <span id="cerrarModal" class="close-button">&times;</span>
+                <h2>Detalle de la Transferencia</h2>
+                <ul class="transfer-details">
+
+                    <li><b>ID Operación:</b> <span id="modalOperacion"></span></li>
+                    <li><b>Origen:</b> <span id="modalOrigen"></span></li>
+                    <li><b>Destino:</b> <span id="modalDestino"></span></li>
+                    <li><b>Monto:</b> <span id="modalMonto"></span></li>
+                    <li><b>Estado:</b> <span id="modalEstado"></span></li>
+                    <li><b>Fecha:</b> <span id="modalFecha"></span></li>
+                </ul>
+            </div>
+        </div>
         <!-- Modal Ingresar Dinero -->
         <div id="ingresar-modal" class="modal hidden">
             <div class="modal-content">
@@ -193,6 +195,6 @@
 
 <script th:src="@{/js/theme.js}"></script>
 <script th:src="@{/js/dashboard.js}"></script>
-
+<script th:src="@{/js/transactions.js}"></script>
 </body>
 </html>

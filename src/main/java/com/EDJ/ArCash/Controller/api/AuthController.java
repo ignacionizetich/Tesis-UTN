@@ -27,15 +27,6 @@ import java.util.Map;
 @RequestMapping(value = "/api/auth", produces = "application/json")
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private CredentialRepository credentialRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
 
     @Autowired
     private AuthService authService;

@@ -8,10 +8,9 @@ import com.EDJ.ArCash.Repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -63,15 +62,17 @@ public class TransactionService {
         }
     }
 
-    public List<TransactionDTO> listaTransacciones(Long id){
 
+
+    public List<TransactionDTO> listaTransacciones(Long id) {
         Optional<Account> accountOptional = accountRepository.findByIdAccount(id);
-        if(accountOptional.isPresent()){
+        if (accountOptional.isPresent()) {
             List<Transaction> lista = transactionRepository.findByIdOriginOrIdDestination(accountOptional.get(), accountOptional.get());
-            List<TransactionDTO> dtoList = lista.stream()
+            // Ordenar por fecha descendente (más reciente primero)
+            lista.sort((t1, t2) -> t2.getTransaction_date().compareTo(t1.getTransaction_date()));
+            return lista.stream()
                     .map(TransactionDTO::new)
                     .collect(Collectors.toList());
-            return dtoList;
         }
         return Collections.emptyList();
     }

@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Validar sesión antes de cualquier acción
-    const token = localStorage.getItem("JWT");
+   const token = localStorage.getItem("JWT");
     if (!token) {
         window.location.href = "/PreLogin";
         return;
@@ -555,6 +555,9 @@ document.addEventListener("DOMContentLoaded", () => {
         setupModal('deposit-modal');
         setupModal('alias-modal');
     }
+
+      ///MOSTRAR EL MOVIMIENTO DE LA CUENTA
+
 });
 
 

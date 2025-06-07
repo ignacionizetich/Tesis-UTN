@@ -1,7 +1,6 @@
 package com.EDJ.ArCash.DTO;
 
 import com.EDJ.ArCash.Models.Transaction;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,6 +15,9 @@ public class TransactionDTO {
     private Long idDestination;
     private Double amount;
     private String state;
+    private String date;
+    private String originUsername;
+    private String destinationUsername;
 
 
     public TransactionDTO(Transaction transaction) {
@@ -25,5 +27,8 @@ public class TransactionDTO {
         setAmount(transaction.getBalance());
         setIdOperation(transaction.getId_operation());
         setState(transaction.getState());
+        setDate(transaction.getTransaction_date());
+        this.originUsername = transaction.getIdOrigin().getUser().getAlias();
+        this.destinationUsername = transaction.getIdDestination().getUser().getAlias();
     }
 }

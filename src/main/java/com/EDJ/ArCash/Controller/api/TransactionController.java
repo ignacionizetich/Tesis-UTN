@@ -11,6 +11,7 @@ import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.TransactionService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,10 +29,10 @@ public class TransactionController {
     private AccountService accountService;
     @Autowired
     private TransactionService transactionService;
-    @Autowired
-    private JwtUtils jwtUtils;
+
 
     @PostMapping("/{id1}/transfer/{id2}")
+    @Transactional
     public ResponseEntity<TransactionResponse> transaction(@PathVariable Long id1, @PathVariable Long id2, @RequestBody TranscationRequest transcationRequest, HttpServletRequest request) {
 
         Optional<Account> optionalOrigen = accountService.findAccountByID(id1);
@@ -100,7 +101,8 @@ public class TransactionController {
     }
 
     @GetMapping("/{id}/getTransactions")
-    public List<TransactionDTO> getTransactions (@PathVariable long id){
+    public List<TransactionDTO> getTransactions (@PathVariable long id, HttpServletRequest request){
+        String token = request.getHeader("Authorization");
         return transactionService.listaTransacciones(id);
     }
 

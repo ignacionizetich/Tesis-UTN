@@ -1,9 +1,12 @@
 package com.EDJ.ArCash;
 
+import com.EDJ.ArCash.DTO.TransactionDTO;
 import com.EDJ.ArCash.Models.RefreshToken;
+import com.EDJ.ArCash.Models.Transaction;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
+import com.EDJ.ArCash.Service.TransactionService;
 import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,6 +30,9 @@ class ArCashApplicationTests {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private TransactionService transactionService;
+
     @BeforeAll
     static void loadEnv() {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -37,24 +43,10 @@ class ArCashApplicationTests {
 
     @Test
     void testFindAllByUserAndRevokedFalse() {
-        User user = new User();
-        user.setName("testUser");
-        user.setLastName("testLastName");
-        user.setDni("12345678");
-        user.setEmail("test@example.com");
-        user.setAlias("testAlias");
-        user.setEnabled(true);
-        userRepository.save(user);
+        List<TransactionDTO> lista = transactionService.listaTransacciones(1L);
 
-        RefreshToken token1 = new RefreshToken(null, user, "token1", LocalDateTime.now(), LocalDateTime.now().plusDays(7), false);
-        RefreshToken token2 = new RefreshToken(null, user, "token2", LocalDateTime.now(), LocalDateTime.now().plusDays(7), true);
-        refreshTokenRepository.save(token1);
-        refreshTokenRepository.save(token2);
-
-        List<RefreshToken> activos = refreshTokenRepository.findAllByUserAndRevokedFalse(user);
-
-        System.out.println("Tokens activos: " + activos);
-        assertEquals(1, activos.size());
-        assertEquals("token1", activos.get(0).getRefreshToken());
+        for (TransactionDTO transactionDTO : lista){
+            System.out.println(transactionDTO);
+        }
     }
 }

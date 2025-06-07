@@ -488,9 +488,7 @@ body{
     color: #000;
 }
 
-.hidden {
-    display: none;
-}
+
 
 #tax-result p {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -738,3 +736,110 @@ body{
 #amount-step input:not(:placeholder-shown) ~ label {
     color: var(--text-accent);
 }
+
+/* Estilos para el modal de transferencia - versión corregida */
+
+#modalTransferencia {
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#modalTransferencia .modal-content {
+    background-color: var(--bg-primary);
+    padding: 25px;
+    border-radius: 12px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.movimientos-lista {
+    cursor: pointer;
+}
+
+.movimientos-lista li {
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.movimientos-lista li:hover {
+    background: var(--border-light, #e3e8f0);
+    box-shadow: 0 2px 8px rgba(66, 133, 244, 0.08);
+}
+
+    .transfer-details {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0 0 0;
+}
+
+.transfer-details li {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.transfer-details li:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.transfer-details b {
+    color: var(--text-accent);
+    margin-right: 5px;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal:not(.hidden) {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background-color: var(--bg-primary);
+    padding: 25px;
+    border-radius: 12px;
+    width: 400px;
+    max-width: 90%;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+.modal:not(.hidden) .modal-content {
+    transform: translateY(0);
+}
+
+
+
