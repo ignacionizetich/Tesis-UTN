@@ -584,6 +584,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Configurar cada modal
     setupModal('transfer-modal');
-    setupModal('deposit-modal');
+    setupModal('ingresar-modal');
     setupModal('alias-modal');
 });
