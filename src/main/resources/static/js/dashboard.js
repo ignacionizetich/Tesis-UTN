@@ -582,7 +582,82 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Configurar cada modal
+
+    const profileModal = document.getElementById('profile-modal');
+    const openProfileBtn = document.getElementById('open-profile-modal');
+    const closeProfileBtn = profileModal.querySelector('.close-profile');
+    const editBtn = document.getElementById('edit-profile-btn');
+    const saveBtn = document.getElementById('save-profile-btn');
+    const aliasDisplay = document.getElementById('profile-alias-display');
+    const aliasInput = document.getElementById('profile-alias-input');
+    const phoneDisplay = document.getElementById('profile-phone-display');
+    const phoneInput = document.getElementById('profile-phone-input');
+
+    // Abrir modal
+    openProfileBtn.addEventListener('click', (e) => {
+        e.preventDefault(); // Para evitar navegación si es <a href="#">
+        profileModal.classList.remove('hidden');
+    });
+
+    // Cerrar modal con la "X"
+    closeProfileBtn.addEventListener('click', () => {
+        profileModal.classList.add('hidden');
+    });
+
+    // Cerrar modal clickeando afuera del contenido
+    profileModal.addEventListener('click', (e) => {
+        if (e.target === profileModal) {
+            profileModal.classList.add('hidden');
+        }
+    });
+
+    // Al hacer clic en editar: ocultar textos, mostrar inputs con valores actuales
+    editBtn.addEventListener('click', () => {
+        aliasInput.value = aliasDisplay.textContent;
+        phoneInput.value = phoneDisplay.textContent;
+
+        aliasDisplay.classList.add('hidden');
+        phoneDisplay.classList.add('hidden');
+
+        aliasInput.classList.remove('hidden');
+        phoneInput.classList.remove('hidden');
+
+        editBtn.classList.add('hidden');
+        saveBtn.classList.remove('hidden');
+    });
+
+    // Al hacer clic en guardar: validar, actualizar texto, ocultar inputs, mostrar texto
+    saveBtn.addEventListener('click', () => {
+        // Validación sencilla: alias no vacío, teléfono solo números y espacios
+        const aliasVal = aliasInput.value.trim();
+        const phoneVal = phoneInput.value.trim();
+
+        if (!aliasVal) {
+            alert('El alias no puede estar vacío.');
+            return;
+        }
+
+        if (!/^[\d\s-+()]*$/.test(phoneVal)) {
+            alert('El teléfono contiene caracteres no válidos.');
+            return;
+        }
+
+        aliasDisplay.textContent = aliasVal;
+        phoneDisplay.textContent = phoneVal;
+
+        aliasInput.classList.add('hidden');
+        phoneInput.classList.add('hidden');
+
+        aliasDisplay.classList.remove('hidden');
+        phoneDisplay.classList.remove('hidden');
+
+        saveBtn.classList.add('hidden');
+        editBtn.classList.remove('hidden');
+
+        // Aquí puedes agregar la llamada para guardar los datos en backend si quieres
+    });
+
+// Configurar cada modal
     setupModal('transfer-modal');
     setupModal('ingresar-modal');
     setupModal('alias-modal');
