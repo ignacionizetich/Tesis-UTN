@@ -1,0 +1,79 @@
+/* === ESTILOS PARA EMULAR HOME (sin modificar los originales) === */
+.home-style {
+    font-family: 'Manrope', sans-serif;
+}
+
+/* Header */
+.app-header.home-style {
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-light);
+    padding: 0 2rem;
+}
+
+.brand-typography {
+    display: flex;
+    margin-left: 1rem;
+}
+
+.brand-name {
+    font-family: 'Unna', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+}
+
+.brand-name-sub {
+    font-family: 'Unna', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-accent);
+}
+
+/* Sidebar */
+.sidebar.home-style {
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border-light);
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.8rem 1.5rem;
+    color: var(--text-primary);
+}
+
+.nav-link:hover {
+    background-color: var(--text-accent);
+    color: white;
+}
+
+/* Cards */
+.home-card {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+}
+
+/* Botones */
+.action-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-button svg {
+    background-color: var(--text-accent);
+    border-radius: 50%;
+    padding: 10px;
+}
+
+/* Footer */
+.global-footer.home-style {
+    border-top: 1px solid var(--border-light);
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.8rem;
+}

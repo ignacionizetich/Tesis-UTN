@@ -71,14 +71,6 @@ public class User {
     }
 
 
-    public String mostrarInformacion(){
-        return "Nombre: "+name +'\n'+
-                "Apellido: "+lastName +'\n'+
-                "Dni: "+dni+'\n'+
-                "email: "+email +'\n'+
-                "alias: "+alias+'\n';
-    }
-
     @PrePersist
     private void PrePersist(){
        GenerateCreationDate();
