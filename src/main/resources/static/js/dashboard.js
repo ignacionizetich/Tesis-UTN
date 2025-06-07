@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const userNameTopbar = document.getElementById("user-name-topbar");
 
 
-            if (userNameEl) userNameEl.textContent = `${data.name} ${data.lastName} 👋`;
+            if (userNameEl) userNameEl.textContent = `${data.name}`;
             if (userEmailEl) userEmailEl.textContent = data.email;
             if (userAliasEl) userAliasEl.textContent = `Alias: ${data.alias}`;
             if (userBalanceEl) userBalanceEl.textContent = data.balance.toFixed(2);
