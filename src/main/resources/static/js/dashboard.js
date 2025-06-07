@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Validar sesión antes de cualquier acción
-   const token = localStorage.getItem("JWT");
+    const token = localStorage.getItem("JWT");
     if (!token) {
         window.location.href = "/PreLogin";
         return;
@@ -35,7 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function inicializarDashboard() {
         actualizarSaldo();
-        console.log("El DOM está cargado, ejecutando script");
         // 🔐 Validar JWT y cargar datos del usuario
         const token = localStorage.getItem("JWT");
 
@@ -134,6 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         ingresarForm.reset();
                         ingresarModal.classList.add("hidden");
                         actualizarSaldo();
+                        if (window.cargarMovimientos) cargarMovimientos(); // Actualiza movimientos tras ingreso
                     } else {
                         alert("Error: " + result.message);
                     }
@@ -495,8 +495,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     confirmAccountStep.classList.add('hidden');
                     modal.classList.add('hidden');
 
-                    // Actualizar saldo
+                    // Actualizar saldo y movimientos
                     actualizarSaldo();
+                    if (window.cargarMovimientos) cargarMovimientos();
                 } else {
                     alert('Error: ' + result.message);
                 }

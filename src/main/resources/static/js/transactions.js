@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+function cargarMovimientos() {
     const lista = document.querySelector(".movimientos-lista");
     const userID = Number(localStorage.getItem("accountId"));
     const modal = document.getElementById("modalTransferencia");
@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded", function () {
                   <span class="monto ${tipo}">${montoFormateado}</span>
                 `;
 
-                // Al hacer click, mostrar modal con detalles
                 li.addEventListener("click", function() {
                     document.getElementById("modalOperacion").textContent = mov.idOperation;
                     document.getElementById("modalOrigen").textContent = mov.originUsername;
@@ -38,17 +37,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     document.getElementById("modalMonto").textContent = "$" + mov.amount.toLocaleString("es-AR");
                     document.getElementById("modalEstado").textContent = mov.state;
 
-                    // Formatear fecha para el modal
                     const fechaModal = fechaObj.toLocaleString("es-AR", {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
-                        hour: 'numeric',
-                        minute: 'numeric'
+                        hour: '2-digit',
+                        minute: '2-digit'
                     });
                     document.getElementById("modalFecha").textContent = fechaModal;
 
-                    // Mostrar modal (versión corregida)
                     modal.classList.remove("hidden");
                 });
 
@@ -60,15 +57,18 @@ document.addEventListener("DOMContentLoaded", function () {
             lista.innerHTML = "<li>Error al cargar los movimientos</li>";
         });
 
-    // Cerrar modal (versión corregida)
     cerrarModal.addEventListener("click", function() {
         modal.classList.add("hidden");
     });
 
-    // Cerrar al hacer clic fuera del modal
     modal.addEventListener("click", function(event) {
         if (event.target === modal) {
             modal.classList.add("hidden");
         }
     });
+}
+
+// Llama a la función al cargar la página
+document.addEventListener("DOMContentLoaded", function () {
+    cargarMovimientos();
 });
