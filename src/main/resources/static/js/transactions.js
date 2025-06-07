@@ -11,11 +11,23 @@ function cargarMovimientos() {
 
             data.forEach(mov => {
                 const li = document.createElement("li");
-
                 const esSalida = mov.idOrigin === userID;
-                const tipo = esSalida ? "negativo" : "positivo";
-                const signo = esSalida ? "-" : "+";
-                const montoFormateado = `${signo}$${Math.abs(mov.amount).toLocaleString("es-AR")}`;
+                const esFallida = mov.state === "FAILED";
+                let tipo = "";
+                let signo = "";
+
+                if (esFallida) {
+                    tipo = "FAILED";
+                    signo = "";
+                } else {
+                    tipo = esSalida ? "negativo" : "positivo";
+                    signo = esSalida ? "-" : "+";
+                }
+
+                const montoFormateado = esFallida
+                    ? `$${Math.abs(mov.amount).toLocaleString("es-AR")}`
+                    : `${signo}$${Math.abs(mov.amount).toLocaleString("es-AR")}`;
+
                 const usuarioRelacionado = esSalida ? mov.destinationUsername : mov.originUsername;
                 const fechaObj = new Date(mov.date);
                 const fechaFormateada = fechaObj.toLocaleDateString("es-AR", {
@@ -26,7 +38,10 @@ function cargarMovimientos() {
 
                 li.innerHTML = `
                   <span class="fecha">${fechaFormateada}</span>
-                  <span class="descripcion">transferencia con ${usuarioRelacionado}</span>
+                  <span class="descripcion">
+                    transferencia con ${usuarioRelacionado}
+                    ${esFallida ? '<span class="estado-fallido"> (Fallida)</span>' : ''}
+                  </span>
                   <span class="monto ${tipo}">${montoFormateado}</span>
                 `;
 
@@ -37,6 +52,19 @@ function cargarMovimientos() {
                     document.getElementById("modalMonto").textContent = "$" + mov.amount.toLocaleString("es-AR");
                     document.getElementById("modalEstado").textContent = mov.state;
 
+                    // Quita clases previas
+                    const modalEstado = document.getElementById("modalEstado");
+                    modalEstado.classList.remove("estado-completed", "estado-failed");
+
+                    // Aplica color según estado
+                    if (mov.state === "FAILED") {
+                        modalEstado.classList.add("estado-failed");
+                    } else if (mov.state === "COMPLETED") {
+                        modalEstado.classList.add("estado-completed");
+                    } else {
+                        modalEstado.style.color = "";
+                    }
+
                     const fechaModal = fechaObj.toLocaleString("es-AR", {
                         day: '2-digit',
                         month: '2-digit',
@@ -45,7 +73,6 @@ function cargarMovimientos() {
                         minute: '2-digit'
                     });
                     document.getElementById("modalFecha").textContent = fechaModal;
-
                     modal.classList.remove("hidden");
                 });
 

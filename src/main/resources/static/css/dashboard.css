@@ -801,6 +801,55 @@ body{
     margin-right: 5px;
 }
 
+
+.monto.fallida {
+    color: #888 !important;
+    font-style: italic;
+}
+
+.movimientos-lista .estado-fallido {
+    color: #d32f2f;
+    font-weight: bold;
+    font-size: 0.95em;
+    margin-left: 4px;
+}
+
+/* Resalta el estado fallido en el modal */
+#modalEstado {
+    font-weight: bold;
+}
+
+#modalEstado.estado-completed {
+    color: #388e3c; /* verde */
+}
+
+#modalEstado.estado-failed {
+    color: #d32f2f; /* rojo */
+}
+
+.monto.FAILED {
+    color: #888 !important;
+    font-style: italic;
+}
+
+.monto.positivo {
+    color: #388e3c !important; /* verde */
+    font-weight: bold;
+}
+
+
+
+.movimientos-lista .estado-fallido {
+    color: #d32f2f;
+    font-weight: bold;
+    font-size: 0.95em;
+    margin-left: 4px;
+}
+
+
+
+
+
 .modal {
     position: fixed;
     top: 0;
