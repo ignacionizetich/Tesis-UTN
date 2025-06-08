@@ -30,11 +30,11 @@ public class UserDataController {
         Account account = optionalAccount.orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Cuenta no encontrada para el usuario")
         );
-        return ResponseEntity.ok(new UserDTO(user.getName(), user.getLastName(), user.getEmail(), user.getAlias(),account.getIdAccount(), account.getBalance()));
+        return ResponseEntity.ok(new UserDTO(user.getName(), user.getLastName(),user.getDni(), user.getEmail(),user.getAlias(), account.getAccountNickname(),account.getIdAccount(),account.getAccountCvu() ,account.getBalance()));
     }
 
 
-    public record UserDTO(String name, String lastName, String email, String alias, Long idAccount, double balance) {
+    public record UserDTO(String name, String lastName,String dni, String email,String username ,String alias, Long idAccount,String cvu, double balance) {
     }
 
 

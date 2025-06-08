@@ -675,7 +675,7 @@ body{
     transition: 0.3s;
 }
 
-/* Ajustes para tema oscuro */
+
 [data-theme="dark"] #amount-step {
     background-color: transparent;
 }
@@ -739,7 +739,7 @@ body{
 #transfer-modal button.secondary:hover {
     background-color: var(--border-light);
 }
-/* Estilos comunes que se mantienen igual para ambos temas */
+
 #search-account-step input,
 #amount-step input {
     color: var(--text-primary);
@@ -757,7 +757,71 @@ body{
     color: var(--text-accent);
 }
 
-/* Estilos para el modal de transferencia - versión corregida */
+.info-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-right: 8px; /* Añade espacio a la derecha del contenedor */
+}
+
+#copy-alias {
+    margin-top: 0;
+    transform: translateY(-1px);
+}
+
+.info-alias-cvu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.info-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+#alias-modal .info-line {
+    min-width: 220px;
+}
+
+#alias-modal .info-text {
+    flex: 1;
+    min-width: 0;
+    margin-right: 8px; /* Añade espacio entre el texto y el botón */
+}
+
+#copy-alias,
+#copy-cvu {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-left: 4px;
+    margin-right: 8px; /* Aumenta este valor para separar del borde */
+    border-radius: 3px;
+}
+
+#copy-alias svg,
+#copy-cvu svg {
+    width: 16px;
+    height: 16px;
+}
+
+#copy-cvu {
+    margin-top: -1px;
+}
+
+
 
 #modalTransferencia {
 
@@ -910,5 +974,48 @@ body{
     transform: translateY(0);
 }
 
+/*ESTILOS PARA EL BOTON DE EDITAR ALIAS*/
 
+#edit-alias-btn, #edit-username-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin-left: 14px; /* Espaciado horizontal reducido */
+    cursor: pointer;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    transform: translateY(-9.8px);
+    line-height: 1;
+}
 
+#edit-alias-btn:hover, #edit-username-btn:hover {
+    opacity: 1;
+}
+
+#edit-alias-btn i, #edit-username-btn i {
+    font-size: 14px;
+    color: var(--text-accent);
+    display: block;
+    transform: translateY(2px);
+}
+[data-theme="dark"] #edit-alias-btn i, #edit-username-btn i {
+    color: var(--platinum);
+}
+
+#profile-alias-display, #profile-username-display {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    line-height: normal; /* Resetea cualquier line-height heredado */
+}
+
+[data-theme="dark"] #profile-modal .modal-content {
+    background-color: rgba(30, 30, 30, 0.92); /* gris oscuro con transparencia */
+    backdrop-filter: blur(2px);
+}

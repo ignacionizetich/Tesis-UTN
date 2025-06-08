@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (userEmailEl) userEmailEl.textContent = data.email;
             if (userAliasEl) userAliasEl.textContent = `Alias: ${data.alias}`;
             if (userBalanceEl) userBalanceEl.textContent = data.balance.toFixed(2);
-            if (userNameTopbar) userNameTopbar.textContent = data.alias;
+            if (userNameTopbar) userNameTopbar.textContent = data.username;
             document.querySelector(".dashboard").classList.add("loaded");
         })
         .catch(err => {
@@ -510,116 +510,206 @@ document.addEventListener("DOMContentLoaded", () => {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
-                        },
+                    },
                     credentials: 'include'
                 });
 
-                // Limpiar localStorage independientemente de la respuesta
                 localStorage.clear();
-
+                showToast('Sesión cerrada con éxito', 'success');
                 setTimeout(() => {
                     window.location.href = '/home';
-                }, 50);
+                }, 1800);
 
             } catch (error) {
                 console.error('Error durante el logout:', error);
-                // En caso de error, también limpiar y redirigir
                 localStorage.clear();
                 window.location.href = '/PreLogin';
             }
         });
     }
 
-    // Función para manejar el comportamiento de los modales
-    function setupModal(modalId) {
-        const modal = document.getElementById(modalId);
-        const closeButton = modal.querySelector('.close-button');
-
-        // Prevenir que el modal se cierre al hacer click afuera
-        modal.addEventListener('click', function(event) {
-            event.stopPropagation();
-        });
-
-        // Solo cerrar con el botón de cerrar
-        closeButton.addEventListener('click', function() {
-            modal.classList.add('hidden');
-        });
-    }
-
+    // --- Abrir modal de perfil y cargar datos ---
+    // --- Abrir modal de perfil y cargar datos ---
     const profileModal = document.getElementById('profile-modal');
     const openProfileBtn = document.getElementById('open-profile-modal');
     const closeProfileBtn = profileModal.querySelector('.close-profile');
-    const editBtn = document.getElementById('edit-profile-btn');
-    const saveBtn = document.getElementById('save-profile-btn');
-    const aliasDisplay = document.getElementById('profile-alias-display');
     const aliasInput = document.getElementById('profile-alias-input');
-    const phoneDisplay = document.getElementById('profile-phone-display');
-    const phoneInput = document.getElementById('profile-phone-input');
+    const aliasDisplay = document.getElementById('profile-alias-display');
+    const nameDisplay = document.getElementById('profile-name');
+    const lastNameDisplay = document.getElementById('profile-lastName');
+    const emailDisplay = document.getElementById('profile-email');
+    const dniDisplay = document.getElementById('profile-dni');
+    const editAliasBtn = document.getElementById('edit-alias-btn');
+    const cvuDisplay = document.getElementById('profile-cvu');
+    const usernameDisplay = document.getElementById('profile-username-display');
+    const usernameInput = document.getElementById('profile-username-input');
+    const editUsernameBtn = document.getElementById('edit-username-btn');
 
-    // Abrir modal
-    openProfileBtn.addEventListener('click', (e) => {
-        e.preventDefault(); // Para evitar navegación si es <a href="#">
-        profileModal.classList.remove('hidden');
+    openProfileBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem("JWT");
+        if (!token) {
+            window.location.href = "/PreLogin";
+            return;
+        }
+        try {
+            const response = await fetch("/api/user/data", {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            });
+            if (!response.ok) {
+                showToast("No se pudo obtener la información del usuario", "error");
+                return;
+            }
+            const data = await response.json();
+
+            // Actualiza estos campos según la nueva estructura
+            nameDisplay.textContent = data.name || "";
+            lastNameDisplay.textContent = data.lastName || "";
+            dniDisplay.textContent = data.dni || "";
+            emailDisplay.textContent = data.email || "";
+            usernameDisplay.textContent = data.username || ""; // Nombre de usuario para login
+            aliasDisplay.textContent = data.alias || "";      // Alias de la cuenta
+            cvuDisplay.textContent = data.cvu || "";
+            localStorage.setItem("accountId", data.idAccount);
+            profileModal.classList.remove('hidden');
+            // Oculta inputs y muestra displays por si quedaron abiertos antes
+            aliasInput.classList.add('hidden');
+            aliasDisplay.classList.remove('hidden');
+            editAliasBtn.classList.remove('hidden');
+            usernameInput.classList.add('hidden');
+            usernameDisplay.classList.remove('hidden');
+            editUsernameBtn.classList.remove('hidden');
+        } catch (err) {
+            showToast("Error al cargar datos de usuario", "error");
+            console.error(err);
+        }
     });
 
-    // Cerrar modal con la "X"
+// Cerrar modal con la X
     closeProfileBtn.addEventListener('click', () => {
         profileModal.classList.add('hidden');
     });
 
-    // Cerrar modal clickeando afuera del contenido
+// Cerrar modal clickeando afuera del contenido
     profileModal.addEventListener('click', (e) => {
         if (e.target === profileModal) {
             profileModal.classList.add('hidden');
         }
     });
 
-    // Al hacer clic en editar: ocultar textos, mostrar inputs con valores actuales
-    editBtn.addEventListener('click', () => {
+// --- Editar alias con ícono de lápiz ---
+    editAliasBtn.addEventListener('click', () => {
         aliasInput.value = aliasDisplay.textContent;
-        phoneInput.value = phoneDisplay.textContent;
-
         aliasDisplay.classList.add('hidden');
-        phoneDisplay.classList.add('hidden');
-
+        editAliasBtn.classList.add('hidden');
         aliasInput.classList.remove('hidden');
-        phoneInput.classList.remove('hidden');
-
-        editBtn.classList.add('hidden');
-        saveBtn.classList.remove('hidden');
+        aliasInput.focus();
     });
 
-    // Al hacer clic en guardar: validar, actualizar texto, ocultar inputs, mostrar texto
-    saveBtn.addEventListener('click', () => {
-        // Validación sencilla: alias no vacío, teléfono solo números y espacios
-        const aliasVal = aliasInput.value.trim();
-        const phoneVal = phoneInput.value.trim();
-
-        if (!aliasVal) {
-            showToast('El alias no puede estar vacío.', 'error');
-            return;
+// Validar y actualizar alias al presionar Enter
+    aliasInput.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
+            const newAlias = aliasInput.value.trim();
+            const aliasRegex = /^(?=.*[A-Za-z])(?=^[A-Za-z0-9]+(\.[A-Za-z0-9]+)+$)(?!.*\.\.)[A-Za-z0-9.]{4,25}$/;
+            if (!aliasRegex.test(newAlias)) {
+                showToast('Formato de alias inválido. Debe tener entre 4 y 25 caracteres, solo letras, números y puntos, al menos un punto en el medio, no puede ser solo números ni tener "..".', 'error');
+                return;
+            }
+            const token = localStorage.getItem("JWT");
+            const accountId = localStorage.getItem("accountId");
+            try {
+                const response = await fetch(`/api/accounts/${accountId}/changeAlias`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify({ newAlias })
+                });
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    aliasDisplay.textContent = newAlias;
+                    showToast('Alias actualizado correctamente', 'success');
+                    aliasInput.classList.add('hidden');
+                    aliasDisplay.classList.remove('hidden');
+                    editAliasBtn.classList.remove('hidden');
+                    // Actualiza en tiempo real en otros lugares
+                    const userAliasEl = document.getElementById("user-alias");
+                    if (userAliasEl) userAliasEl.textContent = `Alias: ${newAlias}`;
+                    const aliasValueEl = document.getElementById("alias-value");
+                    if (aliasValueEl) aliasValueEl.textContent = newAlias;
+                    localStorage.setItem("alias", newAlias);
+                } else {
+                    showToast(result.message || 'No se pudo actualizar el alias', 'error');
+                }
+            } catch (err) {
+                showToast('Error al actualizar el alias', 'error');
+            }
+        } else if (e.key === 'Escape') {
+            aliasInput.classList.add('hidden');
+            aliasDisplay.classList.remove('hidden');
+            editAliasBtn.classList.remove('hidden');
         }
-
-        if (!/^[\d\s-+()]*$/.test(phoneVal)) {
-            showToast('El teléfono contiene caracteres no válidos.', 'error');
-            return;
-        }
-
-        aliasDisplay.textContent = aliasVal;
-        phoneDisplay.textContent = phoneVal;
-
-        aliasInput.classList.add('hidden');
-        phoneInput.classList.add('hidden');
-
-        aliasDisplay.classList.remove('hidden');
-        phoneDisplay.classList.remove('hidden');
-
-        saveBtn.classList.add('hidden');
-        editBtn.classList.remove('hidden');
-
-        // Aquí puedes agregar la llamada para guardar los datos en backend si quieres
     });
 
+// --- Editar username con ícono de lápiz ---
+    if (editUsernameBtn && usernameDisplay && usernameInput) {
+        editUsernameBtn.addEventListener('click', () => {
+            usernameInput.value = usernameDisplay.textContent;
+            usernameDisplay.classList.add('hidden');
+            editUsernameBtn.classList.add('hidden');
+            usernameInput.classList.remove('hidden');
+            usernameInput.focus();
+        });
+
+        usernameInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const newUsername = usernameInput.value.trim();
+                // Regex igual al backend
+                const regex = /^(?=.*[A-Za-z])[A-Za-z\d]{4,25}$/;
+                if (
+                    !newUsername ||
+                    !regex.test(newUsername) ||
+                    /^\d+$/.test(newUsername) // solo números
+                ) {
+                    showToast('Formato inválido. Solo letras y números, al menos una letra, sin caracteres especiales ni solo números.', 'error');
+                    return;
+                }
+                const token = localStorage.getItem("JWT");
+                try {
+                    const response = await fetch('/api/auth/changeUsername', {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + token
+                        },
+                        body: JSON.stringify({ newUsername })
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.success) {
+                        usernameDisplay.textContent = newUsername;
+                        const userNameTopbar = document.getElementById("user-name-topbar");
+                        if (userNameTopbar) userNameTopbar.textContent = newUsername;
+                        showToast('Nombre de usuario actualizado correctamente', 'success');
+                        usernameInput.classList.add('hidden');
+                        usernameDisplay.classList.remove('hidden');
+                        editUsernameBtn.classList.remove('hidden');
+                    } else {
+                        showToast(result.message || 'No se pudo actualizar el nombre de usuario', 'error');
+                    }
+                } catch (err) {
+                    showToast('Error al actualizar el nombre de usuario', 'error');
+                }
+            } else if (e.key === 'Escape') {
+                usernameInput.classList.add('hidden');
+                usernameDisplay.classList.remove('hidden');
+                editUsernameBtn.classList.remove('hidden');
+            }
+        });
+    }
     // Configurar cada modal
     setupModal('transfer-modal');
     setupModal('ingresar-modal');

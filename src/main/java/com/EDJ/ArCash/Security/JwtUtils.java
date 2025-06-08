@@ -91,7 +91,7 @@ public class JwtUtils {
 
 
 
-    public String extractUserId(String token) {
+    public static String extractUserId(String token) {
         Claims claims = getClaimJWT(token);
         return claims.get("userID", String.class);
     }

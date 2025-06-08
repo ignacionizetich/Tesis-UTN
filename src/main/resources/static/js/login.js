@@ -64,35 +64,42 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             body: JSON.stringify(loginData)
         })
+
             .then(async response => {
                 const contentType = response.headers.get("content-type");
+                let data;
+                if (contentType && contentType.includes("application/json")) {
+                    data = await response.json();
+                } else {
+                    data = { message: await response.text() };
+                }
+
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Error del servidor: ${response.status} - ${errorText}`);
+                    // Lanza el mensaje de error para el catch
+                    throw new Error(data.message || "Error del servidor");
                 }
-
-                if (!contentType || !contentType.includes("application/json")) {
-                    throw new Error("La respuesta no es JSON.");
-                }
-
-                return response.json();
+                return data;
             })
             .then(data => {
-
                 if (data.success) {
-                    showToast("Inicio de sesion exitoso","success")
+                    showToast("Inicio de sesión exitoso!", "success");
                     form.reset();
                     localStorage.setItem('JWT', data.accessToken);
                     localStorage.setItem('accountId', data.accountId);
-                    console.log('Redirigiendo al dashboard...'); // 🔍
-                    window.location.href = '/dashboard';
-                } else {
-                    showToast(data.message || 'Credenciales incorrectas', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 2000);
                 }
             })
             .catch(error => {
-                console.error('Error en la solicitud:', error);
-                alert('Hubo un error al intentar iniciar sesión.');
+                // Mostrar el toast con el mensaje de error
+                if (error.message === "Usuario no encontrado") {
+                    showToast("Usuario no encontrado, por favor verifique la informacion.", "error");
+                } else if (error.message === "Credenciales incorrectas") {
+                    showToast("Credenciales incorrectas, por favor verifique sus credenciales.", "error");
+                } else {
+                    showToast(error.message || "Error al iniciar sesión", "error");
+                }
             });
     }
 });

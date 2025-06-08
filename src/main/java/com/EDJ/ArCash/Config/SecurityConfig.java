@@ -30,6 +30,7 @@ public class SecurityConfig {
                                 "/api/auth/login", "/error",
                                 "/validate","/forgot","/reset-password",
                                 "/api/auth/send-recover-mail", "/validate-request" ,
+                                "/api/auth/changeUsername",
                                 "/dashboard","/api/user/data",
                                 "/api/transactions/{id}/getTransactions", "/swagger-ui.html").permitAll() // Endpoints libres
                         .anyRequest().authenticated()/// Los demás requieren login

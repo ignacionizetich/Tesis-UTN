@@ -27,7 +27,7 @@ public class TokenController {
     public String validateUser(@RequestParam(value = "token", required = false) String tokenValue, Model model) {
         if (tokenValue == null) {
             model.addAttribute("message", "Token no proporcionado");
-            return "validate";
+            return "error-404";
         }
 
         Optional<ValidationToken> optionalToken = Optional.ofNullable(validationTokenRepository.findByToken(tokenValue));
@@ -35,14 +35,16 @@ public class TokenController {
         String message;
 
         if (optionalToken.isEmpty()) {
-            message = "Token no encontrado.";
+
+            return "error-404";
         } else {
             ValidationToken token = optionalToken.get();
 
             if (token.isUsed()) {
-                message = "El token ya ha sido usado.";
+
+                return "error-404";
             } else if (token.getExpirationDate().isBefore(LocalDateTime.now())) {
-                message = "El token ha expirado.";
+                return "error-404";
             } else {
                 userService.validarUsuario(token.getUser());
                 message = "Cuenta verificada correctamente.";

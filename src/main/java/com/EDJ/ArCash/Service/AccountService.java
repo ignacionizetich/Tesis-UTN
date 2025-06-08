@@ -62,21 +62,29 @@ public class AccountService {
         return accountRepository.findByAccountCvu(cvu);
     }
 
-    public ResponseEntity<AliasResponse> changeAlias(String newAlias, Long id, Object responseEntity){
+    public ResponseEntity<AliasResponse> changeAlias(String newAlias, Long id, Object responseEntity) {
+        // Regex mejorado: exige al menos una letra
+        String regex = "^(?=.*[A-Za-z])(?=^[A-Za-z0-9]+(\\.[A-Za-z0-9]+)+$)(?!.*\\.\\.)[A-Za-z0-9.]{4,25}$";
+        if (!newAlias.matches(regex)) {
+            return ResponseEntity.status(400).body(
+                    new AliasResponse(false, "Formato de alias inválido. Debe tener entre 4 y 25 caracteres, solo letras, números y puntos, al menos un punto en el medio, no puede ser solo números ni tener '..'.")
+            );
+        }
+
         Optional<Account> optionalAccount = accountRepository.findByIdAccount(id);
 
-        if(optionalAccount.isEmpty()){
+        if (optionalAccount.isEmpty()) {
             return ResponseEntity.status(498).body(new AliasResponse(false, "Cuenta no encontrada."));
         }
         Account acc = optionalAccount.get();
 
-        if(acc.getUser().getIduser().equals(responseEntity)){
-        if(!accountRepository.existsByAccountNickname(newAlias)){
-            acc.setAccountNickname(newAlias);
-            accountRepository.save(acc);
-            return ResponseEntity.status(200).body(new AliasResponse(true, "Alias actualizado exitosamente."));
-        }
-        }else{
+        if (acc.getUser().getIduser().equals(responseEntity)) {
+            if (!accountRepository.existsByAccountNickname(newAlias)) {
+                acc.setAccountNickname(newAlias);
+                accountRepository.save(acc);
+                return ResponseEntity.status(200).body(new AliasResponse(true, "Alias actualizado exitosamente."));
+            }
+        } else {
             return ResponseEntity.status(403).body(new AliasResponse(false, "No tienes permisos para hacer eso."));
         }
         return ResponseEntity.status(403).body(new AliasResponse(false, "Alias actualmente en uso."));

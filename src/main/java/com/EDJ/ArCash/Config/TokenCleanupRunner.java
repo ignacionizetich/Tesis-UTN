@@ -13,8 +13,8 @@ public class TokenCleanupRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        jdbcTemplate.execute("DELETE FROM recovery_tokens WHERE used = true OR expiration_date < NOW()");
-        jdbcTemplate.execute("DELETE FROM refresh_tokens WHERE revoked = true OR expires_at < NOW()");
-        jdbcTemplate.execute("DELETE FROM verification_token WHERE used = true OR expiration_date < NOW()");
+        jdbcTemplate.execute("DELETE FROM recovery_tokens WHERE used = true");
+        jdbcTemplate.execute("DELETE FROM refresh_tokens WHERE revoked = true");
+        jdbcTemplate.execute("DELETE FROM verification_token WHERE used = true");
     }
 }

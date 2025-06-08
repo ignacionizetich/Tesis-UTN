@@ -3,7 +3,9 @@ function showToast(message, type = 'success') {
     if (!container) return;
     const toast = document.createElement('div');
     toast.textContent = message;
-    toast.style.background = type === 'success' ? '#4caf50' : '#f44336';
+    // Normaliza el tipo a minúsculas para comparar
+    const isSuccess = type && type.toLowerCase() === 'success';
+    toast.style.background = isSuccess ? '#4caf50' : '#f44336';
     toast.style.color = '#fff';
     toast.style.padding = '12px 24px';
     toast.style.marginTop = '10px';

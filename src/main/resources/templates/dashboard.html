@@ -40,7 +40,8 @@
         <div class="profile-photo" tabindex="0">
             <svg width="50" height="50" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="12" fill="#ccc"/>
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#666"/>
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      fill="#666"/>
             </svg>
         </div>
         <div class="user-name" id="user-name-topbar">Cargando...</div>
@@ -50,7 +51,7 @@
         </div>
     </div>
 
-    <!-- 🔽 MODAL DE PERFIL -->
+
     <div id="profile-modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-button close-profile">&times;</span>
@@ -63,19 +64,26 @@
                     </svg>
                 </div>
                 <p><strong>Nombre:</strong> <span id="profile-name">Cargando...</span></p>
+                <p><strong>Apellido:</strong> <span id="profile-lastName">Cargando...</span></p>
                 <p><strong>Correo:</strong> <span id="profile-email">Cargando...</span></p>
+                <p><strong>Dni:</strong> <span id="profile-dni">Cargando...</span></p>
+                <p>
+                    <strong>Nombre de usuario:</strong>
+                    <span id="profile-username-display" style="display: inline-flex; align-items: center;">cargando...</span>
+                    <button id="edit-username-btn" title="Editar nombre de usuario">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <input type="text" id="profile-username-input" class="hidden" maxlength="25" />
+                </p>
                 <p>
                     <strong>Alias:</strong>
-                    <span id="profile-alias-display">Cargando...</span>
-                    <input type="text" id="profile-alias-input" class="hidden" />
+                    <span id="profile-alias-display" style="display: inline-flex; align-items: center;">cargando...</span>
+                    <button id="edit-alias-btn" title="Editar alias">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <input type="text" id="profile-alias-input" class="hidden" maxlength="25" />
                 </p>
-                <p>
-                    <strong>Teléfono:</strong>
-                    <span id="profile-phone-display">Cargando...</span>
-                    <input type="text" id="profile-phone-input" class="hidden" />
-                </p>
-                <button id="edit-profile-btn">Editar</button>
-                <button id="save-profile-btn" class="hidden">Guardar</button>
+                <p><strong>Cvu:</strong> <span id="profile-cvu">Cargando...</span></p>
             </div>
         </div>
     </div>
@@ -191,7 +199,8 @@
                     </div>
                     <button class="copy-button" id="copy-alias" title="Copiar Alias">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 9h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zm0 11h-9v-9h9v9zm-4-17H6c-1.1 0-2 .9-2 2v9h2V5h10V3z" fill="currentColor"/>
+                            <path d="M20 9h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zm0 11h-9v-9h9v9zm-4-17H6c-1.1 0-2 .9-2 2v9h2V5h10V3z"
+                                  fill="currentColor"/>
                         </svg>
                     </button>
                 </div>
@@ -201,7 +210,8 @@
                     </div>
                     <button class="copy-button" id="copy-cvu" title="Copiar CVU">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 9h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zm0 11h-9v-9h9v9zm-4-17H6c-1.1 0-2 .9-2 2v9h2V5h10V3z" fill="currentColor"/>
+                            <path d="M20 9h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zm0 11h-9v-9h9v9zm-4-17H6c-1.1 0-2 .9-2 2v9h2V5h10V3z"
+                                  fill="currentColor"/>
                         </svg>
                     </button>
                 </div>

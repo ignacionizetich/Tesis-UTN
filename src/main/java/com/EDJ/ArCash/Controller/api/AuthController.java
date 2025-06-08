@@ -5,6 +5,7 @@ import com.EDJ.ArCash.DTO.LoginResponse;
 import com.EDJ.ArCash.DTO.LogoutResponse;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
 import com.EDJ.ArCash.Models.ValidationToken;
+import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AuthService;
 import com.EDJ.ArCash.Service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -127,6 +128,32 @@ private EmailService emailService;
 
 
 
+    @PutMapping("/changeUsername")
+    public ResponseEntity<?> changeUsername(@RequestBody Map<String, String> body, HttpServletRequest request) {
+        String newUsername = body.get("newUsername");
+        if (newUsername == null || newUsername.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "El nombre de usuario no puede estar vacío."));
+        }
+
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Token no proporcionado."));
+        }
+        String token = authHeader.substring(7);
+
+        // Extraer userId del token
+        String userIdStr = JwtUtils.extractUserId(token);
+        if (userIdStr == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Token inválido."));
+        }
+
+        boolean result = authService.cambiarAliasYUsername(Long.parseLong(userIdStr), newUsername.trim());
+        if (result) {
+            return ResponseEntity.ok(Map.of("success", true, "message", "Nombre de usuario actualizado correctamente."));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "No se pudo actualizar el nombre de usuario. Puede que ya exista."));
+        }
+    }
 
 
 

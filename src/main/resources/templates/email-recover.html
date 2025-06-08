@@ -2,18 +2,70 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar contraseña</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: white;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .contenido {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 10px;
+            width: 80%;
+            margin: 50px auto;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .contenido img {
+            width: 200px;
+        }
+        h2 {
+            color: #ffffff;
+        }
+        h3 {
+            color: #b3b3b3;
+        }
+        h4 {
+            font-size: 0.5rem;
+            color: #b3b3b3;
+        }
+        .AR {
+            color: #ffffff;
+            font-family: 'Unna', serif;
+        }
+        .Cash {
+            color: #2A4D7A;
+            font-family: 'Unna', serif;
+        }
+        .boton {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #2A4D7A;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .boton:hover {
+            background-color: #1d3657;
+        }
+    </style>
 </head>
 <body>
-<p>Hola, <b th:text="${username}"></b>:</p>
-<p>Recibimos una solicitud para restablecer tu contraseña en ArCash.</p>
-<p>
-    <a th:href="@{http://localhost:8080/validate-request(token=${token})}"
-       style="display:inline-block;padding:12px 24px;background:#1976d2;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">
+<div class="contenido">
+    <h2>Hola, <span th:text="${username}">Usuario</span></h2>
+    <h3>Recibimos una solicitud para restablecer tu contraseña en <span class="AR">AR</span><span class="Cash">Cash</span>.</h3>
+    <a class="boton" th:href="@{http://localhost:8080/validate-request(token=${token})}">
         Restablecer contraseña
     </a>
-</p>
-<p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
-<p>El equipo de ArCash</p>
+    <h4><br>Si no solicitaste este cambio, puedes ignorar este correo.<br>El equipo de ArCash</h4>
+</div>
 </body>
 </html>
