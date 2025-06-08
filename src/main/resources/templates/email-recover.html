@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Recuperar contraseña</title>
+</head>
+<body>
+<p>Hola, <b th:text="${username}"></b>:</p>
+<p>Recibimos una solicitud para restablecer tu contraseña en ArCash.</p>
+<p>
+    <a th:href="@{http://localhost:8080/validate-request(token=${token})}"
+       style="display:inline-block;padding:12px 24px;background:#1976d2;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">
+        Restablecer contraseña
+    </a>
+</p>
+<p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
+<p>El equipo de ArCash</p>
+</body>
+</html>

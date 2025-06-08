@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const userBalanceEl = document.getElementById("user-balance");
             const userNameTopbar = document.getElementById("user-name-topbar");
 
-
             if (userNameEl) userNameEl.textContent = `${data.name}`;
             if (userEmailEl) userEmailEl.textContent = data.email;
             if (userAliasEl) userAliasEl.textContent = `Alias: ${data.alias}`;
@@ -76,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const monto = parseFloat(document.getElementById("ingresar-monto").value);
             if (isNaN(monto) || monto <= 0) {
-                alert("Por favor ingrese un monto válido.");
+                showToast("Por favor ingrese un monto válido.", "error");
                 return;
             }
 
@@ -96,20 +95,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    alert("Ingreso exitoso: " + result.message);
+                    showToast("Ingreso exitoso: " + result.message, "success");
                     ingresarForm.reset();
                     ingresarModal.classList.add("hidden");
                     actualizarSaldo();
                 } else {
-                    alert("Error: " + result.message);
+                    showToast("Error: " + result.message, "error");
                 }
             } catch (err) {
-                alert("Error al ingresar dinero.");
+                showToast("Error: " + result.message, "error");
                 console.error(err);
             }
         });
     }
-
 
     ///ACTUALIZAR DINERO DE LA CUENTA
     function actualizarSaldo() {
@@ -141,7 +139,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
-
     // Transferencia
     const modal = document.getElementById("transfer-modal");
     const openButton = document.querySelector(".tranferir");
@@ -157,14 +154,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (closeButton) {
         closeButton.addEventListener("click", () => {
             modal.classList.add("hidden");
-            transferForm.reset();
+            if (transferForm) transferForm.reset();
         });
     }
 
     window.addEventListener("click", (e) => {
         if (e.target === modal) {
             modal.classList.add("hidden");
-            transferForm.reset();
+            if (transferForm) transferForm.reset();
         }
     });
 
@@ -176,10 +173,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const valor = parseFloat(montoInput.value);
 
             if (isNaN(valor) || valor <= 0) {
-                alert("Por favor, ingresa un monto mayor o igual a $1");
+                showToast('Por favor ingrese un monto válido', 'error');
                 montoInput.focus();
             } else {
-                alert("Transferencia enviada con éxito");
+                showToast('Transferencia realizada con éxito', 'success');
                 transferForm.reset();
                 modal.classList.add("hidden");
             }
@@ -211,13 +208,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Feedback visual
             button.classList.add('success');
-
+            showToast('Copiado al portapapeles', 'success');
             setTimeout(() => {
                 button.classList.remove('success');
             }, 2000);
         } catch (err) {
-            console.error('Error al copiar:', err);
-            alert('No se pudo copiar el texto');
+            showToast('No se pudo copiar el texto', 'error');
         }
     }
 
@@ -259,8 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-
-// Calculadora Impuestos
+    // Calculadora Impuestos
     const abrirCalculadora = document.getElementById('abrir-calculadora');
     const taxModal = document.getElementById('tax-modal');
     const closeTax = document.querySelector(".close-tax");
@@ -269,23 +264,6 @@ document.addEventListener("DOMContentLoaded", () => {
         abrirCalculadora.addEventListener("click", (e) => {
             e.preventDefault();
             taxModal.classList.remove("hidden");
-        });
-    }
-
-    document.querySelectorAll(".tax-select-button").forEach(button => {
-        button.addEventListener("click", () => {
-            const target = button.getAttribute("data-target");
-            document.getElementById("tax-options").classList.add("hidden");
-            document.querySelectorAll(".tax-form").forEach(form => form.classList.add("hidden"));
-            document.getElementById(`${target}-form`).classList.remove("hidden");
-        });
-    });
-
-    if (closeTax) {
-        closeTax.addEventListener("click", () => {
-            taxModal.classList.add("hidden");
-            document.getElementById("tax-options").classList.remove("hidden");
-            document.querySelectorAll(".tax-form").forEach(form => form.classList.add("hidden"));
         });
     }
 
@@ -308,11 +286,18 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    if (closeTax) {
+        closeTax.addEventListener("click", () => {
+            taxModal.classList.add("hidden");
+            taxForm.classList.add("hidden");
+        });
+    }
+
     calcularBtn.addEventListener("click", async () => {
         const monto = parseFloat(taxMonto.value);
 
         if (isNaN(monto) || monto <= 0) {
-            alert("Por favor, ingrese un monto válido.");
+            showToast('Por favor ingrese un monto válido', 'error');
             return;
         }
 
@@ -322,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (selectedCurrency === "USD") {
             url = `/api/impuestos/calculateUSD?montoUSD=${monto}`;
         } else {
-            alert("Moneda no válida.");
+            showToast("Moneda no válida.", "error");
             return;
         }
 
@@ -330,12 +315,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch(url);
             if (!response.ok) {
                 const errorText = await response.text();
-                alert("Error al calcular impuestos: " + errorText);
+                showToast("Error al calcular impuestos: " + errorText, "error");
                 return;
             }
 
             const data = await response.json();
-            console.log("Respuesta del servidor:", data);
             if (data && typeof data.totalFinal === "number") {
                 let detalle = `<p><strong class="label">Monto sin impuestos:</strong> <span class="value">$${data.montoOriginal.toFixed(2)} ARS</span></p>`;
 
@@ -355,11 +339,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
         } catch (error) {
-            alert("Error al conectar con el servidor.");
+            showToast("Error al conectar con el servidor.", "error");
             console.error(error);
         }
     });
-
 
     // Perfil dropdown
     const profilePhoto = document.querySelector('.profile-photo');
@@ -378,184 +361,174 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-// Variables para almacenar datos de las cuentas
-let cuentaOrigenId = localStorage.getItem('accountId'); // ID de la cuenta del usuario actual
-let cuentaDestinoId = null;
-let cuentaDestinoData = null;
+    // Variables para almacenar datos de las cuentas
+    let cuentaOrigenId = localStorage.getItem('accountId'); // ID de la cuenta del usuario actual
+    let cuentaDestinoId = null;
+    let cuentaDestinoData = null;
 
-// Resto de elementos del DOM (como antes...)
+    // Elementos del DOM
+    const searchAccountStep = document.getElementById('search-account-step');
+    const confirmAccountStep = document.getElementById('confirm-account-step');
+    const amountStep = document.getElementById('amount-step');
+    const buscarCuentaBtn = document.getElementById('buscar-cuenta');
+    const confirmarCuentaBtn = document.getElementById('confirmar-cuenta');
+    const cancelarBusquedaBtn = document.getElementById('cancelar-busqueda');
+    const confirmarTransferenciaBtn = document.getElementById('confirmar-transferencia');
+    const volverBusquedaBtn = document.getElementById('volver-busqueda');
+    const accountDetails = document.getElementById('account-details');
 
-// Elementos del DOM
-const searchAccountStep = document.getElementById('search-account-step');
-const confirmAccountStep = document.getElementById('confirm-account-step');
-const amountStep = document.getElementById('amount-step');
-const buscarCuentaBtn = document.getElementById('buscar-cuenta');
-const confirmarCuentaBtn = document.getElementById('confirmar-cuenta');
-const cancelarBusquedaBtn = document.getElementById('cancelar-busqueda');
-const confirmarTransferenciaBtn = document.getElementById('confirmar-transferencia');
-const volverBusquedaBtn = document.getElementById('volver-busqueda');
-const accountDetails = document.getElementById('account-details');
-
-// Función para buscar cuenta
-buscarCuentaBtn.addEventListener('click', async () => {
-    const input = document.getElementById('destinatario').value;
-    if (!input) {
-        alert('Por favor ingrese un Alias o CVU');
-        return;
-    }
-
-    // Verificar que no esté intentando transferir a la misma cuenta
-    try {
-        const response = await fetch(`/api/transactions/search/${input}`, {
-            headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('JWT')
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Cuenta no encontrada');
-        }
-
-        const data = await response.json();
-        cuentaDestinoId = data.idaccount;
-
-        // Verificar que no esté intentando transferir a la misma cuenta
-        if (cuentaDestinoId === cuentaOrigenId) {
-            alert('No puedes transferir dinero a tu misma cuenta');
+    // Función para buscar cuenta
+    buscarCuentaBtn.addEventListener('click', async () => {
+        const input = document.getElementById('destinatario').value;
+        if (!input) {
+            showToast('Por favor ingrese un Alias o CVU', 'error');
             return;
         }
 
-        cuentaDestinoData = data;
-
-        // Mostrar detalles de la cuenta
-        accountDetails.innerHTML = `
-            <p><strong>Alias:</strong> ${data.alias}</p>
-            <p><strong>CVU:</strong> ${data.cvu}</p>
-            <p><strong>Titular:</strong> ${data.user.nombre} ${data.user.apellido}</p>
-            <p><strong>DNI:</strong> ${data.user.dni}</p>
-        `;
-
-        // Mostrar paso de confirmación
-        searchAccountStep.classList.add('hidden');
-        confirmAccountStep.classList.remove('hidden');
-
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
-});
-
-// El resto de los event listeners permanecen igual hasta la parte de realizar la transferencia
-
-// Confirmar cuenta y mostrar paso de monto
-confirmarCuentaBtn.addEventListener('click', () => {
-    confirmAccountStep.classList.add('hidden');
-    amountStep.classList.remove('hidden');
-});
-
-// Volver a búsqueda
-cancelarBusquedaBtn.addEventListener('click', () => {
-    confirmAccountStep.classList.add('hidden');
-    searchAccountStep.classList.remove('hidden');
-    document.getElementById('destinatario').value = '';
-});
-
-volverBusquedaBtn.addEventListener('click', () => {
-    amountStep.classList.add('hidden');
-    searchAccountStep.classList.remove('hidden');
-    document.getElementById('destinatario').value = '';
-    document.getElementById('monto').value = '';
-});
-
-// Realizar transferencia
-confirmarTransferenciaBtn.addEventListener('click', async () => {
-    const monto = parseFloat(document.getElementById('monto').value);
-
-    if (isNaN(monto) || monto <= 0) {
-        alert('Por favor ingrese un monto válido');
-        return;
-    }
-
-    // Verificar que tengamos ambos IDs
-    if (!cuentaOrigenId || !cuentaDestinoId) {
-        alert('Error: Información de cuentas incompleta');
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/transactions/${cuentaOrigenId}/transfer/${cuentaDestinoId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('JWT')
-            },
-            body: JSON.stringify({ balance: monto })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            alert('Transferencia realizada con éxito');
-            // Limpiar el formulario y cerrar el modal
-            document.getElementById('destinatario').value = '';
-            document.getElementById('monto').value = '';
-            searchAccountStep.classList.remove('hidden');
-            amountStep.classList.add('hidden');
-            confirmAccountStep.classList.add('hidden');
-            modal.classList.add('hidden');
-
-            // Actualizar saldo
-            actualizarSaldo();
-        } else {
-            alert('Error: ' + result.message);
-        }
-
-    } catch (error) {
-        alert('Error al realizar la transferencia');
-        console.error(error);
-    }
-});
-
-// Busca el enlace de cerrar sesión
-const logoutLink = document.querySelector('a[href="/logout"]');
-
-if (logoutLink) {
-    logoutLink.addEventListener('click', async (e) => {
-        e.preventDefault();
-
         try {
-            const token = localStorage.getItem('JWT');
-            if (!token) {
-                // Si no hay token, simplemente redirigir
-                window.location.href = '/PreLogin';
+            const response = await fetch(`/api/transactions/search/${input}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('JWT')
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Cuenta no encontrada');
+            }
+
+            const data = await response.json();
+            cuentaDestinoId = data.idaccount;
+
+            if (cuentaDestinoId === cuentaOrigenId) {
+                showToast('No puedes transferir dinero a tu misma cuenta', 'error');
                 return;
             }
 
-            const response = await fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
+            cuentaDestinoData = data;
 
-            // Limpiar localStorage independientemente de la respuesta
-            localStorage.clear();
+            accountDetails.innerHTML = `
+                <p><strong>Alias:</strong> ${data.alias}</p>
+                <p><strong>CVU:</strong> ${data.cvu}</p>
+                <p><strong>Titular:</strong> ${data.user.nombre} ${data.user.apellido}</p>
+                <p><strong>DNI:</strong> ${data.user.dni}</p>
+            `;
 
-            // Esperar un momento antes de redirigir para asegurar que la limpieza se complete
-            setTimeout(() => {
-                window.location.href = '/PreLogin';
-            }, 100);
+            searchAccountStep.classList.add('hidden');
+            confirmAccountStep.classList.remove('hidden');
 
         } catch (error) {
-            console.error('Error durante el logout:', error);
-            // En caso de error, también limpiar y redirigir
-            localStorage.clear();
-            window.location.href = '/PreLogin';
+            showToast('Error: ' + error.message, 'error');
         }
     });
-}
 
+    // Confirmar cuenta y mostrar paso de monto
+    confirmarCuentaBtn.addEventListener('click', () => {
+        confirmAccountStep.classList.add('hidden');
+        amountStep.classList.remove('hidden');
+    });
+
+    // Volver a búsqueda
+    cancelarBusquedaBtn.addEventListener('click', () => {
+        confirmAccountStep.classList.add('hidden');
+        searchAccountStep.classList.remove('hidden');
+        document.getElementById('destinatario').value = '';
+    });
+
+    volverBusquedaBtn.addEventListener('click', () => {
+        amountStep.classList.add('hidden');
+        searchAccountStep.classList.remove('hidden');
+        document.getElementById('destinatario').value = '';
+        document.getElementById('monto').value = '';
+    });
+
+    // Realizar transferencia
+    confirmarTransferenciaBtn.addEventListener('click', async () => {
+        const monto = parseFloat(document.getElementById('monto').value);
+
+        if (isNaN(monto) || monto <= 0) {
+            showToast('Por favor ingrese un monto válido', 'error');
+            return;
+        }
+
+        if (!cuentaOrigenId || !cuentaDestinoId) {
+            showToast('Error: Información de cuentas incompleta', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/transactions/${cuentaOrigenId}/transfer/${cuentaDestinoId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('JWT')
+                },
+                body: JSON.stringify({ balance: monto })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showToast('Transferencia realizada con éxito', 'success');
+                document.getElementById('destinatario').value = '';
+                document.getElementById('monto').value = '';
+                searchAccountStep.classList.remove('hidden');
+                amountStep.classList.add('hidden');
+                confirmAccountStep.classList.add('hidden');
+                modal.classList.add('hidden');
+
+                actualizarSaldo();
+
+                if (window.cargarMovimientos) {
+                    cargarMovimientos();
+                }
+            } else {
+                showToast('Error: ' + result.message, 'error');
+            }
+
+        } catch (error) {
+            showToast('Error al realizar la transferencia', 'error');
+            console.error(error);
+        }
+    });
+
+    // Busca el enlace de cerrar sesión
+    const logoutLink = document.querySelector('a[href="/logout"]');
+
+    if (logoutLink) {
+        logoutLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            try {
+                const token = localStorage.getItem('JWT');
+                if (!token) {
+                    window.location.href = '/PreLogin';
+                    return;
+                }
+
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                        },
+                    credentials: 'include'
+                });
+
+                // Limpiar localStorage independientemente de la respuesta
+                localStorage.clear();
+
+                setTimeout(() => {
+                    window.location.href = '/home';
+                }, 50);
+
+            } catch (error) {
+                console.error('Error durante el logout:', error);
+                // En caso de error, también limpiar y redirigir
+                localStorage.clear();
+                window.location.href = '/PreLogin';
+            }
+        });
+    }
 
     // Función para manejar el comportamiento de los modales
     function setupModal(modalId) {
@@ -572,7 +545,6 @@ if (logoutLink) {
             modal.classList.add('hidden');
         });
     }
-
 
     const profileModal = document.getElementById('profile-modal');
     const openProfileBtn = document.getElementById('open-profile-modal');
@@ -624,12 +596,12 @@ if (logoutLink) {
         const phoneVal = phoneInput.value.trim();
 
         if (!aliasVal) {
-            alert('El alias no puede estar vacío.');
+            showToast('El alias no puede estar vacío.', 'error');
             return;
         }
 
         if (!/^[\d\s-+()]*$/.test(phoneVal)) {
-            alert('El teléfono contiene caracteres no válidos.');
+            showToast('El teléfono contiene caracteres no válidos.', 'error');
             return;
         }
 
@@ -648,7 +620,7 @@ if (logoutLink) {
         // Aquí puedes agregar la llamada para guardar los datos en backend si quieres
     });
 
-// Configurar cada modal
+    // Configurar cada modal
     setupModal('transfer-modal');
     setupModal('ingresar-modal');
     setupModal('alias-modal');

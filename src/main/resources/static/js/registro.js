@@ -129,5 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function mostrarMensaje(mensaje, color) {
         respuesta.textContent = mensaje;
         respuesta.style.color = color;
+        showToast(mensaje, color === 'green' || color === 'blue' ? 'success' : 'error');
     }
 });

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Recuperar Contraseña</title>
+    <link rel="stylesheet" th:href="@{/css/login-register.css}">
+    <link rel="stylesheet" th:href="@{/css/color-palet.css}">
+    <link rel="stylesheet" th:href="@{/css/recover.css}">
+    <link rel="stylesheet" th:href="@{/css/toast.css}">
+</head>
+<body>
+<div class="theme-control">
+    <button id="theme-switcher">
+        <svg width="22" height="22" viewBox="0 0 24 24">
+            <path class="sun" d="M12 6a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm0-2a8 8 0 1 0 0 16 8 8 0 0 0 0-16z"/>
+            <path class="sun-ray" d="M12 2v2m0 16v2M4 12H2m20 0h-2m3-7l-2 2m-13 13l-2 2m17-15l2 2M3 19l2 2"/>
+        </svg>
+    </button>
+</div>
+<div>
+    <button id="back-button" onclick="window.history.back()" aria-label="Volver">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" class="back-circle"/>
+            <path d="M14 8L10 12L14 16" class="back-arrow" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </button>
+</div>
+<div class="container">
+    <div class="brand-identity">
+        <svg class="brand-mark" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <path d="M60 20 L100 40 V80 L60 100 L20 80 V40 Z" class="vault-shape"/>
+            <circle cx="60" cy="60" r="18" class="security-core"/>
+            <path d="M60 42 L60 78 M48 60 L72 60" class="access-cross"/>
+        </svg>
+        <div class="brand-typography">
+            <span class="brand-name">AR</span>
+            <span class="brand-name-sub">Cash</span>
+        </div>
+        <p class="brand-tagline">BEST VIRTUAL WALLET</p>
+    </div>
+    <h1>Recuperar Cuenta</h1>
+    <form id="recoverForm" autocomplete="off">
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" name="email" required placeholder="ejemplo@correo.com">
+        <button type="submit">Enviar instrucciones</button>
+    </form>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span>
+        <h2>¡Correo enviado!</h2>
+        <p>Se han enviado las instrucciones a <span id="censoredEmail"></span>.</p>
+        <p>Por favor, revisa tu bandeja de entrada y la carpeta de spam.</p>
+    </div>
+</div>
+
+<footer>
+    <div class="global-footer">
+        <p>ArCash™ | Virtual Wallet <a href="https://mail.google.com/mail/?view=cm&fs=1&to=helparcash2025@gmail.com" target="_blank" class="email-link">helparcash2025@gmail.com</a></p>
+    </div>
+</footer>
+<script th:src="@{/js/recover.js}"></script>
+<script th:src="@{/js/theme.js}"></script>
+<div id="toast-container"></div>
+<script th:src="@{/js/toast.js}"></script>
+</body>
+</html>

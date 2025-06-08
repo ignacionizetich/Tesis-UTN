@@ -1,6 +1,8 @@
 package com.EDJ.ArCash.Service;
 
 import com.EDJ.ArCash.Models.User;
+import com.EDJ.ArCash.Models.ValidationToken;
+import com.EDJ.ArCash.Repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import java.io.UnsupportedEncodingException;
+import java.util.Optional;
 
 @Service
 public class EmailService {
@@ -20,6 +23,7 @@ public class EmailService {
     public EmailService(JavaMailSender mailSender, SpringTemplateEngine templateEngine) {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;
+
     }
 
     public void testEmail(User user, String token) throws MessagingException, UnsupportedEncodingException {
@@ -43,4 +47,26 @@ public class EmailService {
 
         mailSender.send(mimeMessage);
     }
+
+    public void testRecoverMail(User user, String token) throws MessagingException, UnsupportedEncodingException {
+        Context context = new Context();
+        context.setVariable("username", user.getName());
+        context.setVariable("token", token);
+
+        // Usa la plantilla de email de recuperación
+        String html = templateEngine.process("email-recover", context);
+
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
+
+        helper.setFrom("helparcash2025@gmail.com", "ArCash");
+        helper.setTo(user.getEmail());
+        helper.setSubject("Recupera tu contraseña en ArCash");
+
+        helper.setText(html, true);
+
+        mailSender.send(mimeMessage);
+    }
+
+
 }

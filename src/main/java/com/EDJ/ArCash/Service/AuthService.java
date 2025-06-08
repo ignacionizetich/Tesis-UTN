@@ -1,22 +1,17 @@
 package com.EDJ.ArCash.Service;
 
-
 import com.EDJ.ArCash.DTO.LoginRequest;
 import com.EDJ.ArCash.DTO.LoginResponse;
-import com.EDJ.ArCash.Models.Account;
-import com.EDJ.ArCash.Models.Credentials;
-import com.EDJ.ArCash.Models.RefreshToken;
-import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Repository.AccountRepository;
-import com.EDJ.ArCash.Repository.CredentialRepository;
-import com.EDJ.ArCash.Repository.RefreshTokenRepository;
-import com.EDJ.ArCash.Repository.UserRepository;
+import com.EDJ.ArCash.Models.*;
+import com.EDJ.ArCash.Repository.*;
 import com.EDJ.ArCash.Security.JwtUtils;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +37,14 @@ public class AuthService {
     @Autowired
     private AccountRepository accountRepository;
 
-    // Método para manejar el login
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private RecoveryTokenRepository recoveryTokenRepository;
+
+    @Autowired
+    private RecoveryTokenService recoveryTokenService;
 
     public LoginResponse login(LoginRequest loginRequest) {
         Optional<Credentials> credentialsOptional = credentialRepository.findByUsername(loginRequest.getUsername());
@@ -59,13 +61,11 @@ public class AuthService {
                 return new LoginResponse(false, "Usuario no habilitado", null, null, null);
             }
 
-
             List<RefreshToken> activeTokens = refreshTokenRepository.findAllByUserAndRevokedFalse(usuario);
             String refreshToken;
             if (!activeTokens.isEmpty()) {
                 refreshToken = activeTokens.get(0).getRefreshToken();
             } else {
-                /// genera un nuevo refresh token si no hay ninguno activo
                 refreshToken = JwtUtils.generateRefreshToken(String.valueOf(usuario.getIduser()));
                 saveRefreshToken(usuario, refreshToken);
             }
@@ -82,10 +82,8 @@ public class AuthService {
         return new LoginResponse(false, "Usuario no encontrado", null, null, null);
     }
 
-
     public LogoutStatus logout(String accessToken) {
         try {
-            // Intentar extraer el userId del token sin validar su expiración
             Claims claims = JwtUtils.getClaimJWT(accessToken);
             String userId = claims.get("userID", String.class);
 
@@ -95,7 +93,6 @@ public class AuthService {
 
             Long userIdLong = Long.parseLong(userId);
 
-            // Buscar y revocar todos los refresh tokens activos
             Optional<User> userOptional = userRepository.findById(userIdLong);
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
@@ -105,7 +102,6 @@ public class AuthService {
                     return LogoutStatus.ALREADY_REVOKED;
                 }
 
-                // Revocar todos los tokens activos
                 jwtUtils.revokeAllUserTokens(userIdLong);
                 return LogoutStatus.SUCCESS;
             }
@@ -117,14 +113,11 @@ public class AuthService {
         }
     }
 
-
-
     public boolean isValidSession(String token) {
         try {
             String userId = jwtUtils.extractUserId(token);
             if (userId == null) return false;
 
-            // Verificar si existe un refresh token activo para el usuario
             return refreshTokenRepository
                     .existsByUser_IduserAndRevokedFalse(Long.parseLong(userId));
 
@@ -133,21 +126,71 @@ public class AuthService {
         }
     }
 
-
-
-    // Método para guardar el refresh token en la base de datos
     public void saveRefreshToken(User usuario, String refreshToken) {
-
         RefreshToken token = new RefreshToken();
         token.setUser(usuario);
         token.setRefreshToken(refreshToken);
         token.setIssuedAt(LocalDateTime.now());
-        token.setExpiresAt(LocalDateTime.now().plusDays(7)); // 7 días
+        token.setExpiresAt(LocalDateTime.now().plusDays(7));
         token.setRevoked(false);
         refreshTokenRepository.save(token);
     }
 
 
 
+    @Transactional
+    public boolean enviarCorreoRecuperacion(String email) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            recoveryTokenRepository.deleteByUser_Iduser(user.getIduser());
+            String token = recoveryTokenService.createRecoveryToken(user);
 
+            try {
+                emailService.testRecoverMail(user, token);
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    @Transactional
+    public String actualizarPassword(String tokenValue, String nuevaPassword, String confirmarPassword) {
+        if (!nuevaPassword.equals(confirmarPassword)) {
+            return "Las contraseñas no coinciden.";
+        }
+
+        Optional<RecoveryToken> recoveryToken = recoveryTokenRepository.findByToken(tokenValue);
+
+        if (recoveryToken.isEmpty()) {
+            return "Token no válido.";
+        }
+
+        RecoveryToken token = recoveryToken.get();
+
+        if (token.isUsed()) {
+            return "El token ya ha sido usado.";
+        }
+
+        if (token.getExpirationDate().isBefore(LocalDateTime.now())) {
+            return "El token ha expirado.";
+        }
+
+        User user = token.getUser();
+        user.getCredentials().setPass(passwordEncoder.encode(nuevaPassword));
+        userRepository.save(user);
+        token.setUsed(true);
+        recoveryTokenRepository.saveAndFlush(token);
+
+        return "Contraseña actualizada correctamente.";
+    }
+
+    public boolean tokenValido(String tokenValue) {
+        Optional<RecoveryToken> optionalToken = recoveryTokenRepository.findByToken(tokenValue);
+        if (optionalToken.isEmpty()) return false;
+        RecoveryToken token = optionalToken.get();
+        return !token.isUsed() && token.getExpirationDate().isAfter(LocalDateTime.now());
+    }
 }
