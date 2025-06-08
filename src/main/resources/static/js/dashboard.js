@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = "/PreLogin";
         });
 
-    // Ingresar Dinero
+    <!-- Modal para ver el Ingreso De Dinero-->
     const ingresarModal = document.getElementById("ingresar-modal");
     const ingresarButton = document.querySelector(".ingresar");
     const closeIngresar = document.querySelector(".close-ingresar");
@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
-    // Transferencia
+    <!-- Modal para las Transferencias -->
     const modal = document.getElementById("transfer-modal");
     const openButton = document.querySelector(".tranferir");
     const closeButton = document.querySelector(".close-button");
@@ -183,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Alias Modal
+    <!-- Modal para ver el Alias-CVU -->
     const aliasModal = document.getElementById("alias-modal");
     const aliasButton = document.querySelector(".Alias-CVU");
     const closeAlias = document.querySelector(".close-alias");
@@ -546,6 +546,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    <!-- Modal para ver el Perfil del Usuario -->
     const profileModal = document.getElementById('profile-modal');
     const openProfileBtn = document.getElementById('open-profile-modal');
     const closeProfileBtn = profileModal.querySelector('.close-profile');
@@ -617,7 +618,6 @@ document.addEventListener("DOMContentLoaded", () => {
         saveBtn.classList.add('hidden');
         editBtn.classList.remove('hidden');
 
-        // Aquí puedes agregar la llamada para guardar los datos en backend si quieres
     });
 
     // Configurar cada modal
