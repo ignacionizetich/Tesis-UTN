@@ -376,3 +376,19 @@ input[type="password"]:focus {
     opacity: 1;               /* cuando visible, totalmente opaco */
 }
 
+
+/*ESTILOS PARA LA PAGINA RECOVER-PASSWORD.HTML*/
+.logo-space {
+    margin-bottom: 3rem; /* Ajusta el valor según lo que necesites */
+}
+
+button:disabled,
+#submitBtn:disabled {
+    cursor: not-allowed !important;
+    /* No cambies color, fondo, sombra, opacidad, ni border */
+    background: inherit !important;
+    color: inherit !important;
+    box-shadow: inherit !important;
+    border: inherit !important;
+    opacity: 1 !important;
+}
