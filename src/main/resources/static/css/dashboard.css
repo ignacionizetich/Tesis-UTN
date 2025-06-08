@@ -998,15 +998,6 @@ body{
     opacity: 1;
 }
 
-#edit-alias-btn i, #edit-username-btn i {
-    font-size: 14px;
-    color: var(--text-accent);
-    display: block;
-    transform: translateY(2px);
-}
-[data-theme="dark"] #edit-alias-btn i, #edit-username-btn i {
-    color: var(--platinum);
-}
 
 #profile-alias-display, #profile-username-display {
     display: inline-flex;
@@ -1015,7 +1006,20 @@ body{
     line-height: normal; /* Resetea cualquier line-height heredado */
 }
 
-[data-theme="dark"] #profile-modal .modal-content {
-    background-color: rgba(30, 30, 30, 0.92); /* gris oscuro con transparencia */
+#profile-modal .modal-content {
     backdrop-filter: blur(2px);
+}
+
+#edit-alias-btn i,
+#edit-username-btn i {
+    font-size: 14px;
+    color: var(--text-accent);
+    display: block;
+    transition: color 0.3s;
+}
+
+
+[data-theme="dark"] #edit-alias-btn i,
+[data-theme="dark"] #edit-username-btn i {
+    color: var(--platinum, var(--platinum));
 }
