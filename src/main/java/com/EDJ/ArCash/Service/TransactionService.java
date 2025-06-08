@@ -25,9 +25,9 @@ public class TransactionService {
         this.transactionRepository = transactionRepository;
     }
 
+
     @Transactional
     public boolean transaction(Long idOrigen, Long idDestino, double monto) {
-
         if (monto <= 0) {
             return false;
         }
@@ -41,6 +41,17 @@ public class TransactionService {
         Account cuentaOrigen = optionalOrigen.get();
         Account cuentaDestino = optionalDestino.get();
         Transaction transaction = new Transaction();
+
+        // Transferencia a uno mismo: marcar como fallida, no mover dinero
+        if (idOrigen.equals(idDestino)) {
+            transaction.setIdOrigin(cuentaOrigen);
+            transaction.setIdDestination(cuentaDestino);
+            transaction.setBalance(monto);
+            transaction.setState("FAILED");
+            transactionRepository.save(transaction);
+            return true; // Se completa, pero como fallida
+        }
+
         if (cuentaOrigen.getBalance() < monto) {
             transaction.setIdOrigin(cuentaOrigen);
             transaction.setIdDestination(cuentaDestino);

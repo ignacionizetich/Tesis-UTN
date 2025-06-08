@@ -1,3 +1,4 @@
+// User.java
 package com.EDJ.ArCash.Models;
 
 import jakarta.persistence.*;
@@ -7,7 +8,6 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
 
 @Getter
 @Setter
@@ -23,24 +23,21 @@ public class User {
     @Column(name = "id_user")
     private Long iduser;
 
-    /// un usuario puede tener una credencial, una credencial corresponde a un usuario
-    @OneToOne(mappedBy = "user",cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Credentials credentials;
 
-     /// un usuario puede tener muchas cuentas (caja en pesos y en dolares)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Account> accounts;
 
-
-    @NotBlank( message = "el nombre no puede estar vacio")
+    @NotBlank(message = "el nombre no puede estar vacio")
     @Column(name = "name")
     private String name;
 
-    @NotBlank( message = "el apellido no puede estar vacio")
+    @NotBlank(message = "el apellido no puede estar vacio")
     @Column(name = "last_name")
     private String lastName;
 
-    @NotBlank( message = "el dni no puede estar vacio")
+    @NotBlank(message = "el dni no puede estar vacio")
     @Column(unique = true, name = "dni")
     private String dni;
 
@@ -59,10 +56,14 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private ValidationToken validationToken;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private RecoveryToken recoveryToken;
+
+
     @Column(nullable = false, name = "enabled")
     private boolean enabled;
 
-    public User (String name,String lastName,String dni,String email,String alias){
+    public User(String name, String lastName, String dni, String email, String alias) {
         this.name = name;
         this.lastName = lastName;
         this.dni = dni;
@@ -70,14 +71,12 @@ public class User {
         this.alias = alias;
     }
 
-
     @PrePersist
-    private void PrePersist(){
-       GenerateCreationDate();
+    private void PrePersist() {
+        GenerateCreationDate();
     }
 
-
-    private void GenerateCreationDate(){
+    private void GenerateCreationDate() {
         DateTimeFormatter formateador = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime fechaActual = LocalDateTime.now();
         this.creationDate = fechaActual.format(formateador);

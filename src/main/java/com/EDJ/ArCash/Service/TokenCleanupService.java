@@ -4,17 +4,20 @@ import com.EDJ.ArCash.Models.ValidationToken;
 import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.Repository.ValidationTokenRepository;
 import jakarta.transaction.Transactional;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Slf4j
 @Service
-public class TokenCleanupService {
+public class TokenCleanupService implements ApplicationListener<ContextRefreshedEvent> {
 
     @Autowired
     private ValidationTokenRepository validationTokenRepository;
@@ -22,9 +25,13 @@ public class TokenCleanupService {
     @Autowired
     private UserRepository userRepository;
 
-    @PostConstruct
-    public void init() {
-        removeExpiredUnvalidatedUsers();
+    @Autowired
+    @Lazy
+    private TokenCleanupService self; // Inyecta el propio bean
+
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent event) {
+        self.removeExpiredUnvalidatedUsers(); // Llama a través del proxy
     }
 
     @Transactional
@@ -35,13 +42,14 @@ public class TokenCleanupService {
 
         List<ValidationToken> expiredTokensAndUsers = validationTokenRepository.findAllByUsedFalseAndExpirationDateBefore(now);
         System.out.println("Tokens encontrados: " + expiredTokensAndUsers.size());
-        
+
         for (ValidationToken token : expiredTokensAndUsers) {
             userRepository.delete(token.getUser());
         }
 
         List<ValidationToken> expiredTokens = validationTokenRepository.findAllByUsedTrueAndExpirationDateBefore(now);
         validationTokenRepository.deleteAllInBatch(expiredTokens);
-        System.out.println("Token eliminado:[" + (expiredTokens.size() > 0 ? "OK" : "") + "]");
+        System.out.println("Token eliminado:[" + (!expiredTokens.isEmpty() ? "OK" : "") + "]");
     }
+
 }

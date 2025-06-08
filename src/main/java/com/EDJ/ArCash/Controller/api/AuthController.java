@@ -4,29 +4,32 @@ import com.EDJ.ArCash.DTO.LoginRequest;
 import com.EDJ.ArCash.DTO.LoginResponse;
 import com.EDJ.ArCash.DTO.LogoutResponse;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
-import com.EDJ.ArCash.Repository.CredentialRepository;
+import com.EDJ.ArCash.Models.ValidationToken;
 import com.EDJ.ArCash.Service.AuthService;
+import com.EDJ.ArCash.Service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 
 @RestController
 @RequestMapping(value = "/api/auth", produces = "application/json")
 public class AuthController {
 
+@Autowired
+private EmailService emailService;
 
     @Autowired
     private AuthService authService;
@@ -109,6 +112,22 @@ public class AuthController {
                     ));
         }
     }
+
+    @PostMapping("/send-recover-mail")
+    public ResponseEntity<?> sendRecoverEmail(@RequestBody Map<String, String> body) {
+        try {
+            String email = body.get("email");
+            boolean enviado = authService.enviarCorreoRecuperacion(email);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace(); // Esto mostrará el error en la consola
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error interno al enviar el correo");
+        }
+    }
+
+
+
+
 
 
 }

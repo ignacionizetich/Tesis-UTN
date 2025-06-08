@@ -80,14 +80,14 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(data => {
 
                 if (data.success) {
-                    alert('Inicio de sesión exitoso');
+                    showToast("Inicio de sesion exitoso","success")
                     form.reset();
                     localStorage.setItem('JWT', data.accessToken);
                     localStorage.setItem('accountId', data.accountId);
                     console.log('Redirigiendo al dashboard...'); // 🔍
                     window.location.href = '/dashboard';
                 } else {
-                    alert(data.message || 'Credenciales incorrectas');
+                    showToast(data.message || 'Credenciales incorrectas', 'error');
                 }
             })
             .catch(error => {

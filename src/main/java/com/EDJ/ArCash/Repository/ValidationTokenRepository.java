@@ -3,11 +3,12 @@ package com.EDJ.ArCash.Repository;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Models.ValidationToken;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
+@Repository
 public interface ValidationTokenRepository extends JpaRepository<ValidationToken, Long> {
     /// HAY QUE CREAR LOS METODOS PARA LAS VALIDACIONES
 
@@ -17,6 +18,7 @@ public interface ValidationTokenRepository extends JpaRepository<ValidationToken
 
     ValidationToken findByToken(String token);
 
+    void deleteByUser_Iduser(Long iduser);
 
     List<ValidationToken> findAllByUsedTrueAndExpirationDateBefore(LocalDateTime now);
 }

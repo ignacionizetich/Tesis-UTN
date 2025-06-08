@@ -14,7 +14,7 @@
     --border-light: rgba(0, 0, 0, 0.08);
     --border: #ccc;
 
-    --back-circle-fill: #DADADAD8;
+    --back-circle-fill: var(--platinum);
     --back-circle-stroke: #dddddd;
     --back-arrow-color: #333333;
 }
@@ -30,4 +30,6 @@
     --back-circle-fill: #1e1e1e;
     --back-circle-stroke: #1e1e1e;
     --back-arrow-color: #ffffff;
+
+
 }
