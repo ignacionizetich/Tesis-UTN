@@ -2,12 +2,10 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.LoginRequest;
 import com.EDJ.ArCash.DTO.LoginResponse;
-import com.EDJ.ArCash.DTO.LogoutResponse;
+
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
-import com.EDJ.ArCash.Models.ValidationToken;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AuthService;
-import com.EDJ.ArCash.Service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -18,19 +16,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 
-import org.springframework.ui.Model;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Optional;
 
 
 @RestController
 @RequestMapping(value = "/api/auth", produces = "application/json")
 public class AuthController {
 
-@Autowired
-private EmailService emailService;
+
 
     @Autowired
     private AuthService authService;

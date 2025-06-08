@@ -529,7 +529,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Abrir modal de perfil y cargar datos ---
-    // --- Abrir modal de perfil y cargar datos ---
+
     const profileModal = document.getElementById('profile-modal');
     const openProfileBtn = document.getElementById('open-profile-modal');
     const closeProfileBtn = profileModal.querySelector('.close-profile');

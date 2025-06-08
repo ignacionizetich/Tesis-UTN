@@ -18,6 +18,8 @@ public class TransactionDTO {
     private String date;
     private String originUsername;
     private String destinationUsername;
+    private String originAlias;
+    private String destinationAlias;
 
 
     public TransactionDTO(Transaction transaction) {
@@ -30,5 +32,7 @@ public class TransactionDTO {
         setDate(transaction.getTransaction_date());
         this.originUsername = transaction.getIdOrigin().getUser().getAlias();
         this.destinationUsername = transaction.getIdDestination().getUser().getAlias();
+        this.originAlias = transaction.getIdOrigin().getAccountNickname();           // Asigna alias de cuenta origen
+        this.destinationAlias = transaction.getIdDestination().getAccountNickname();
     }
 }

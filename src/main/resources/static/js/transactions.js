@@ -47,8 +47,10 @@ function cargarMovimientos() {
 
                 li.addEventListener("click", function() {
                     document.getElementById("modalOperacion").textContent = mov.idOperation;
-                    document.getElementById("modalOrigen").textContent = mov.originUsername;
-                    document.getElementById("modalDestino").textContent = mov.destinationUsername;
+                    document.getElementById("modalOrigen").textContent =
+                        `${mov.originUsername} (${mov.originAlias})`;
+                    document.getElementById("modalDestino").textContent =
+                        `${mov.destinationUsername} (${mov.destinationAlias})`;
                     document.getElementById("modalMonto").textContent = "$" + mov.amount.toLocaleString("es-AR");
                     document.getElementById("modalEstado").textContent = mov.state;
 
@@ -95,7 +97,6 @@ function cargarMovimientos() {
     });
 }
 
-// Llama a la función al cargar la página
 document.addEventListener("DOMContentLoaded", function () {
     cargarMovimientos();
 });
