@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     dni: campos.dni,
                     email: campos.email,
                     alias: campos.alias,
-                    password: password // 👈 se envía al backend
+                    password: password
                 })
             });
 

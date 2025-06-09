@@ -26,7 +26,7 @@ public class Account {
 
     /// Muchas cuentas(caja en pesos y dolares) pertenece a un usuario
     @ManyToOne
-    @JoinColumn(name = "id_user")
+    @JoinColumn(name = "user_id")
     private User user;
 
 

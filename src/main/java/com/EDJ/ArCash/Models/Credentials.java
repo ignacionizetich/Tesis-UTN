@@ -21,7 +21,7 @@ public class Credentials {
     private Long id;
 
     @OneToOne
-    @JoinColumn(name = "id_user")
+    @JoinColumn(name = "user_id")
     private User user;
 
     @NotBlank(message = "El nombre de usuario no puede estar vacio")

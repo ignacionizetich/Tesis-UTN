@@ -20,7 +20,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_user")
+    @Column(name = "user_id")
     private Long iduser;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)

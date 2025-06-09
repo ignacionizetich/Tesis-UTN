@@ -1,11 +1,11 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.DTO.TaxPesosRequest;
+
 import com.EDJ.ArCash.DTO.TaxPesosResponse;
-import com.EDJ.ArCash.DTO.TaxUsdRequest;
+
 import com.EDJ.ArCash.DTO.TaxUsdResponse;
 import com.EDJ.ArCash.Service.TaxService;
-import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
