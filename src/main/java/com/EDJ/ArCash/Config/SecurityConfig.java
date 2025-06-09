@@ -32,7 +32,9 @@ public class SecurityConfig {
                                 "/api/auth/send-recover-mail", "/validate-request" ,
                                 "/api/auth/changeUsername",
                                 "/dashboard","/api/user/data",
-                                "/api/transactions/{id}/getTransactions", "/swagger-ui.html").permitAll() // Endpoints libres
+                                "/api/transactions/{id}/getTransactions",   "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**").permitAll() // Endpoints libres
                         .anyRequest().authenticated()/// Los demás requieren login
                 )
                 .formLogin(form -> form

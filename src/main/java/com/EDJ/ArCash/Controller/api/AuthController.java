@@ -8,7 +8,12 @@ import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +29,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/api/auth", produces = "application/json")
+@Tag(name = "ejemplo", description = "Operaciones para usuarios autenticados")
 public class AuthController {
 
 
@@ -31,9 +37,25 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-    @Operation(description = "Este endpoint maneja la logica de log-in de los usuarios a nuestra aplicacion")
-    @Parameter(description = "Recibe por parametro un body JSON y usamos un loginRequest que es un DTO para verificar las credenciales del usuario y verificar si son correctas")
-    @ApiResponse(description = "202 OK")
+
+    @Operation(
+            summary = "Iniciar sesión",
+            description = "Verifica las credenciales del usuario y retorna tokens de acceso y refresh si son válidas.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = LoginRequest.class),
+                            examples = @ExampleObject(
+                                    value = "{\"username\": \"usuario1\", \"password\": \"123456\"}"
+                            )
+                    )
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Inicio de sesión exitoso", content = @Content(schema = @Schema(implementation = LoginResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Credenciales inválidas"),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         try {
@@ -61,8 +83,20 @@ public class AuthController {
         }
     }
 
+
+    @Operation(
+            summary = "Cerrar sesión",
+            description = "Cierra la sesión del usuario y elimina el refresh token."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sesión cerrada correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token inválido o no proporcionado")
+    })
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response, @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> logout(
+            HttpServletResponse response,
+            @Parameter(description = "Token JWT de autenticación", required = true, example = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+            @RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         LogoutStatus status = authService.logout(token);
 
@@ -77,8 +111,20 @@ public class AuthController {
         return ResponseEntity.ok(status);
     }
 
+    @Operation(
+            summary = "Verificar sesión",
+            description = "Verifica si el token JWT enviado es válido y la sesión está activa."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sesión activa"),
+            @ApiResponse(responseCode = "401", description = "Sesión inactiva o token inválido"),
+            @ApiResponse(responseCode = "500", description = "Error interno")
+    })
+
     @GetMapping("/check-session")
-    public ResponseEntity<?> checkSession(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<?> checkSession(
+            @Parameter(description = "Token JWT de autenticación", example = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
@@ -110,6 +156,23 @@ public class AuthController {
         }
     }
 
+    @Operation(
+            summary = "Enviar correo de recuperación",
+            description = "Envía un correo electrónico para recuperar la contraseña del usuario.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            examples = @ExampleObject(
+                                    value = "{\"email\": \"usuario@email.com\"}"
+                            )
+                    )
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Correo enviado correctamente"),
+            @ApiResponse(responseCode = "500", description = "Error interno al enviar el correo")
+    })
+
     @PostMapping("/send-recover-mail")
     public ResponseEntity<?> sendRecoverEmail(@RequestBody Map<String, String> body) {
         try {
@@ -122,7 +185,23 @@ public class AuthController {
         }
     }
 
-
+    @Operation(
+            summary = "Cambiar nombre de usuario",
+            description = "Permite al usuario autenticado cambiar su nombre de usuario.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            examples = @ExampleObject(
+                                    value = "{\"newUsername\": \"nuevoUsuario\"}"
+                            )
+                    )
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Nombre de usuario actualizado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos"),
+            @ApiResponse(responseCode = "401", description = "Token no proporcionado o inválido")
+    })
 
     @PutMapping("/changeUsername")
     public ResponseEntity<?> changeUsername(@RequestBody Map<String, String> body, HttpServletRequest request) {
