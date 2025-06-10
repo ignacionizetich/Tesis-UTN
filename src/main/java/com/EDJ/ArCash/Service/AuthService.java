@@ -197,8 +197,7 @@ public class AuthService {
     // En AuthService.java
 
     @Transactional
-    public boolean cambiarAliasYUsername(Long accountId, String nuevoAlias) {
-        // Debe contener al menos una letra, no solo números, no solo especiales, no vacío
+    public boolean cambiarAliasYUsername(Long userId, String nuevoAlias) {
         String regex = "^(?=.*[A-Za-z])[A-Za-z\\d]{4,25}$";
         if (nuevoAlias == null || nuevoAlias.trim().isEmpty() ||
                 !nuevoAlias.matches(regex) ||
@@ -206,15 +205,16 @@ public class AuthService {
             return false;
         }
 
-        Optional<Account> accountOpt = accountRepository.findById(accountId);
+        Optional<Account> accountOpt = accountRepository.findByUserIduser(userId);
         if (accountOpt.isEmpty()) return false;
         Credentials credentials = accountOpt.get().getUser().getCredentials();
         User user = accountOpt.get().getUser();
 
+
         if (credentialRepository.findByUsername(nuevoAlias).isPresent()) return false;
 
         user.setAlias(nuevoAlias);
-        userRepository.save(user);
+        userRepository.saveAndFlush(user);
 
         credentials.setUsername(nuevoAlias);
         credentialRepository.save(credentials);

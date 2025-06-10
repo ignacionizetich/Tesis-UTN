@@ -243,11 +243,6 @@ public class AuthController {
     })
     @PutMapping("/changeUsername")
     public ResponseEntity<?> changeUsername(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Datos para el cambio de nombre de usuario",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = UsernameRequest.class))
-            )
             @RequestBody UsernameRequest usernameRequest,
             HttpServletRequest request
     ) {
