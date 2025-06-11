@@ -53,7 +53,7 @@ public class UserDataController {
     @GetMapping("/data")
     public ResponseEntity<?> getUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        Optional<Account> optionalAccount =  accountRepository.findByUserIduser(user.getIduser());
+        Optional<Account> optionalAccount =  accountRepository.findByUser_Id(user.getId());
         if (optionalAccount.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(java.util.Map.of("error", "Cuenta no encontrada para el usuario"));

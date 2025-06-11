@@ -1,6 +1,7 @@
 // User.java
 package com.EDJ.ArCash.Models;
 
+import com.EDJ.ArCash.Models.Imp.Permissions;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -20,8 +21,8 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
-    private Long iduser;
+    @Column(name = "id")
+    private Long Id;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Credentials credentials;
@@ -63,6 +64,10 @@ public class User {
     @Column(nullable = false, name = "enabled")
     private boolean enabled;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "permissions")
+    private Permissions permissions;
+
     public User(String name, String lastName, String dni, String email, String alias) {
         this.name = name;
         this.lastName = lastName;
@@ -74,6 +79,7 @@ public class User {
     @PrePersist
     private void PrePersist() {
         GenerateCreationDate();
+
     }
 
     private void GenerateCreationDate() {
@@ -81,4 +87,6 @@ public class User {
         LocalDateTime fechaActual = LocalDateTime.now();
         this.creationDate = fechaActual.format(formateador);
     }
+
+
 }

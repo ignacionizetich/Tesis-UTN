@@ -26,14 +26,8 @@ public class LoginResponse {
     @Schema(description = "ID de la cuenta asociada", example = "123")
     private Long accountId;
 
-    public LoginResponse(boolean success, String message, Long accountId) {
-        this.success = success;
-        this.message = message;
-        this.accountId = accountId;
-    }
+    @Schema (description = "Rol de la cuenta asociada", example = "ADMIN")
+    private String role;
 
-    public LoginResponse(boolean success, String message) {
-        this.success = success;
-        this.message = message;
-    }
+
 }

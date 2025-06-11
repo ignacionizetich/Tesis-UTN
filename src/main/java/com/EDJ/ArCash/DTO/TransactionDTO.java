@@ -45,7 +45,7 @@ public class TransactionDTO {
     private String destinationAlias;
 
     public TransactionDTO(Transaction transaction) {
-        setIdTransaction(transaction.getId_transaction());
+        setIdTransaction(transaction.getId());
         setIdOrigin(transaction.getIdOrigin().getIdAccount());
         setIdDestination(transaction.getIdDestination().getIdAccount());
         setAmount(transaction.getBalance());

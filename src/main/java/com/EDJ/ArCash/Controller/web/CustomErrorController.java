@@ -24,7 +24,7 @@ public class CustomErrorController implements ErrorController {
 
         if (isApiRequest(request)) {
             return ResponseEntity.status(statusCode)
-                    .body(new LoginResponse(false, "Ocurrió un error: " + statusCode, null, null, null));
+                    .body(new LoginResponse(false, "Ocurrió un error: " + statusCode, null, null, null,null));
         }
 
         // Renderiza la vista Thymeleaf "error.html"

@@ -84,7 +84,7 @@ public class AccountController {
         } else {
             Account account = optionalAccount.get();
 
-            if (account.getUser().getIduser().equals(responseEntity)) {
+            if (account.getUser().getId().equals(responseEntity)) {
                 boolean success = accountService.updateBalance(accountRequest.getBalance(), id);
                 if (!success) {
                     return ResponseEntity.status(404)
@@ -148,11 +148,11 @@ public class AccountController {
         Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
 
         Optional<Account> optionalAccount = accountService.findAccountByID(id);
-        if (optionalAccount.isPresent() && optionalAccount.get().getUser().getIduser().equals(userId)) {
+        if (optionalAccount.isPresent() && optionalAccount.get().getUser().getId().equals(userId)) {
             Account account = optionalAccount.get();
 
             Map<String, Object> response = new HashMap<>();
-            response.put("balance", Double.valueOf(account.getBalance()));
+            response.put("balance", account.getBalance());
             response.put("alias", account.getAccountNickname());
             response.put("cvu", account.getAccountCvu());
 

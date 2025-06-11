@@ -99,7 +99,7 @@ public class TransactionController {
 
             Account account = optionalOrigen.get();
 
-            if (!account.getUser().getIduser().equals(userId)) {
+            if (!account.getUser().getId().equals(userId)) {
                 return ResponseEntity.status(403).body(new TransactionResponse(false, "No tiene permiso para operar esta cuenta"));
             }
 
