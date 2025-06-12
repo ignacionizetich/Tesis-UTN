@@ -81,6 +81,7 @@
 
 
 .usuarios-lista {
+    cursor: pointer;
     list-style: none;
     padding: 0;
     margin: 0;
@@ -125,6 +126,16 @@
     background: #c0392b;
 }
 
+.habilitar-btn {
+    background: #27ae60;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.95em;
+    cursor: pointer;
+}
+
 .usuario-datos {
     display: flex;
     flex-direction: column;
@@ -162,3 +173,88 @@
     padding: 8px 0;
     font-size: 16px;
 }
+
+/* MODAL UNIFICADO CON DASHBOARD.CSS */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5); /* Fondo más oscuro para mejor contraste */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+
+}
+
+.modal.show {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-content {
+    background-color: rgba(255,255,255,0.95); /* Más opaco en modo claro */
+    color: var(--text-primary);
+    padding: 25px;
+    border-radius: 12px;
+    min-width: 300px;
+    max-width: 90vw;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    position: relative;
+    width: 400px;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: rgba(30,30,30,0.95); /* Más opaco en modo oscuro */
+}
+
+
+.close-modal {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    float: none;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: color 0.3s;
+}
+
+.modal-content p {
+    margin-bottom: 22px; /* Más espacio entre líneas */
+    font-size: 1rem;
+    line-height: 1.4;
+}
+.modal-content p:last-child {
+    margin-bottom: 0;
+}
+
+.modal.show .modal-content {
+    transform: translateY(0);
+}
+/* Estados de texto */
+.modal-content p strong {
+    color: var(--text-accent); /* Títulos en azul */
+}
+
+.modal-content p {
+    color: var(--text-primary); /* Texto principal */
+}
+
+.estado-si {
+    color: #388e3c; /* Verde de éxito, puedes usar otro de la paleta si prefieres */
+}
+
+.estado-no {
+    color: #d32f2f; /* Rojo de la paleta */
+}
+

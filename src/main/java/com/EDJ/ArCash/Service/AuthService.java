@@ -61,7 +61,7 @@ public class AuthService {
                 return new LoginResponse(false, "Credenciales incorrectas", null, null, null,null);
             }
 
-            if (!usuario.isEnabled()) {
+            if (!usuario.isActive()) {
                 return new LoginResponse(false, "Usuario no habilitado", null, null, null,null);
             }
 

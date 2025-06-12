@@ -68,6 +68,10 @@ public class User {
     @Column(name = "permissions")
     private Permissions permissions;
 
+
+    @Column(nullable = false, name = "active")
+    private boolean active;
+
     public User(String name, String lastName, String dni, String email, String alias) {
         this.name = name;
         this.lastName = lastName;

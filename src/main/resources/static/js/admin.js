@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <span class="usuario-username">@${u.username}</span>
         </div>
         ${
-                u.enabled
+                u.active
                     ? `<button class="inhabilitar-btn" data-id="${u.id}">Inhabilitar</button>`
                     : `<button class="habilitar-btn" data-id="${u.id}" style="background:#27ae60;color:#fff;border:none;border-radius:6px;padding:0.5rem 1rem;font-size:0.95em;cursor:pointer;">Habilitar</button>`
             }
@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 
-    // Habilitar/Inhabilitar usuario sin recargar la lista
+    // Habilitar/Inhabilitar usuario sin recargar la lista ni doble confirm
     usuariosLista.addEventListener("click", async (e) => {
         const id = e.target.getAttribute("data-id");
         if (!id) return;
@@ -107,44 +107,44 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!usuario) return;
 
         if (e.target.classList.contains("inhabilitar-btn")) {
-            if (confirm("¿Seguro que quieres inhabilitar este usuario?")) {
-                try {
-                    const response = await fetch(`/api/admin/users/${id}/disable`, {
-                        method: "PUT",
-                        headers: {"Authorization": "Bearer " + token}
-                    });
-                    if (response.ok) {
-                        showToast("Usuario inhabilitado", "success");
-                        usuario.enabled = false;
-                        localStorage.setItem("usuariosAdmin", JSON.stringify(usuarios));
-                        e.target.outerHTML = `<button class="habilitar-btn" data-id="${id}" style="background:#27ae60;color:#fff;border:none;border-radius:6px;padding:0.5rem 1rem;font-size:0.95em;cursor:pointer;">Habilitar</button>`;
-                    } else {
-                        showToast("Error al inhabilitar usuario", "error");
-                    }
-                } catch {
-                    showToast("Error de red", "error");
+            if (!confirm("¿Seguro que quieres inhabilitar este usuario?")) return;
+            try {
+                const response = await fetch(`/api/admin/users/${id}/disable`, {
+                    method: "PUT",
+                    headers: {"Authorization": "Bearer " + token}
+                });
+                if (response.ok) {
+                    usuario.active = false;
+                    localStorage.setItem("usuariosAdmin", JSON.stringify(usuarios));
+                    showToast("Usuario inhabilitado", "success"); // <-- Primero el toast
+                    renderUsuarios(usuarios);
+                } else {
+                    showToast("Error al inhabilitar usuario", "error");
                 }
+            } catch {
+                showToast("Error de red", "error");
             }
+            return;
         }
         if (e.target.classList.contains("habilitar-btn")) {
-            if (confirm("¿Seguro que quieres habilitar este usuario?")) {
-                try {
-                    const response = await fetch(`/api/admin/users/${id}/enable`, {
-                        method: "PUT",
-                        headers: {"Authorization": "Bearer " + token}
-                    });
-                    if (response.ok) {
-                        showToast("Usuario habilitado", "success");
-                        usuario.enabled = true;
-                        localStorage.setItem("usuariosAdmin", JSON.stringify(usuarios));
-                        e.target.outerHTML = `<button class="inhabilitar-btn" data-id="${id}">Inhabilitar</button>`;
-                    } else {
-                        showToast("Error al habilitar usuario", "error");
-                    }
-                } catch {
-                    showToast("Error de red", "error");
+            if (!confirm("¿Seguro que quieres habilitar este usuario?")) return;
+            try {
+                const response = await fetch(`/api/admin/users/${id}/enable`, {
+                    method: "PUT",
+                    headers: {"Authorization": "Bearer " + token}
+                });
+                if (response.ok) {
+                    usuario.active = true;
+                    localStorage.setItem("usuariosAdmin", JSON.stringify(usuarios));
+                    showToast("Usuario habilitado", "success"); // <-- Primero el toast
+                    renderUsuarios(usuarios);
+                } else {
+                    showToast("Error al habilitar usuario", "error");
                 }
+            } catch {
+                showToast("Error de red", "error");
             }
+            return;
         }
     });
 
@@ -159,21 +159,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     const validarTexto = texto => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,}$/.test(texto);
     const validarEmail = email => /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(email);
 
+    // Validación en tiempo real de contraseñas
     adminConfirmPassword.addEventListener('input', () => {
-        if (adminConfirmPassword.value !== adminPassword.value) {
+        const pass = adminPassword.value;
+        const confirm = adminConfirmPassword.value;
+        if (pass.length >= 6 && confirm.length >= 6 && pass !== confirm) {
             adminPasswordHelp.classList.add('visible');
+            adminPasswordHelp.style.display = 'block';
             adminConfirmPassword.classList.add('input-error');
         } else {
             adminPasswordHelp.classList.remove('visible');
+            adminPasswordHelp.style.display = 'none';
             adminConfirmPassword.classList.remove('input-error');
         }
     });
 
+    // Validación al perder foco
     adminConfirmPassword.addEventListener('blur', () => {
-        if (adminConfirmPassword.value !== adminPassword.value) {
+        const pass = adminPassword.value;
+        const confirm = adminConfirmPassword.value;
+        if (pass.length >= 6 && confirm.length >= 6 && pass !== confirm) {
+            adminPasswordHelp.classList.add('visible');
             adminPasswordHelp.style.display = 'block';
             adminConfirmPassword.classList.add('input-error');
         } else {
+            adminPasswordHelp.classList.remove('visible');
             adminPasswordHelp.style.display = 'none';
             adminConfirmPassword.classList.remove('input-error');
         }
@@ -220,9 +230,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         if (password !== confirmPassword) {
             mostrarMensajeAdmin('Las contraseñas no coinciden.', 'red');
+            adminPasswordHelp.classList.add('visible');
+            adminPasswordHelp.style.display = 'block';
             adminConfirmPassword.classList.add('input-error');
             return;
         } else {
+            adminPasswordHelp.classList.remove('visible');
+            adminPasswordHelp.style.display = 'none';
             adminConfirmPassword.classList.remove('input-error');
         }
 
@@ -240,7 +254,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                     email: campos.email,
                     username: campos.alias,
                     password: password
-
                 })
             });
             const data = await response.json().catch(() => ({}));
@@ -249,6 +262,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             mostrarMensajeAdmin('Administrador creado correctamente.', 'green');
             adminForm.reset();
+            adminPasswordHelp.classList.remove('visible');
             adminPasswordHelp.style.display = 'none';
             adminConfirmPassword.classList.remove('input-error');
         } catch (error) {
@@ -266,4 +280,48 @@ document.addEventListener("DOMContentLoaded", async () => {
         adminRespuesta.style.color = color;
         showToast(mensaje, color === 'green' || color === 'blue' ? 'success' : 'error');
     }
+
+    // --- Modal de usuario ---
+    const usuarioModal = document.getElementById('usuario-modal');
+    const usuarioInfo = document.getElementById('usuario-info');
+    const closeModalBtn = usuarioModal.querySelector('.close-modal');
+
+    usuariosLista.addEventListener('click', (e) => {
+        // Ignora clicks en los botones de habilitar/inhabilitar
+        if (e.target.classList.contains('inhabilitar-btn') || e.target.classList.contains('habilitar-btn')) return;
+
+        const usuarioItem = e.target.closest('.usuario-item');
+        if (!usuarioItem) return;
+
+        const index = Array.from(usuarioItem.parentNode.children).indexOf(usuarioItem);
+        const usuarios = JSON.parse(localStorage.getItem("usuariosAdmin") || "[]");
+        const usuario = usuarios[index];
+        if (!usuario) return;
+
+        usuarioInfo.innerHTML = `
+        <p><strong>Nombre:</strong> ${usuario.name}</p>
+        <p><strong>Apellido:</strong> ${usuario.lastName}</p>
+        <p><strong>DNI:</strong> ${usuario.dni}</p>
+        <p><strong>Email:</strong> ${usuario.email}</p>
+        <p><strong>Username:</strong> ${usuario.username}</p>
+        <p><strong>ID Cuenta:</strong> ${usuario.idAccount ?? '-'}</p>
+        <p><strong>Activo:</strong> <span class="${usuario.active ? 'estado-si' : 'estado-no'}">${usuario.active ? 'Sí' : 'No'}</span></p>
+        <p><strong>Habilitado:</strong> <span class="${usuario.enabled ? 'estado-si' : 'estado-no'}">${usuario.enabled ? 'Sí' : 'No'}</span></p>
+    `;
+
+        usuarioModal.classList.add('show');
+    });
+
+    // Cerrar modal al hacer click en la X
+    closeModalBtn.addEventListener('click', () => {
+        usuarioModal.classList.remove('show');
+    });
+
+    // Cerrar modal al hacer click fuera del contenido
+    usuarioModal.addEventListener('click', (e) => {
+        if (e.target === usuarioModal) {
+            usuarioModal.classList.remove('show');
+        }
+    });
+
 });

@@ -66,6 +66,7 @@ public class ApiAdminController {
         user.setEmail(adminRequest.getEmail());
         user.setAlias(adminRequest.getUsername());
         user.setEnabled(true);
+        user.setActive(true);
         adminService.insertarAdministrador(user, adminRequest.getPassword());
         return ResponseEntity.ok("Usuario administrador creado correctamente");
 

@@ -16,4 +16,5 @@ public class UserResponse {
     private String username;
     private Long idAccount;
     private boolean enabled;
+    private boolean active;
 }

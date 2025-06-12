@@ -45,7 +45,8 @@ public class AdminService {
                             user.getEmail(),
                             username,
                             idAccount,
-                            user.isEnabled()
+                            user.isEnabled(),
+                            user.isActive()
                     );
                 })
                 .toList();
@@ -60,7 +61,7 @@ public class AdminService {
             throw new IllegalArgumentException("Usuario no encontrado");
         }
         User user = userOpt.get();
-        user.setEnabled(false);
+        user.setActive(false);
         userRepository.save(user);
     }
 
@@ -71,7 +72,7 @@ public class AdminService {
             throw new IllegalArgumentException("Usuario no encontrado");
         }
         User user = userOpt.get();
-        user.setEnabled(true);
+        user.setActive(true);
         userRepository.save(user);
     }
 

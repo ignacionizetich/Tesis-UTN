@@ -39,7 +39,6 @@
             });
         }
         actualizarSaldo();
-        // 🔐 Validar JWT y cargar datos del usuario
         const token = localStorage.getItem("JWT");
 
         if (!token) {
@@ -84,7 +83,7 @@
         // Ingresar Dinero
         const ingresarModal = document.getElementById("ingresar-modal");
         const ingresarButton = document.querySelector(".ingresar");
-        const closeIngresar = document.querySelector(".close-ingresar");
+        const closeIngresar = document.querySelector("#ingresar-modal .close-button");
         const ingresarForm = document.getElementById("ingresar-form");
 
         if (ingresarButton) {
@@ -180,7 +179,7 @@
         // Transferencia
         const modal = document.getElementById("transfer-modal");
         const openButton = document.querySelector(".tranferir");
-        const closeButton = document.querySelector(".close-button");
+        const closeButton = document.querySelector("#transfer-modal .close-button");
         const transferForm = document.getElementById("transfer-form");
 
         if (openButton) {
@@ -220,6 +219,8 @@
                 }
             });
         }
+
+
 
         // Alias Modal
         const aliasModal = document.getElementById("alias-modal");
@@ -552,7 +553,7 @@
                         credentials: 'include'
                     });
 
-                    localStorage.clear();
+                localStorage.clear()
                     showToast('Sesión cerrada con éxito', 'success');
                     setTimeout(() => {
                         window.location.href = '/home';
@@ -560,7 +561,7 @@
 
                 } catch (error) {
                     console.error('Error durante el logout:', error);
-                    localStorage.clear();
+                    localStorage.clear()
                     window.location.href = '/PreLogin';
                 }
             });
