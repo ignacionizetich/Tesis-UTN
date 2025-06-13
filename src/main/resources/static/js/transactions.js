@@ -104,4 +104,5 @@ function cargarMovimientos() {
 
 document.addEventListener("DOMContentLoaded", function () {
     cargarMovimientos();
+
 });

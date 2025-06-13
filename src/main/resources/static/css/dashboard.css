@@ -790,8 +790,14 @@ body{
 
 #copy-alias svg,
 #copy-cvu svg {
-    width: 16px;
-    height: 16px;
+    color: var(--text-accent);
+    fill: var(--text-accent);
+}
+
+[data-theme="dark"] #copy-alias svg,
+[data-theme="dark"] #copy-cvu svg {
+    color: var(--platinum);
+    fill: var(--platinum);
 }
 
 #copy-cvu {
@@ -1017,4 +1023,52 @@ body{
     cursor: pointer;
     border-radius: 50%;
     transition: color 0.3s;
+}
+
+
+#toggle-balance {
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--border-light);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 10px;
+    transition: background 0.3s, border-color 0.3s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+#toggle-balance:hover {
+    background: var(--text-accent);
+    border-color: var(--text-accent);
+}
+
+#toggle-balance i {
+    color: var(--text-accent);
+    font-size: 18px;
+    transition: color 0.3s;
+}
+
+#toggle-balance:hover i {
+    color: var(--platinum);
+}
+
+[data-theme="dark"] #toggle-balance {
+    background: var(--carbon);
+    border-color: var(--border-light);
+}
+
+[data-theme="dark"] #toggle-balance i {
+    color: var(--cobalt);
+}
+
+[data-theme="dark"] #toggle-balance:hover {
+    background: var(--cobalt);
+    border-color: var(--cobalt);
+}
+
+[data-theme="dark"] #toggle-balance:hover i {
+    color: var(--platinum);
 }

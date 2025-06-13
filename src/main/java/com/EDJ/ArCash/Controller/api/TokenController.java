@@ -32,26 +32,28 @@ public class TokenController {
 
         Optional<ValidationToken> optionalToken = Optional.ofNullable(validationTokenRepository.findByToken(tokenValue));
 
-        String message;
 
         if (optionalToken.isEmpty()) {
-
-            return "error-404";
+            model.addAttribute("success", false);
+            model.addAttribute("message", "Token inválido o no encontrado.");
+            return "validate";
         } else {
             ValidationToken token = optionalToken.get();
-
             if (token.isUsed()) {
-
-                return "error-404";
+                model.addAttribute("success", false);
+                model.addAttribute("message", "El token ya fue utilizado.");
+                return "validate";
             } else if (token.getExpirationDate().isBefore(LocalDateTime.now())) {
-                return "error-404";
+                model.addAttribute("success", false);
+                model.addAttribute("message", "El token ha expirado.");
+                return "validate";
             } else {
                 userService.validarUsuario(token.getUser());
-                message = "Cuenta verificada correctamente.";
+                model.addAttribute("success", true);
+                model.addAttribute("message", "Cuenta verificada correctamente.");
+                return "validate";
             }
         }
-
-        model.addAttribute("message", message);
-        return "validate"; // Thymeleaf buscará validate.html
     }
+
 }

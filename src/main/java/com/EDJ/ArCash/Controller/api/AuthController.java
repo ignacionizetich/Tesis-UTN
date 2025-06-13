@@ -2,6 +2,9 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.*;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
+import com.EDJ.ArCash.Models.RefreshToken;
+import com.EDJ.ArCash.Models.User;
+import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,7 +23,9 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/api/auth", produces = "application/json")
@@ -29,6 +34,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Operation(
             summary = "Iniciar sesión",
@@ -269,4 +277,21 @@ public class AuthController {
             return ResponseEntity.badRequest().body(new UsernameResponse(false ,"No se pudo actualizar el nombre de usuario. Puede que ya exista."));
         }
     }
+
+    // En AuthController.java
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshAccessToken(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
+        if (refreshToken == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Refresh token requerido"));
+        }
+        Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken);
+        if (tokenOpt.isEmpty() || tokenOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.status(401).body(Map.of("error", "Refresh token inválido o expirado"));
+        }
+        User user = tokenOpt.get().getUser();
+        String newAccessToken = JwtUtils.generateToken(String.valueOf(user.getId()), user.getPermissions().name());
+        return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+    }
+
+
 }
