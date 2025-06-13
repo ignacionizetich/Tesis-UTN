@@ -1,20 +1,16 @@
 package com.EDJ.ArCash.Service;
 
-import com.EDJ.ArCash.DTO.LoginRequest;
-import com.EDJ.ArCash.DTO.LoginResponse;
-import com.EDJ.ArCash.DTO.UserResponse;
+import com.EDJ.ArCash.DTO.AuthDTO.LoginRequest;
+import com.EDJ.ArCash.DTO.AuthDTO.LoginResponse;
 import com.EDJ.ArCash.Models.*;
 import com.EDJ.ArCash.Repository.*;
 import com.EDJ.ArCash.Security.JwtUtils;
 import io.jsonwebtoken.Claims;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -159,46 +155,6 @@ public class AuthService {
     }
 
     @Transactional
-    public String actualizarPassword(String tokenValue, String nuevaPassword, String confirmarPassword) {
-        if (!nuevaPassword.equals(confirmarPassword)) {
-            return "Las contraseñas no coinciden.";
-        }
-
-        Optional<RecoveryToken> recoveryToken = recoveryTokenRepository.findByToken(tokenValue);
-
-        if (recoveryToken.isEmpty()) {
-            return "Token no válido.";
-        }
-
-        RecoveryToken token = recoveryToken.get();
-
-        if (token.isUsed()) {
-            return "El token ya ha sido usado.";
-        }
-
-        if (token.getExpirationDate().isBefore(LocalDateTime.now())) {
-            return "El token ha expirado.";
-        }
-
-        User user = token.getUser();
-        user.getCredentials().setPass(passwordEncoder.encode(nuevaPassword));
-        userRepository.save(user);
-        token.setUsed(true);
-        recoveryTokenRepository.saveAndFlush(token);
-
-        return "Contraseña actualizada correctamente.";
-    }
-
-    public boolean tokenValido(String tokenValue) {
-        Optional<RecoveryToken> optionalToken = recoveryTokenRepository.findByToken(tokenValue);
-        if (optionalToken.isEmpty()) return false;
-        RecoveryToken token = optionalToken.get();
-        return !token.isUsed() && token.getExpirationDate().isAfter(LocalDateTime.now());
-    }
-
-
-
-    @Transactional
     public boolean cambiarAliasYUsername(Long userId, String nuevoAlias) {
         String regex = "^(?=.*[A-Za-z])[A-Za-z\\d]{4,25}$";
         if (nuevoAlias == null || nuevoAlias.trim().isEmpty() ||
@@ -221,6 +177,13 @@ public class AuthService {
         credentials.setUsername(nuevoAlias);
         credentialRepository.save(credentials);
         return true;
+    }
+
+    public boolean tokenValido(String tokenValue) {
+        Optional<RecoveryToken> optionalToken = recoveryTokenRepository.findByToken(tokenValue);
+        if (optionalToken.isEmpty()) return false;
+        RecoveryToken token = optionalToken.get();
+        return !token.isUsed() && token.getExpirationDate().isAfter(LocalDateTime.now());
     }
 
 

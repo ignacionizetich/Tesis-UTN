@@ -1,8 +1,6 @@
 package com.EDJ.ArCash.Service;
 
 import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Models.ValidationToken;
-import com.EDJ.ArCash.Repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.nio.charset.StandardCharsets;
@@ -12,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import java.io.UnsupportedEncodingException;
-import java.util.Optional;
 
 @Service
 public class EmailService {

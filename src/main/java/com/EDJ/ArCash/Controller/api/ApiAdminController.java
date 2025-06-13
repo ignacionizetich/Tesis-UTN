@@ -1,14 +1,16 @@
 package com.EDJ.ArCash.Controller.api;
 
 
-import com.EDJ.ArCash.DTO.AdminRequest;
-import com.EDJ.ArCash.DTO.RegistrerRequest;
-import com.EDJ.ArCash.DTO.UserResponse;
+import com.EDJ.ArCash.DTO.AuthDTO.AdminRequest;
+import com.EDJ.ArCash.DTO.AuthDTO.UserResponse;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Service.AdminService;
-import com.EDJ.ArCash.Service.AuthService;
-import com.EDJ.ArCash.Service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +30,26 @@ public class ApiAdminController {
     @Autowired
     private AdminService adminService;
 
-    @Autowired
-    private UserService userService;
 
-    /// Lista de usuarios autenticados
+
+    @Operation(
+            summary = "Obtener todos los usuarios autenticados",
+            description = "Devuelve una lista de usuarios autenticados en el sistema."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Lista de usuarios autenticados",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Acceso denegado"
+            )
+    })
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getAllAuthenticatedUsers(HttpServletRequest request) {
         adminService.validarAdmin(request);
@@ -40,12 +58,43 @@ public class ApiAdminController {
     }
 
 
+    @Operation(
+            summary = "Deshabilitar usuario",
+            description = "Deshabilita un usuario por su ID."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Usuario deshabilitado correctamente"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Acceso denegado"
+            )
+    })
+
     @PutMapping("/users/{id}/disable")
     public ResponseEntity<?> disableUser(@PathVariable Long id, HttpServletRequest request) {
         adminService.validarAdmin(request);
         adminService.disableUser(id);
         return ResponseEntity.ok("usuario deshabilitado correctamente");
     }
+
+
+    @Operation(
+            summary = "Habilitar usuario",
+            description = "Habilita un usuario por su ID."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Usuario habilitado correctamente"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Acceso denegado"
+            )
+    })
 
     @PutMapping("/users/{id}/enable")
     public ResponseEntity<?> enableUser(@PathVariable Long id, HttpServletRequest request) {
@@ -54,6 +103,26 @@ public class ApiAdminController {
         return ResponseEntity.ok("usuario habilitado correctamente");
     }
 
+
+    @Operation(
+            summary = "Crear usuario administrador",
+            description = "Crea un nuevo usuario con permisos de administrador."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Usuario administrador creado correctamente"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Acceso denegado"
+            )
+    })
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Datos del nuevo administrador",
+            required = true,
+            content = @Content(schema = @Schema(implementation = AdminRequest.class))
+    )
 
     @PostMapping("/users/create-admin")
     public ResponseEntity<?> createAdminUser(@RequestBody AdminRequest adminRequest,HttpServletRequest request) throws MessagingException, UnsupportedEncodingException {
@@ -71,6 +140,22 @@ public class ApiAdminController {
         return ResponseEntity.ok("Usuario administrador creado correctamente");
 
     }
+
+
+    @Operation(
+            summary = "Verificar acceso de administrador",
+            description = "Verifica si el usuario autenticado tiene acceso de administrador."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Acceso de administrador verificado"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Acceso denegado"
+            )
+    })
 
     @GetMapping("/check-access")
     public ResponseEntity<?> checkAdminAccess() {

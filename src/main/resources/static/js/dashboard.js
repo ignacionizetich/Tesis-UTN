@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Mostrar el botón de admin si el rol es ADMIN
     const role = localStorage.getItem("role");
-    const JWT = localStorage.getItem("JWT");
     const adminPanelLink = document.getElementById("admin-panel-link");
     if (role === "ADMIN" && adminPanelLink) {
         adminPanelLink.style.display = "block";
@@ -65,10 +64,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (userBalanceEl) userBalanceEl.textContent = userData.balance.toFixed(2);
         if (userNameTopbar) userNameTopbar.textContent = userData.username;
         document.querySelector(".dashboard").classList.add("loaded");
+
+        // Ocultar loader con retardo para que se vea al menos 1 segundo
+        const loader = document.getElementById("loader-overlay");
+        if (loader) {
+            setTimeout(() => {
+                loader.style.opacity = "0";
+                setTimeout(() => { loader.style.display = "none"; }, 400);
+            }, 2000); // 1000 ms = 1 segundo
+        }
     }
 
     mostrarDatosUsuario();
-
     // Ingresar Dinero
     const ingresarModal = document.getElementById("ingresar-modal");
     const ingresarButton = document.querySelector(".ingresar");
@@ -373,7 +380,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const response = await fetchWithAuth(`/api/transactions/search/${input}`, {});
             if (!response.ok) {
-                throw new Error('Cuenta no encontrada');
+                 new Error('Cuenta no encontrada');
             }
             const data = await response.json();
             cuentaDestinoId = data.idaccount;
@@ -567,7 +574,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 showToast('Formato de alias inválido. Debe tener entre 4 y 25 caracteres, solo letras, números y puntos, al menos un punto en el medio, no puede ser solo números ni tener "..".', 'error');
                 return;
             }
-            const token = localStorage.getItem("JWT");
+
             const accountId = localStorage.getItem("accountId");
             try {
                 const response = await fetchWithAuth(`/api/accounts/${accountId}/changeAlias`, {
@@ -631,7 +638,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     showToast('Formato inválido. Solo letras y números, al menos una letra, sin caracteres especiales ni solo números.', 'error');
                     return;
                 }
-                const token = localStorage.getItem("JWT");
                 try {
                     const response = await fetchWithAuth('/api/auth/changeUsername', {
                         method: "PUT",

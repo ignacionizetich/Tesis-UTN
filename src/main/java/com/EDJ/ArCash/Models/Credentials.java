@@ -1,6 +1,5 @@
 package com.EDJ.ArCash.Models;
 
-import com.EDJ.ArCash.Models.Imp.Permissions;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

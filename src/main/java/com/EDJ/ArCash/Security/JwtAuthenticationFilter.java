@@ -1,7 +1,6 @@
 package com.EDJ.ArCash.Security;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtParserBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
@@ -111,7 +110,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 !uri.equals("/validate-request") &&
                 !uri.equals("/swagger-ui.html") &&
                 !uri.startsWith("/swagger-ui/") &&
-                !uri.startsWith("/v3/api-docs/") &&
+                !(uri.equals("/v3/api-docs") || uri.startsWith("/v3/api-docs/")) &&
                 !uri.startsWith("/dashboard") &&
                 !uri.startsWith("/adminDashboard");
 

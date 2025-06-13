@@ -18,19 +18,10 @@ document.getElementById('recoverForm').addEventListener('submit', async function
     });
 
     if (response.ok) {
-        document.getElementById('censoredEmail').textContent = censurarCorreo(email);
-        document.getElementById('modal').style.display = 'block';
+        const censurado = censurarCorreo(email);
+        showToast(`Se han enviado las instrucciones a ${censurado}.`, "SUCCESS");
     } else {
-       showToast("No se encontro la cuenta.", "FAILED");
+        showToast("El correo ingresado no se asocia a una cuenta existente.", "FAILED");
     }
 });
 
-document.getElementById('closeModal').onclick = function() {
-    document.getElementById('modal').style.display = 'none';
-};
-
-window.onclick = function(event) {
-    if (event.target == document.getElementById('modal')) {
-        document.getElementById('modal').style.display = 'none';
-    }
-};

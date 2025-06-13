@@ -1,6 +1,9 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.DTO.*;
+import com.EDJ.ArCash.DTO.AuthDTO.LoginRequest;
+import com.EDJ.ArCash.DTO.AuthDTO.LoginResponse;
+import com.EDJ.ArCash.DTO.AuthDTO.UsernameRequest;
+import com.EDJ.ArCash.DTO.AuthDTO.UsernameResponse;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
 import com.EDJ.ArCash.Models.RefreshToken;
 import com.EDJ.ArCash.Models.User;
@@ -10,7 +13,6 @@ import com.EDJ.ArCash.Service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -220,6 +222,10 @@ public class AuthController {
         try {
             String email = body.get("email");
             boolean enviado = authService.enviarCorreoRecuperacion(email);
+            if (!enviado) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "El correo ingresado no se asocia a una cuenta existente."));
+            }
             return ResponseEntity.ok(Map.of("message", "Correo enviado correctamente"));
         } catch (Exception e) {
             e.printStackTrace();
@@ -278,7 +284,46 @@ public class AuthController {
         }
     }
 
-    // En AuthController.java
+
+
+
+
+    @Operation(
+            summary = "Refrescar token de acceso",
+            description = "Genera un nuevo token de acceso JWT usando un refresh token válido enviado en la cookie."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Nuevo token de acceso generado correctamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    example = "{\"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Refresh token requerido",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    example = "{\"error\": \"Refresh token requerido\"}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Refresh token inválido o expirado",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    example = "{\"error\": \"Refresh token inválido o expirado\"}"
+                            )
+                    )
+            )
+    })
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshAccessToken(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
         if (refreshToken == null) {

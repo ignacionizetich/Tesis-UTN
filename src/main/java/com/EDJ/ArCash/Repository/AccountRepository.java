@@ -3,12 +3,8 @@ package com.EDJ.ArCash.Repository;
 import com.EDJ.ArCash.Models.Account;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -39,9 +35,5 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     /// METODO PAR ENCONTRAR UNA CUENTA CON EL ID DEL USUARIO
     Optional<Account> findByUser_Id(Long userId);
 
-    /// METODO  PARA ACTUALIZAR EL BALANCE DE UNA CUENTA EN ESPECIFICO POR SU ID
-    @Modifying
-    @Query("UPDATE Account a set a.balance = :balance where a.idAccount = :idAccount")
-   boolean updateBalanceByIdAccount(@Param("balance")double balance,@Param("IdAccount") Long idAccount);
 
 }
