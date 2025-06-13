@@ -58,9 +58,19 @@ body{
     cursor: pointer;
 }
 
-.sidebar-hide{
+
+
+.sidebar-hide {
     overflow: hidden;
+    max-width: 0;
+    opacity: 0;
+    transition: max-width 0.3s, opacity 0.3s;
     white-space: nowrap;
+}
+
+.sidebar:hover .sidebar-hide {
+    max-width: 200px;
+    opacity: 1;
 }
 
 .profile-picture{
@@ -1094,6 +1104,7 @@ body{
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: opacity 0.4s;
     transition: opacity 0.4s;
 }
 
