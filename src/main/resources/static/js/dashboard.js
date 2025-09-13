@@ -675,7 +675,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
         async function fetchWithAuth(url, options = {}) {
-            let token = localStorage.getItem('JWT');
+            const token = localStorage.getItem('JWT');
             options.headers = options.headers || {};
             if (token) {
                 options.headers['Authorization'] = 'Bearer ' + token;

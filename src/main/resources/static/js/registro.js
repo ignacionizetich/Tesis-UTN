@@ -113,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             mostrarMensaje(data.mensaje, 'green');
             formulario.reset();
+            formulario.focus();
             passwordHelp.style.display = 'none';
             confirmPasswordInput.classList.remove('input-error');
 

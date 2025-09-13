@@ -1,4 +1,4 @@
-function cargarMovimientos() {
+ function cargarMovimientos() {
     const lista = document.querySelector(".movimientos-lista");
     const userID = Number(localStorage.getItem("accountId"));
     const modal = document.getElementById("modalTransferencia");

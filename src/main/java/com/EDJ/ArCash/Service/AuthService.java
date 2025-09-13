@@ -49,6 +49,7 @@ public class AuthService {
     public LoginResponse login(LoginRequest loginRequest) {
         Optional<Credentials> credentialsOptional = credentialRepository.findByUsername(loginRequest.getUsername());
 
+
         if (credentialsOptional.isPresent()) {
             Credentials credentials = credentialsOptional.get();
             User usuario = credentials.getUser();

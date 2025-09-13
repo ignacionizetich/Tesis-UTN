@@ -62,7 +62,7 @@
 <div class="contenido">
     <h2>Hola, <span th:text="${username}">Usuario</span></h2>
     <h3>Recibimos una solicitud para restablecer tu contraseña en <span class="AR">AR</span><span class="Cash">Cash</span>.</h3>
-    <a class="boton" th:href="@{http://localhost:8080/validate-request(token=${token})}">
+    <a class="boton" th:href="@{http://arcash.me:8080/validate-request(token=${token})}">
         Restablecer contraseña
     </a>
     <h4><br>Si no solicitaste este cambio, puedes ignorar este correo.<br>El equipo de ArCash</h4>
