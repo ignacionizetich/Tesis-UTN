@@ -146,7 +146,7 @@ public class AuthService {
             String token = recoveryTokenService.createRecoveryToken(user);
 
             try {
-                emailService.testRecoverMail(user, token);
+                emailService.sendRecoverPasswordEmail(user, token);
                 return true;
             } catch (Exception e) {
                 e.printStackTrace();

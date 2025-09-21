@@ -218,6 +218,8 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             await navigator.clipboard.writeText(text);
             button.classList.add('success');
+            console.log('Copiando texto:', text);
+
             showToast('Copiado al portapapeles', 'success');
             setTimeout(() => {
                 button.classList.remove('success');

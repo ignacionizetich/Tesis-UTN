@@ -34,7 +34,7 @@
                     : `${signo}$${Math.abs(mov.amount).toLocaleString("es-AR")}`;
 
                 const usuarioRelacionado = esSalida ? mov.destinationUsername : mov.originUsername;
-                const fechaObj = new Date(mov.date);
+                const fechaObj = new Date(mov.date.replace(" ", "T"));
                 const fechaFormateada = fechaObj.toLocaleDateString("es-AR", {
                     day: '2-digit',
                     month: '2-digit',

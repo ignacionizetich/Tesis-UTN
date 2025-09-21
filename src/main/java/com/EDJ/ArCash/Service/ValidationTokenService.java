@@ -16,14 +16,7 @@ public class ValidationTokenService {
         this.validationTokenRepository = validationTokenRepository;
     }
 
-    @Transactional
-    public String createValidationToken(User user){
-        // Elimina el token anterior si existe
-        validationTokenRepository.deleteByUser_Id(user.getId());
-        ValidationToken validationToken = new ValidationToken(user);
-        validationTokenRepository.save(validationToken);
-        return validationToken.getToken();
-    }
+
 
     @Transactional
     public void usedToken(User user){

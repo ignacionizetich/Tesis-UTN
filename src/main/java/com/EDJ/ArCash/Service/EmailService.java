@@ -1,69 +1,63 @@
 package com.EDJ.ArCash.Service;
 
 import com.EDJ.ArCash.Models.User;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import java.nio.charset.StandardCharsets;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
-import java.io.UnsupportedEncodingException;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final WebClient webClient;
     private final SpringTemplateEngine templateEngine;
 
-    public EmailService(JavaMailSender mailSender, SpringTemplateEngine templateEngine) {
-        this.mailSender = mailSender;
+    public EmailService(WebClient resendWebClient, SpringTemplateEngine templateEngine) {
+        this.webClient = resendWebClient;
         this.templateEngine = templateEngine;
-
     }
 
-    public void testEmail(User user, String token) throws MessagingException, UnsupportedEncodingException {
-        Context context = new Context();
-        context.setVariable("username", user.getName());
-        context.setVariable("token", token);
-
-        String html = templateEngine.process("email", context);
-
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
-
-        // Establecer el nombre del remitente y la dirección de correo
-        helper.setFrom("helparcash2025@gmail.com", "ArCash");
-
-        helper.setTo(user.getEmail());
-        helper.setSubject("¡Bienvenido a ArCashApp, " + user.getName() + "!");
-
-        // Asegurar que el contenido sea HTML y usar UTF-8 para evitar problemas de codificación
-        helper.setText(html, true);
-
-        mailSender.send(mimeMessage);
+    @Async
+    public void sendVerificationEmail(User user, String token) {
+        sendEmail(user.getEmail(), "¡Bienvenido a ArCashApp, " + user.getName() + "!",
+                "email", Map.of("username", user.getName(), "token", token));
     }
 
-    public void testRecoverMail(User user, String token) throws MessagingException, UnsupportedEncodingException {
-        Context context = new Context();
-        context.setVariable("username", user.getName());
-        context.setVariable("token", token);
-
-        // Usa la plantilla de email de recuperación
-        String html = templateEngine.process("email-recover", context);
-
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
-
-        helper.setFrom("helparcash2025@gmail.com", "ArCash");
-        helper.setTo(user.getEmail());
-        helper.setSubject("Recupera tu contraseña en ArCash");
-
-        helper.setText(html, true);
-
-        mailSender.send(mimeMessage);
+    @Async
+    public void sendRecoverPasswordEmail(User user, String token) {
+        sendEmail(user.getEmail(), "Recupera tu contraseña en ArCash",
+                "email-recover", Map.of("username", user.getName(), "token", token));
     }
 
+    private void sendEmail(String to, String subject, String template, Map<String, Object> variables) {
+        try {
+            Context context = new Context();
+            context.setVariables(variables);
+            String html = templateEngine.process(template, context);
 
+            Map<String, Object> body = Map.of(
+                    "from", "no-reply@arcash.me",
+                    "to", List.of(to),
+                    "subject", subject,
+                    "html", html
+            );
+
+            webClient.post()
+                    .uri("/emails")
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .doOnError(e -> System.err.println("Error enviando mail: " + e.getMessage()))
+                    .block();
+
+            System.out.println("Mail enviado a " + to);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
