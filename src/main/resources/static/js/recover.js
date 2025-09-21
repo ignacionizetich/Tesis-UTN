@@ -23,5 +23,10 @@ document.getElementById('recoverForm').addEventListener('submit', async function
     } else {
         showToast("El correo ingresado no se asocia a una cuenta existente.", "FAILED");
     }
+
+    /// logica para volver atras
+    document.getElementById("back-button").addEventListener("click", () =>{
+        window.history.back()
+    })
 });
 

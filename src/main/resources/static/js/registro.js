@@ -127,6 +127,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+
+    /// logica del boton para volver atras
+    document.getElementById("back-button").addEventListener("click", () =>{
+         window.history.back();
+    })
+
     function mostrarMensaje(mensaje, color) {
         respuesta.textContent = mensaje;
         respuesta.style.color = color;

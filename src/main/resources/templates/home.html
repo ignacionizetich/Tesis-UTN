@@ -30,23 +30,23 @@
             <span class="brand-name">AR</span>
             <span class="brand-name-sub">Cash</span>
         </div>
+        </div>
         <p class="brand-tagline">BEST VIRTUAL WALLET</p>
     </div>
 
     <div class="access-interface">
-        <button onclick="location.href='/login'" class="access-btn primary">
+        <button id="btn-login" class="access-btn primary">
             <span>Login</span>
             <svg width="15" height="14" viewBox="0 0 24 24" fill="none">
                 <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke-width="2" stroke-linecap="round"/>
             </svg>
         </button>
 
-        <button onclick="location.href='/register'" class="access-btn secondary">
+        <button id="btn-register" class="access-btn secondary">
             <span>Sign in</span>
         </button>
 
-
-       <a th:href="@{/forgot}" class="access-link">Recover Credentials</a>
+        <a id="link-forgot" class="access-link">Recover Credentials</a>
     </div>
 
     <div class="global-footer">
@@ -60,6 +60,7 @@
 </main>
 
 <script th:src="@{/js/theme.js}"></script>
+<script th:src="@{/js/home.js}"></script>
 
 </body>
 </html>

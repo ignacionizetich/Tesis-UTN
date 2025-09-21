@@ -103,4 +103,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             });
     }
+
+    ///logica para volver atras en el login
+    document.getElementById("back-button").addEventListener("click", () =>{
+        window.history.back()
+    })
 });

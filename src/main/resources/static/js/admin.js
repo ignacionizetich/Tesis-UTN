@@ -40,6 +40,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         mostrarFormAdminBtn.disabled = false;
     });
 
+    /// volver atras
+    document.getElementById("back-button").addEventListener("click", () =>{
+        window.history.back()
+    })
+
     // Renderiza la lista de usuarios
     function renderUsuarios(usuarios) {
         if (!usuarios || usuarios.length === 0) {
