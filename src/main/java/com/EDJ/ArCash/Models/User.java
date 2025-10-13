@@ -2,6 +2,7 @@
 package com.EDJ.ArCash.Models;
 
 import com.EDJ.ArCash.Models.Imp.Permissions;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -71,6 +72,10 @@ public class User {
 
     @Column(nullable = false, name = "active")
     private boolean active;
+
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonBackReference("user-favorites") // Complemento de @JsonManagedReference
+    private List<FavoriteContact> favoriteContacts;
 
     public User(String name, String lastName, String dni, String email, String alias) {
         this.name = name;

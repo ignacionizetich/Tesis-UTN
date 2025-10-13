@@ -22,8 +22,6 @@ public class TaxUsdResponse {
     @Schema(description = "IVA calculado", example = "21.00")
     private double IVA;
 
-    @Schema(description = "Percepción de Ganancias calculada", example = "45.00")
-    private double percepcionGanancias;
 
     @Schema(description = "Total final con impuestos", example = "116.00")
     private double totalFinal;

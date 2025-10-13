@@ -40,16 +40,15 @@ public class TaxService {
 
     private TaxUsdResponse calcularUSD(double montoBase, String moneda){
         double iva = montoBase * 0.21;
-        double percepcionGanancias = montoBase * 0.30;
 
 
-        double total = montoBase + iva + percepcionGanancias;
+
+        double total = montoBase + iva ;
 
         TaxUsdResponse taxUsdResponse = new TaxUsdResponse();
         taxUsdResponse.setMontoOriginal(montoBase);
         taxUsdResponse.setMoneda(moneda);
         taxUsdResponse.setPrecioDolar(cotizationUsdService.obtenerCotizacionVenta());
-        taxUsdResponse.setPercepcionGanancias(percepcionGanancias);
         taxUsdResponse.setIVA(iva);
         taxUsdResponse.setTotalFinal(total);
 

@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 @Service
 public class TransactionService {
 
-
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
 
@@ -22,7 +21,6 @@ public class TransactionService {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
     }
-
 
     @Transactional
     public boolean transaction(Long idOrigen, Long idDestino, double monto) {
@@ -71,8 +69,6 @@ public class TransactionService {
         }
     }
 
-
-
     public List<TransactionDTO> listaTransacciones(Long id) {
         Optional<Account> accountOptional = accountRepository.findByIdAccount(id);
         if (accountOptional.isPresent()) {
@@ -85,6 +81,4 @@ public class TransactionService {
         }
         return Collections.emptyList();
     }
-
-
 }

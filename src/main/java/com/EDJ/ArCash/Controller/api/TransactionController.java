@@ -4,16 +4,15 @@ import com.EDJ.ArCash.DTO.AuthDTO.TransactionDTO;
 import com.EDJ.ArCash.DTO.AuthDTO.TransactionResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TranscationRequest;
 import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.Models.FavoriteContact;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AccountService;
+import com.EDJ.ArCash.Service.FavoriteContactService;
 import com.EDJ.ArCash.Service.TransactionService;
 import io.jsonwebtoken.Claims;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
@@ -35,33 +34,9 @@ public class TransactionController {
     private AccountService accountService;
     @Autowired
     private TransactionService transactionService;
+    @Autowired
+    private FavoriteContactService favoriteContactService;
 
-    @Operation(
-            summary = "Realizar transferencia entre cuentas",
-            description = "Transfiere un monto de una cuenta origen a una cuenta destino si el usuario es propietario de la cuenta origen."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Transferencia realizada correctamente",
-                    content = @Content(schema = @Schema(implementation = TransactionResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "No autorizado o fondos insuficientes",
-                    content = @Content(schema = @Schema(implementation = TransactionResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Cuenta de origen o destino no encontrada",
-                    content = @Content(schema = @Schema(implementation = TransactionResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "498",
-                    description = "Token inválido",
-                    content = @Content(schema = @Schema(implementation = TransactionResponse.class))
-            )
-    })
     @PostMapping("/{id1}/transfer/{id2}")
     @Transactional
     public ResponseEntity<TransactionResponse> transaction(
@@ -103,6 +78,10 @@ public class TransactionController {
             }
 
             if(transactionService.transaction(id1, id2, transcationRequest.getBalance())){
+
+                // NUEVO: Actualizar lastUsed si se transfiere a un contacto favorito
+                updateLastUsedForFavoriteContact(userId, id2);
+
                 return ResponseEntity.ok(new TransactionResponse(true, "Transferencia realizada correctamente"));
             }else{
                 return ResponseEntity.status(403).body(new TransactionResponse(false, "Not enough cash, stranger."));
@@ -110,32 +89,25 @@ public class TransactionController {
         }
     }
 
-    @Operation(
-            summary = "Buscar cuenta por alias o CVU",
-            description = "Busca una cuenta por alias o CVU y devuelve información básica de la cuenta y usuario."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Cuenta encontrada",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(
-                                    example = "{\"idaccount\": 1, \"alias\": \"mi.alias.cuenta\", \"cvu\": \"0001234567890123456789\", \"user\": {\"nombre\": \"Juan\", \"apellido\": \"Pérez\", \"dni\": \"12345678\"}}"
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Cuenta no encontrada",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(
-                                    example = "{\"error\": \"Cuenta no encontrada.\"}"
-                            )
-                    )
-            )
-    })
+    // NUEVO: Método privado para actualizar lastUsed
+    private void updateLastUsedForFavoriteContact(Long userId, Long destinationAccountId) {
+        try {
+            // Buscar si la cuenta de destino es un contacto favorito del usuario
+            List<FavoriteContact> userFavorites = favoriteContactService.getFavoriteContactsByUser(userId);
+
+            Optional<FavoriteContact> matchingFavorite = userFavorites.stream()
+                    .filter(favorite -> favorite.getFavoriteAccount().getIdAccount().equals(destinationAccountId))
+                    .findFirst();
+
+            if (matchingFavorite.isPresent()) {
+                favoriteContactService.updateLastUsedForContact(matchingFavorite.get().getId());
+            }
+        } catch (Exception e) {
+            // Log del error pero no fallar la transferencia
+            System.out.println("Error actualizando lastUsed para contacto favorito: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/search/{input}")
     public ResponseEntity<?> searchAccount(
             @Parameter(description = "Alias o CVU de la cuenta", required = true) @PathVariable String input) {
@@ -161,27 +133,6 @@ public class TransactionController {
         }
     }
 
-    @Operation(
-            summary = "Obtener transacciones de una cuenta",
-            description = "Devuelve la lista de transacciones asociadas a una cuenta."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Lista de transacciones obtenida correctamente",
-                    content = @Content(schema = @Schema(implementation = TransactionDTO.class))
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Token no proporcionado o inválido",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(
-                                    example = "{\"error\": \"Token no proporcionado o inválido\"}"
-                            )
-                    )
-            )
-    })
     @GetMapping("/{id}/getTransactions")
     public List<TransactionDTO> getTransactions(
             @Parameter(description = "ID de la cuenta", required = true) @PathVariable long id){

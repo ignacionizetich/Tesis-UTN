@@ -2,13 +2,11 @@ package com.EDJ.ArCash.Models;
 
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
+import java.util.List;
 
 
 @Getter
@@ -21,7 +19,7 @@ public class Account {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long idAccount;
+    private Long idAccount;
 
 
     /// Muchas cuentas(caja en pesos y dolares) pertenece a un usuario
@@ -48,6 +46,9 @@ public class Account {
 
     @Column(name = "creation_date")
     private String creationDate;
+
+    @OneToMany(mappedBy = "favoriteAccount", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<FavoriteContact> favoritedBy;
 
 
     public Account (User user){
