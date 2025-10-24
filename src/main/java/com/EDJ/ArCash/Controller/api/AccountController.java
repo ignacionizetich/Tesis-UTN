@@ -5,6 +5,7 @@ import com.EDJ.ArCash.DTO.AuthDTO.AccountResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.AliasRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.AliasResponse;
 import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AccountService;
 import io.jsonwebtoken.Claims;
@@ -143,7 +144,7 @@ public class AccountController {
         }
 
         String token = authHeader.substring(7);
-        Claims claims = JwtUtils.getClaimJWT(token);
+        Claims claims = jwtUtils.getClaimJWT(token);
         String userIdStr = claims.get("userID", String.class);
         Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
 
@@ -196,5 +197,81 @@ public class AccountController {
         }
 
         return accountService.changeAlias(aliasRequest.getNewAlias(), id, responseEntity);
+    }
+
+    @Operation(
+            summary = "Obtener datos para el código QR",
+            description = "Devuelve la información necesaria para generar un código QR para recibir transferencias."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Datos para el QR obtenidos correctamente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    example = "{\"walletApp\":\"ArCashV1\",\"accountId\":123,\"accountAlias\":\"juan.perez.arcash\",\"receiverName\":\"Juan Pérez\",\"dni\":\"12345678\",\"currency\":\"ARS\"}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Token no proporcionado o inválido"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "El usuario no es propietario de la cuenta"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Cuenta no encontrada"
+            )
+    })
+    @GetMapping("/{id}/qr-data")
+    public ResponseEntity<Map<String, Object>> getQrData(@PathVariable Long id, HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", "Token no proporcionado o inválido"));
+        }
+
+
+        String token = authHeader.substring(7);
+        Claims claims = jwtUtils.getClaimJWT(token);
+        String userIdStr = claims.get("userID", String.class);
+        Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
+
+
+
+        Optional<Account> optionalAccount = accountService.findAccountByID(id);
+
+        if (optionalAccount.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "Cuenta no encontrada"));
+        }
+
+        Account account = optionalAccount.get();
+        if (!account.getUser().getId().equals(userId)) {
+            System.out.println("--- ¡ERROR! Los IDs no coinciden. Acceso denegado. ---"); // Log de error
+            return ResponseEntity.status(403).body(Map.of("error", "El usuario no es propietario de la cuenta"));
+        }
+
+
+        User user = account.getUser();
+
+        Map<String, Object> qrData = new HashMap<>();
+        qrData.put("walletApp", "ArCashV1");
+        qrData.put("accountId", account.getIdAccount());
+        qrData.put("accountAlias", account.getAccountNickname());
+        qrData.put("receiverName", user.getName() + " " + user.getLastName());
+        qrData.put("dni", user.getDni());
+        qrData.put("email", user.getEmail());
+        if ("PESOS".equalsIgnoreCase(account.getAccountType())) {
+            qrData.put("currency", "ARS");
+        } else {
+            qrData.put("currency", account.getAccountType());
+        }
+
+
+        return ResponseEntity.ok(qrData);
     }
 }

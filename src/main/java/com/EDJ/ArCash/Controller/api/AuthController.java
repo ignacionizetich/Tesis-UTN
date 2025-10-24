@@ -40,6 +40,9 @@ public class AuthController {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 
+    @Autowired
+    private JwtUtils jwtUtils;
+
     @Operation(
             summary = "Iniciar sesión",
             description = "Verifica las credenciales del usuario y retorna tokens de acceso y refresh si son válidas."
@@ -271,7 +274,7 @@ public class AuthController {
         }
         String token = authHeader.substring(7);
 
-        String userIdStr = JwtUtils.extractUserId(token);
+        String userIdStr = jwtUtils.extractUserId(token);
         if (userIdStr == null) {
             return ResponseEntity.status(401).body(new UsernameResponse(false, "Token invalido"));
         }
@@ -334,7 +337,7 @@ public class AuthController {
             return ResponseEntity.status(401).body(Map.of("error", "Refresh token inválido o expirado"));
         }
         User user = tokenOpt.get().getUser();
-        String newAccessToken = JwtUtils.generateToken(String.valueOf(user.getId()), user.getPermissions().name());
+        String newAccessToken = jwtUtils.generateToken(String.valueOf(user.getId()), user.getPermissions().name());
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
     }
 

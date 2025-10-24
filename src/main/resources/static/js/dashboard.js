@@ -255,6 +255,61 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // QR Modal
+    const qrModal = document.getElementById("qr-modal");
+    const qrButton = document.getElementById("btn-qr");
+    const closeQr = document.querySelector(".close-qr");
+    const qrcodeContainer = document.getElementById("qrcode");
+    let qrcode = null;
+
+    if (qrButton) {
+        qrButton.addEventListener("click", async () => {
+            const accountId = localStorage.getItem("accountId");
+            if (!accountId) {
+                showToast("No se pudo obtener el ID de la cuenta.", "error");
+                return;
+            }
+
+            try {
+                const response = await fetchWithAuth(`/api/accounts/${accountId}/qr-data`, { method: "GET" });
+                if (!response.ok) {
+                    throw new Error("No se pudieron obtener los datos para el QR.");
+                }
+                const qrData = await response.json();
+
+                if (qrcode) {
+                    qrcode.clear(); // Limpia el QR anterior
+                    qrcode.makeCode(JSON.stringify(qrData)); // Genera el nuevo QR
+                } else {
+                    qrcode = new QRCode(qrcodeContainer, {
+                        text: JSON.stringify(qrData),
+                        width: 256,
+                        height: 256,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+                }
+
+                qrModal.classList.remove("hidden");
+            } catch (error) {
+                showToast(error.message, "error");
+            }
+        });
+    }
+
+    if (closeQr) {
+        closeQr.addEventListener("click", () => {
+            qrModal.classList.add("hidden");
+        });
+    }
+
+    window.addEventListener("click", (e) => {
+        if (e.target === qrModal) {
+            qrModal.classList.add("hidden");
+        }
+    });
+
     // Sidebar toggle
     const menuButton = document.getElementById("menu-toggle");
     const sidebar = document.getElementById("sidebar");

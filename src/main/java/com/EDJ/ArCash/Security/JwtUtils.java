@@ -24,7 +24,7 @@ import java.util.List;
 @Component
 public class JwtUtils {
 
-    private static Key secretKey;
+    private  Key secretKey;
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
@@ -39,7 +39,7 @@ public class JwtUtils {
 
 
 
-    public static String generateToken(String idUser, String role) {
+    public  String generateToken(String idUser, String role) {
         return Jwts.builder()
                 .setSubject(idUser)
                 .claim("userID",idUser)
@@ -50,7 +50,7 @@ public class JwtUtils {
                 .compact();
     }
 
-    public static String generateRefreshToken(String idUser, String role) {
+    public  String generateRefreshToken(String idUser, String role) {
         return Jwts.builder()
                 .setSubject(idUser)
                 .claim("role", role)
@@ -60,7 +60,7 @@ public class JwtUtils {
                 .compact();
     }
 
-    public static Claims getClaimJWT(String token){
+    public  Claims getClaimJWT(String token){
         JwtParserBuilder parserBuilder = Jwts.parserBuilder();
         return parserBuilder.setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
     }
@@ -92,7 +92,7 @@ public class JwtUtils {
 
 
 
-    public static String extractUserId(String token) {
+    public  String extractUserId(String token) {
         Claims claims = getClaimJWT(token);
         return claims.get("userID", String.class);
     }

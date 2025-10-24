@@ -67,11 +67,11 @@ public class AuthService {
             if (!activeTokens.isEmpty()) {
                 refreshToken = activeTokens.get(0).getRefreshToken();
             } else {
-                refreshToken = JwtUtils.generateRefreshToken(String.valueOf(usuario.getId()), usuario.getPermissions().name());
+                refreshToken = jwtUtils.generateRefreshToken(String.valueOf(usuario.getId()), usuario.getPermissions().name());
                 saveRefreshToken(usuario, refreshToken);
             }
 
-            String accessToken = JwtUtils.generateToken(String.valueOf(usuario.getId()), usuario.getPermissions().name());
+            String accessToken = jwtUtils.generateToken(String.valueOf(usuario.getId()), usuario.getPermissions().name());
 
             Optional<Account> optionalAccount = accountRepository.findByUser_Id(usuario.getId());
             if (optionalAccount.isPresent()) {
@@ -85,7 +85,7 @@ public class AuthService {
 
     public LogoutStatus logout(String accessToken) {
         try {
-            Claims claims = JwtUtils.getClaimJWT(accessToken);
+            Claims claims = jwtUtils.getClaimJWT(accessToken);
             String userId = claims.get("userID", String.class);
 
             if (userId == null) {
@@ -116,7 +116,7 @@ public class AuthService {
 
     public boolean isValidSession(String token) {
         try {
-            String userId = JwtUtils.extractUserId(token);
+            String userId = jwtUtils.extractUserId(token);
             if (userId == null) return false;
 
             return refreshTokenRepository.existsByUser_IdAndRevokedFalse(Long.parseLong(userId));

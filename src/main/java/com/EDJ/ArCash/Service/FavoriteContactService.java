@@ -71,22 +71,13 @@ public class FavoriteContactService {
     public List<FavoriteContact> getFavoriteContactsByUser(Long userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
-            System.out.println("Usuario no encontrado con ID: " + userId);
             return List.of();
         }
 
         User user = userOpt.get();
-        System.out.println("Usuario encontrado: " + user.getId());
 
-        // Buscar TODOS los favoritos primero para debuggear
-        List<FavoriteContact> allFavorites = favoriteContactRepository.findByOwner(user);
-        System.out.println("Total de favoritos (incluyendo inactivos): " + allFavorites.size());
-
-        // Ahora buscar solo los activos
-        List<FavoriteContact> activeFavorites = favoriteContactRepository.findByOwnerAndActiveTrue(user);
-        System.out.println("Total de favoritos activos: " + activeFavorites.size());
-
-        return activeFavorites;
+        // Ahora buscar solo los activos y los retorno
+        return favoriteContactRepository.findByOwnerAndActiveTrue(user);
     }
 
     // En FavoriteContactService.java
@@ -138,9 +129,6 @@ public class FavoriteContactService {
     @Transactional
     public boolean updateFavoriteContact(Long contactId, Long userId, String newAlias, String newDescription) {
         try {
-            System.out.println("=== ACTUALIZANDO CONTACTO FAVORITO ===");
-            System.out.println("ContactId: " + contactId + ", UserId: " + userId);
-            System.out.println("Nuevo alias: " + newAlias + ", Nueva descripción: " + newDescription);
 
             Optional<FavoriteContact> optionalContact = favoriteContactRepository.findById(contactId);
 
@@ -150,16 +138,8 @@ public class FavoriteContactService {
             }
 
             FavoriteContact contact = optionalContact.get();
-            System.out.println("Contacto encontrado:");
-            System.out.println("- ID: " + contact.getId());
-            System.out.println("- Owner ID: " + contact.getOwner().getId());
-            System.out.println("- Active: " + contact.isActive());
-            System.out.println("- Alias actual: " + contact.getContactAlias());
-
             // Verificar que el contacto pertenece al usuario
             if (!contact.getOwner().getId().equals(userId)) {
-                System.out.println("ERROR: El contacto no pertenece al usuario.");
-                System.out.println("Owner esperado: " + userId + ", Owner real: " + contact.getOwner().getId());
                 return false;
             }
 
@@ -171,17 +151,14 @@ public class FavoriteContactService {
 
             // Actualizar los campos
             if (newAlias != null && !newAlias.trim().isEmpty()) {
-                System.out.println("Actualizando alias de '" + contact.getContactAlias() + "' a '" + newAlias.trim() + "'");
                 contact.setContactAlias(newAlias.trim());
             }
 
             if (newDescription != null) {
-                System.out.println("Actualizando descripción de '" + contact.getDescription() + "' a '" + newDescription.trim() + "'");
                 contact.setDescription(newDescription.trim());
             }
 
             favoriteContactRepository.save(contact);
-            System.out.println("✅ Contacto favorito actualizado correctamente");
             return true;
 
         } catch (Exception e) {

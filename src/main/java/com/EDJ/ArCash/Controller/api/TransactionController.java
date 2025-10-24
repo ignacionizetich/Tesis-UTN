@@ -36,6 +36,8 @@ public class TransactionController {
     private TransactionService transactionService;
     @Autowired
     private FavoriteContactService favoriteContactService;
+    @Autowired
+    private JwtUtils jwtUtils;
 
     @PostMapping("/{id1}/transfer/{id2}")
     @Transactional
@@ -63,7 +65,7 @@ public class TransactionController {
             }
 
             String token = authHeader.substring(7);
-            Claims claims = JwtUtils.getClaimJWT(token);
+            Claims claims = jwtUtils.getClaimJWT(token);
             String userIdStr = claims.get("userID", String.class);
             Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
 

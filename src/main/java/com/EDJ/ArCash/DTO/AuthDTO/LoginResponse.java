@@ -18,10 +18,10 @@ public class LoginResponse {
     private String message;
 
     @Schema(description = "Token de acceso JWT", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
-    private String AccessToken;
+    private String accessToken;
 
     @Schema(description = "Token de refresco JWT", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
-    private String RefreshToken;
+    private String refreshToken;
 
     @Schema(description = "ID de la cuenta asociada", example = "123")
     private Long accountId;

@@ -7,6 +7,7 @@ import com.EDJ.ArCash.Models.FavoriteContact;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.FavoriteContactService;
+import io.jsonwebtoken.Jwt;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -34,6 +35,8 @@ public class FavoriteContactController {
 
     @Autowired
     private FavoriteContactService favoriteContactService;
+    @Autowired
+    private JwtUtils jwtUtils;
 
     @PostMapping("/add")
     @Operation(summary = "Agregar contacto a favoritos")
@@ -237,7 +240,7 @@ public class FavoriteContactController {
         }
 
         String token = authHeader.substring(7);
-        String userIdStr = JwtUtils.extractUserId(token);
+        String userIdStr = jwtUtils.extractUserId(token);
         if (userIdStr == null) {
             return Optional.empty();
         }
@@ -282,21 +285,21 @@ public class FavoriteContactController {
             String accountType
     ) {
         public static FavoriteContactResponse from(FavoriteContact favorite) {
-            Account favAccount = favorite.getFavoriteAccount();
-            User accountOwner = favAccount.getUser(); // El dueño de la cuenta favorita
+            Account favoriteAccount = favorite.getFavoriteAccount();
+            User accountOwner = favoriteAccount.getUser();
 
             return new FavoriteContactResponse(
                     favorite.getId(),
                     favorite.getContactAlias(),
                     favorite.getDescription(),
-                    favorite.getCreationDate(),
-                    favorite.getLastUsed(),
+                    favorite.getCreationDate().toString(),
+                    favorite.getLastUsed() != null ? favorite.getLastUsed().toString() : null,
                     favorite.isActive(),
-                    accountOwner.getName() + " " + accountOwner.getLastName(), // Nombre completo del dueño de la cuenta
-                    accountOwner.getAlias(),                    // Alias del dueño de la cuenta
-                    favAccount.getAccountCvu(),                 // CBU de la cuenta favorita
-                    favAccount.getAccountNickname(),                      // Alias de la cuenta favorita
-                    favAccount.getAccountType().toString()
+                    accountOwner.getName() + " " + accountOwner.getLastName(),
+                    accountOwner.getAlias(), // O el campo que uses para alias del usuario
+                    favoriteAccount.getAccountCvu(),
+                    favoriteAccount.getAccountNickname(),
+                    "PESOS" // O el campo correspondiente si tienes getAccountType()
             );
         }
     }

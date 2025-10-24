@@ -28,6 +28,9 @@ public class AdminService {
      @Autowired
      private AccountService accountService;
 
+     @Autowired
+     private JwtUtils jwtUtils;
+
     // metodo para traer una lista de usuarios autenticados
     public List<UserResponse> getAuthUsers() {
         List<User> users = userRepository.findByEnabledTrue();
@@ -83,17 +86,10 @@ public class AdminService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token no proporcionado");
         }
         String token = authHeader.substring(7);
-        String role = JwtUtils.getClaimJWT(token).get("role", String.class);
+        String role = jwtUtils.getClaimJWT(token).get("role", String.class);
         if (!"ADMIN".equals(role)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos de administrador");
         }
-    }
-
-
-    public void insertarAdministrador(User user, String rawPassword) {
-        userRepository.save(user);
-        credentialsService.createCredentials(user,rawPassword);
-        accountService.createAccount(user,"PESOS");
     }
 
 

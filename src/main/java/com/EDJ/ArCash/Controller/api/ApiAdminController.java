@@ -11,14 +11,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.mail.MessagingException;
+
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 @RestController
@@ -125,7 +123,7 @@ public class ApiAdminController {
     )
 
     @PostMapping("/users/create-admin")
-    public ResponseEntity<?> createAdminUser(@RequestBody AdminRequest adminRequest,HttpServletRequest request) throws MessagingException, UnsupportedEncodingException {
+    public ResponseEntity<?> createAdminUser(@RequestBody AdminRequest adminRequest,HttpServletRequest request)  {
         adminService.validarAdmin(request);
         User user = new User();
         user.setName(adminRequest.getName().substring(0,1).toUpperCase() + adminRequest.getName().substring(1).toLowerCase());
@@ -136,7 +134,7 @@ public class ApiAdminController {
         user.setAlias(adminRequest.getUsername());
         user.setEnabled(true);
         user.setActive(true);
-        adminService.insertarAdministrador(user, adminRequest.getPassword());
+//        adminService.insertarAdministrador(user, adminRequest.getPassword());
         return ResponseEntity.ok("Usuario administrador creado correctamente");
 
     }

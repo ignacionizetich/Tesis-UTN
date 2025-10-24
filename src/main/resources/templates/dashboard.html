@@ -27,11 +27,7 @@
     </div>
 </div>
 
-
-
 <header class="app-header">
-
-    </button>
     <div class="theme-control">
         <button id="theme-switcher">
             <svg width="22" height="22" viewBox="0 0 24 24">
@@ -43,99 +39,91 @@
     <h1 class="app-title">ARCash</h1>
 </header>
 
-    <aside class="sidebar">
-
-         <ul class="sidebar-list">
-             <li class="sidebar-element">
-
-                 <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" transform="" id="injected-svg">
-                     <path d="m19,2H5c-1.1,0-2,.9-2,2v16c0,1.1.9,2,2,2h14c1.1,0,2-.9,2-2V4c0-1.1-.9-2-2-2ZM5,20V4h14v16s-14,0-14,0Z"/>
-                     <path d="M7 12H9V14H7z"/>
-                     <path d="M7 16H9V18H7z"/>
-                     <path d="M11 12H13V14H11z"/>
-                     <path d="M7 6H17V10H7z"/>
-                     <path d="M11 16H13V18H11z"/>
-                     <path d="M15 12H17V18H15z"/>
+<aside class="sidebar">
+     <ul class="sidebar-list">
+         <li class="sidebar-element">
+             <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" transform="" id="injected-svg">
+                 <path d="m19,2H5c-1.1,0-2,.9-2,2v16c0,1.1.9,2,2,2h14c1.1,0,2-.9,2-2V4c0-1.1-.9-2-2-2ZM5,20V4h14v16s-14,0-14,0Z"/>
+                 <path d="M7 12H9V14H7z"/>
+                 <path d="M7 16H9V18H7z"/>
+                 <path d="M11 12H13V14H11z"/>
+                 <path d="M7 6H17V10H7z"/>
+                 <path d="M11 16H13V18H11z"/>
+                 <path d="M15 12H17V18H15z"/>
+             </svg>
+             <div class="sidebar-hide">
+                 <a href="#" id="abrir-calculadora">Calculadora Impuestos</a>
+             </div>
+         </li>
+         <li class="sidebar-element" id="admin-panel-link" style="display:none;">
+                 <svg  xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                       fill="currentColor" viewBox="0 0 24 24" >
+                     <path d="m20,2H4c-1.1,0-2,.9-2,2v16c0,1.1.9,2,2,2h14c1.1,0,2-.9,2-2v-10c1.1,0,2-.9,2-2v-4c0-1.1-.9-2-2-2Zm-2,18H4v-10h14v10Zm2-12H4v-4h16v4s0,0,0,0Z"></path><path d="M16.5 7 18 5 15 5 16.5 7z"></path><path d="M6 12H16V14H6z"></path><path d="M6 16H13V18H6z"></path>
                  </svg>
-                 <div class="sidebar-hide">
-                     <a href="#" id="abrir-calculadora">Calculadora Impuestos</a>
-                 </div>
-             </li>
-             <li class="sidebar-element" id="admin-panel-link" style="display:none;">
-                     <svg  xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                           fill="currentColor" viewBox="0 0 24 24" >
-                         <path d="m20,2H4c-1.1,0-2,.9-2,2v16c0,1.1.9,2,2,2h14c1.1,0,2-.9,2-2v-10c1.1,0,2-.9,2-2v-4c0-1.1-.9-2-2-2Zm-2,18H4v-10h14v10Zm2-12H4v-4h16v4s0,0,0,0Z"></path><path d="M16.5 7 18 5 15 5 16.5 7z"></path><path d="M6 12H16V14H6z"></path><path d="M6 16H13V18H6z"></path>
-                     </svg>
-                    <div class="sidebar-hide">
-                        <a href="/adminDashboard" id="sidebar-admin-link">Admin</a>
-                    </div>
-             </li>
-
-             <li class="sidebar-element ">
-                         <svg class="profile-picture" width="38" height="38" viewBox="0 0 24 24" fill="none">
-                             <circle cx="12" cy="12" r="12" fill="#ccc"/>
-                             <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#666"/>
-                         </svg>
-
-                     <div class="sidebar-hide">
-                         <div class="user-name" id="user-name-topbar">Cargando...</div>
-                             <a href="#" id="open-profile-modal">Mi Perfil</a>
-                     </div>
-             </li>
-
-             <li class="sidebar-element">
-                 <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" transform="" id="injected-svg">
-                     <path d="m20,4c0-1.1-.9-2-2-2H6c-1.1,0-2,.9-2,2v16h-2v2h20v-2h-2V4ZM6,20V4h12v16H6Z"/>
-                     <path d="M15 11H17V13H15z"/>
-                 </svg>
-                 <div class="sidebar-hide">
-                     <a href="/logout">Salir</a>
-                 </div>
-             </li>
-         </ul>
-    </aside>
-
-
-    <!-- CONTENEDOR DEL USUARIO -->
-        <div id="profile-modal" class="modal hidden">
-            <div class="modal-content">
-                <span class="close-button close-profile">&times;</span>
-                <h2>Perfil de Usuario</h2>
-                <div class="profile-details">
-                    <div class="profile-photo" tabindex="0">
-                        <svg width="50" height="50" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="12" fill="#ccc"/>
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                                  fill="#666"/>
-                        </svg>
-                    </div>
-                    <p><strong>Nombre:</strong> <span id="profile-name">Cargando...</span></p>
-                    <p><strong>Apellido:</strong> <span id="profile-lastName">Cargando...</span></p>
-                    <p><strong>Correo:</strong> <span id="profile-email">Cargando...</span></p>
-                    <p><strong>Dni:</strong> <span id="profile-dni">Cargando...</span></p>
-                    <p>
-                        <strong>Nombre de usuario:</strong>
-                        <span id="profile-username-display" style="display: inline-flex; align-items: center;">cargando...</span>
-                        <button id="edit-username-btn" title="Editar nombre de usuario">
-                            <i class="fas fa-pencil-alt"></i>
-                        </button>
-                        <input type="text" id="profile-username-input" class="hidden" maxlength="25"/>
-                    </p>
-                    <p>
-                        <strong>Alias:</strong>
-                        <span id="profile-alias-display"
-                              style="display: inline-flex; align-items: center;">cargando...</span>
-                        <button id="edit-alias-btn" title="Editar alias">
-                            <i class="fas fa-pencil-alt"></i>
-                        </button>
-                        <input type="text" id="profile-alias-input" class="hidden" maxlength="25"/>
-                    </p>
-                    <p><strong>Cvu:</strong> <span id="profile-cvu">Cargando...</span></p>
+                <div class="sidebar-hide">
+                    <a href="/adminDashboard" id="sidebar-admin-link">Admin</a>
                 </div>
+         </li>
+         <li class="sidebar-element ">
+                     <svg class="profile-picture" width="38" height="38" viewBox="0 0 24 24" fill="none">
+                         <circle cx="12" cy="12" r="12" fill="#ccc"/>
+                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#666"/>
+                     </svg>
+                 <div class="sidebar-hide">
+                     <div class="user-name" id="user-name-topbar">Cargando...</div>
+                         <a href="#" id="open-profile-modal">Mi Perfil</a>
+                 </div>
+         </li>
+         <li class="sidebar-element">
+             <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" transform="" id="injected-svg">
+                 <path d="m20,4c0-1.1-.9-2-2-2H6c-1.1,0-2,.9-2,2v16h-2v2h20v-2h-2V4ZM6,20V4h12v16H6Z"/>
+                 <path d="M15 11H17V13H15z"/>
+             </svg>
+             <div class="sidebar-hide">
+                 <a href="/logout">Salir</a>
+             </div>
+         </li>
+     </ul>
+</aside>
+
+<!-- CONTENEDOR DEL USUARIO -->
+<div id="profile-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-button close-profile">&times;</span>
+        <h2>Perfil de Usuario</h2>
+        <div class="profile-details">
+            <div class="profile-photo" tabindex="0">
+                <svg width="50" height="50" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="12" fill="#ccc"/>
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                          fill="#666"/>
+                </svg>
             </div>
+            <p><strong>Nombre:</strong> <span id="profile-name">Cargando...</span></p>
+            <p><strong>Apellido:</strong> <span id="profile-lastName">Cargando...</span></p>
+            <p><strong>Correo:</strong> <span id="profile-email">Cargando...</span></p>
+            <p><strong>Dni:</strong> <span id="profile-dni">Cargando...</span></p>
+            <p>
+                <strong>Nombre de usuario:</strong>
+                <span id="profile-username-display" style="display: inline-flex; align-items: center;">cargando...</span>
+                <button id="edit-username-btn" title="Editar nombre de usuario">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
+                <input type="text" id="profile-username-input" class="hidden" maxlength="25"/>
+            </p>
+            <p>
+                <strong>Alias:</strong>
+                <span id="profile-alias-display"
+                      style="display: inline-flex; align-items: center;">cargando...</span>
+                <button id="edit-alias-btn" title="Editar alias">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
+                <input type="text" id="profile-alias-input" class="hidden" maxlength="25"/>
+            </p>
+            <p><strong>Cvu:</strong> <span id="profile-cvu">Cargando...</span></p>
         </div>
-        </div>
-</nav>
+    </div>
+</div>
 
 <main class="dashboard">
     <div class="dashboard-name">
@@ -173,6 +161,14 @@
                     <i class="fa-regular fa-id-card"></i>
                 </button>
                 <span class="label">Ver CVU</span>
+            </div>
+            
+            <!-- Boton para mostrar el QR -->
+            <div class="button-qr">
+                <button id="btn-qr" class="action-button qr">
+                    <i class="fa-solid fa-qrcode"></i>
+                </button>
+                <span class="label">Mi QR</span>
             </div>
         </div>
     </div>
@@ -276,6 +272,15 @@
         </div>
     </div>
 
+    <!-- Modal para ver el QR -->
+    <div id="qr-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button close-qr">&times;</span>
+            <h2>Mi Código QR</h2>
+            <p>Escanea este código para recibir una transferencia.</p>
+            <div id="qrcode"></div>
+        </div>
+    </div>
 
     <!-- Modal para ver la Calculadora de Impuestos -->
     <div id="tax-modal" class="modal hidden">
@@ -301,6 +306,7 @@
     </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script th:src="@{/js/theme.js}"></script>
 <script th:src="@{/js/dashboard.js}"></script>
 <script th:src="@{/js/transactions.js}"></script>
