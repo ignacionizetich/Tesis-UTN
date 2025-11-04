@@ -3,8 +3,11 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.AuthDTO.AdminRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.UserResponse;
+import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
+import com.EDJ.ArCash.Models.ValidationToken;
+import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.Service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -27,6 +31,11 @@ public class ApiAdminController {
 
     @Autowired
     private AdminService adminService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+
 
 
 
@@ -134,7 +143,10 @@ public class ApiAdminController {
         user.setAlias(adminRequest.getUsername());
         user.setEnabled(true);
         user.setActive(true);
-//        adminService.insertarAdministrador(user, adminRequest.getPassword());
+        // Crear credenciales y token en cascada
+        user.setCredentials(new Credentials(user, user.getAlias(), passwordEncoder.encode(adminRequest.getPassword())));
+
+        adminService.cargarAdmin(user);
         return ResponseEntity.ok("Usuario administrador creado correctamente");
 
     }

@@ -34,7 +34,10 @@ public class UserService {
     }
 
 
-    public void insertarUsuario(User user, String rawPassword) {
+    public void insertarUsuario(User user, String rawPassword) throws RuntimeException {
+        // Validar múltiples conflictos
+        validateUserConflicts(user);
+        
         // Formatear nombres
         user.setName(capitalize(user.getName()));
         user.setLastName(capitalize(user.getLastName()));
@@ -52,6 +55,40 @@ public class UserService {
         // Enviar mail asincrónico
         emailService.sendVerificationEmail(user, user.getValidationToken().getToken());
     }
+    
+    private void validateUserConflicts(User user) throws RuntimeException {
+        java.util.List<String> errors = new java.util.ArrayList<>();
+        
+        // Verificar si el email ya existe
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            errors.add("EMAIL_ALREADY_EXISTS");
+        }
+        
+        // Verificar si el alias ya existe
+        if (findByAlias(user.getAlias()) != null) {
+            errors.add("ALIAS_ALREADY_EXISTS");
+        }
+        
+        // Verificar si el DNI ya existe
+        if (findByDni(user.getDni()) != null) {
+            errors.add("DNI_ALREADY_EXISTS");
+        }
+        
+        // Si hay errores, lanzar excepción con todos los conflictos
+        if (!errors.isEmpty()) {
+            throw new RuntimeException(String.join(",", errors));
+        }
+    }
+    
+    private User findByAlias(String alias) {
+        // Usar el método del repository para búsqueda por alias
+        return userRepository.findByAlias(alias).orElse(null);
+    }
+    
+    private User findByDni(String dni) {
+        // Usar el método del repository para búsqueda por DNI
+        return userRepository.findByDni(dni).orElse(null);
+    }
 
 
     public void validarUsuario(User user){
@@ -60,6 +97,42 @@ public class UserService {
         user.setActive(true);
         userRepository.save(user);
         validationTokenService.usedToken(user);
+    }
+
+    /**
+     * Reenvía el enlace de validación de email para usuarios no validados
+     * @param email Email del usuario
+     * @return true si se envió exitosamente, false si no se pudo enviar
+     */
+    public boolean resendValidationEmail(String email) {
+        try {
+            // Buscar el usuario por email
+            java.util.Optional<User> optionalUser = userRepository.findByEmail(email);
+            
+            if (optionalUser.isEmpty()) {
+                return false; // Usuario no existe
+            }
+            
+            User user = optionalUser.get();
+            
+            // Verificar que el usuario no esté ya validado
+            if (user.isEnabled()) {
+                return false; // Usuario ya está validado
+            }
+            
+            // Crear un nuevo token de validación (invalidar el anterior)
+            ValidationToken newToken = validationTokenService.createNewToken(user);
+            
+            // Enviar el nuevo email de validación
+            emailService.sendVerificationEmail(user, newToken.getToken());
+            
+            return true;
+            
+        } catch (Exception e) {
+            // Log del error (opcional)
+            System.err.println("Error al reenviar email de validación: " + e.getMessage());
+            return false;
+        }
     }
 
 

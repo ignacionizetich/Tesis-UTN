@@ -142,14 +142,15 @@ public class AuthService {
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            recoveryTokenRepository.deleteByUser_Id(user.getId());
-            String token = recoveryTokenService.createRecoveryToken(user);
 
+            // Usar el nuevo método que actualiza en lugar de borrar y crear
+            String token = recoveryTokenService.createRecoveryToken(user);
             try {
                 emailService.sendRecoverPasswordEmail(user, token);
                 return true;
             } catch (Exception e) {
                 e.printStackTrace();
+                return false;
             }
         }
         return false;
@@ -186,6 +187,26 @@ public class AuthService {
         RecoveryToken token = optionalToken.get();
         return !token.isUsed() && token.getExpirationDate().isAfter(LocalDateTime.now());
     }
+
+    /**
+     * Reenvía el enlace de recuperación de contraseña
+     * @param email Email del usuario
+     * @return true si se envió exitosamente, false si no se pudo enviar
+     */
+    public boolean resendPasswordRecovery(String email) {
+        try {
+            System.out.println("Iniciando reenvío de recuperación para email: " + email);
+            boolean result = enviarCorreoRecuperacion(email);
+            System.out.println("Resultado del reenvío: " + result);
+            return result;
+        } catch (Exception e) {
+            System.err.println("Error al reenviar email de recuperación: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
 
 
 

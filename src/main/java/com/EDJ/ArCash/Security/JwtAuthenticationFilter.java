@@ -104,6 +104,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 !uri.startsWith("/js/") &&
                 !uri.startsWith("/api/auth/") &&
                 !uri.startsWith("/api/user/create") &&
+                !uri.startsWith("/api/resend/") &&
                 !uri.startsWith("/api/impuestos/") &&
                 !uri.equals("/error") &&
                 !uri.equals("/validate") &&

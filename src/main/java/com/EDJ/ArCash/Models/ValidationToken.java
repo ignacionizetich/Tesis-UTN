@@ -42,5 +42,14 @@ public class ValidationToken {
     private String generateToken() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 20);
     }
+
+    /**
+     * Regenera el token y actualiza la fecha de expiración
+     */
+    public void regenerateToken() {
+        this.token = generateToken();
+        this.expirationDate = LocalDateTime.now().plusHours(1);
+        this.used = false;
+    }
 }
 

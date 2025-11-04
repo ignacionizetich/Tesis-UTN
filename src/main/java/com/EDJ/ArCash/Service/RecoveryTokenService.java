@@ -15,9 +15,19 @@ public class RecoveryTokenService {
 
     @Transactional
     public String createRecoveryToken(User user){
-        recoveryTokenRepository.deleteByUser_Id(user.getId());
-        RecoveryToken recoveryToken = new RecoveryToken(user);
-        recoveryTokenRepository.save(recoveryToken);
-        return recoveryToken.getToken();
+        // Buscar si ya existe un token para este usuario
+        RecoveryToken existingToken = recoveryTokenRepository.findByUser(user);
+        
+        if (existingToken != null) {
+            // Si existe, regenerar el token
+            existingToken.regenerateToken();
+            recoveryTokenRepository.save(existingToken);
+            return existingToken.getToken();
+        } else {
+            // Si no existe, crear uno nuevo
+            RecoveryToken recoveryToken = new RecoveryToken(user);
+            recoveryTokenRepository.save(recoveryToken);
+            return recoveryToken.getToken();
+        }
     }
 }

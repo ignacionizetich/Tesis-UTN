@@ -7,6 +7,7 @@ import com.EDJ.ArCash.Security.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,6 +31,8 @@ public class AdminService {
 
      @Autowired
      private JwtUtils jwtUtils;
+
+
 
     // metodo para traer una lista de usuarios autenticados
     public List<UserResponse> getAuthUsers() {
@@ -91,6 +94,15 @@ public class AdminService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos de administrador");
         }
     }
+
+    public void cargarAdmin(User user){
+        userRepository.save(user);
+        accountService.createAccount(user, "PESOS");
+    }
+
+
+
+
 
 
 }

@@ -36,7 +36,15 @@ public class RecoveryToken {
         this.token = UUID.randomUUID().toString().substring(0,20);
         this.expirationDate = LocalDateTime.now().plusHours(1);
         this.used = false;
+    }
 
+    /**
+     * Regenera el token y actualiza la fecha de expiración
+     */
+    public void regenerateToken() {
+        this.token = UUID.randomUUID().toString().substring(0,20);
+        this.expirationDate = LocalDateTime.now().plusHours(1);
+        this.used = false;
     }
 
 }

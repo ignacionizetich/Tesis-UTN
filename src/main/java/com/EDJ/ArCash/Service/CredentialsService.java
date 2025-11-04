@@ -40,32 +40,33 @@ public class CredentialsService {
     @Transactional
     public String actualizarPassword(String tokenValue, String nuevaPassword, String confirmarPassword) {
         if (!nuevaPassword.equals(confirmarPassword)) {
-            return "Las contraseñas no coinciden.";
+            return "Las contraseñas no coinciden. Verifica que ambas sean iguales.";
         }
 
         Optional<RecoveryToken> recoveryToken = recoveryTokenRepository.findByToken(tokenValue);
 
         if (recoveryToken.isEmpty()) {
-            return "Token no válido.";
+            return "El enlace de recuperación no es válido o no existe.";
         }
 
         RecoveryToken token = recoveryToken.get();
 
         if (token.isUsed()) {
-            return "El token ya ha sido usado.";
+            return "Este enlace de recuperación ya fue utilizado. Solicita un nuevo enlace si necesitas cambiar tu contraseña nuevamente.";
         }
 
         if (token.getExpirationDate().isBefore(LocalDateTime.now())) {
-            return "El token ha expirado.";
+            return "El enlace de recuperación ha expirado. Solicita un nuevo enlace para restablecer tu contraseña.";
         }
 
         User user = token.getUser();
         user.getCredentials().setPass(passwordEncoder.encode(nuevaPassword));
         userRepository.save(user);
         token.setUsed(true);
-        recoveryTokenRepository.saveAndFlush(token);
+        // Eliminar el token usado para permitir generar nuevos tokens
+        recoveryTokenRepository.delete(token);
 
-        return "Contraseña actualizada correctamente.";
+        return "¡Contraseña actualizada exitosamente! Ya puedes iniciar sesión con tu nueva contraseña.";
     }
 
 

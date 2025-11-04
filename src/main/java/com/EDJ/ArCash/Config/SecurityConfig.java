@@ -97,8 +97,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
-                                // ... tu lista de rutas públicas ...
-                                "/api/auth/login", "/api/user/create"
+                                "/api/auth/login", "/api/user/create",
+                                "/api/auth/send-recover-mail",
+                                "/api/resend/validation", "/api/resend/password-recovery",
+                                "/reset-password", "/validate", "/forgot",
+                                "/validate-request", "/validate-recovery-token"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()

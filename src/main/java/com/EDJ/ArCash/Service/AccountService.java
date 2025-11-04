@@ -3,7 +3,9 @@ package com.EDJ.ArCash.Service;
 import com.EDJ.ArCash.DTO.AuthDTO.AliasResponse;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.User;
+import com.EDJ.ArCash.Models.ValidationToken;
 import com.EDJ.ArCash.Repository.AccountRepository;
+import com.EDJ.ArCash.Repository.ValidationTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -13,15 +15,17 @@ import java.util.Random;
 
 @Service
 public class AccountService {
-
+    @Autowired
+    private final ValidationTokenRepository validationTokenRepository;
 
 
     @Autowired
     private final AccountRepository accountRepository;
 
 
-    public AccountService(AccountRepository accountRepository) {
+    public AccountService(AccountRepository accountRepository, ValidationTokenRepository validationTokenRepository) {
         this.accountRepository = accountRepository;
+        this.validationTokenRepository = validationTokenRepository;
     }
 
 
@@ -89,6 +93,7 @@ public class AccountService {
         }
         return ResponseEntity.status(403).body(new AliasResponse(false, "Alias actualmente en uso."));
     }
+
 
 
 

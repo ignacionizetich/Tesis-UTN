@@ -29,6 +29,8 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.springframework.web.servlet.function.ServerResponse.noContent;
+
 @RestController
 @RequestMapping(value = "/api/auth", produces = "application/json")
 @Tag(name = "Usuarios Autenticados", description = "Operaciones para usuarios autenticados")
@@ -222,16 +224,20 @@ public class AuthController {
     })
     @PostMapping("/send-recover-mail")
     public ResponseEntity<?> sendRecoverEmail(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        
+
         try {
-            String email = body.get("email");
             boolean enviado = authService.enviarCorreoRecuperacion(email);
-            if (!enviado) {
+
+            if (enviado) {
+                return ResponseEntity.ok(Map.of("message", "Correo enviado correctamente"));
+            } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("message", "El correo ingresado no se asocia a una cuenta existente."));
             }
-            return ResponseEntity.ok(Map.of("message", "Correo enviado correctamente"));
         } catch (Exception e) {
-            e.printStackTrace();
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Error interno al enviar el correo"));
         }
