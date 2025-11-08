@@ -7,7 +7,7 @@ import com.EDJ.ArCash.Security.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,8 +23,7 @@ public class AdminService {
      @Autowired
      private UserRepository userRepository;
 
-     @Autowired
-     private CredentialsService credentialsService;
+
 
      @Autowired
      private AccountService accountService;
@@ -99,6 +98,18 @@ public class AdminService {
         userRepository.save(user);
         accountService.createAccount(user, "PESOS");
     }
+
+    public boolean existsByUsername(String username){
+        return userRepository.existsByAlias(username);
+    }
+
+    public boolean existsByEmail(String email){
+        return userRepository.existsByEmail(email);
+    }
+    public boolean existsByDni(String dni){
+        return userRepository.existsByDni(dni);
+    }
+
 
 
 

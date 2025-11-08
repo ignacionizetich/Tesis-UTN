@@ -36,8 +36,9 @@ public class SecurityConfig {
 
         // Orígenes permitidos (tu Angular y Swagger si lo usas)
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:4200",
-                "http://localhost:8080" // O la URL de tu Swagger UI
+                "https://arcash.me",       // <--- AÑADIDO PARA PRODUCCIÓN
+                "http://localhost:4200",    // <--- MANTENIDO PARA DESARROLLO
+                "http://localhost:8080"     // <--- Para tu Swagger local
         ));
 
         // Métodos permitidos (incluye OPTIONS)
@@ -95,15 +96,33 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // 1. Permite todas las peticiones OPTIONS (para CORS pre-flight)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+
                         .requestMatchers(
-                                "/api/auth/login", "/api/user/create",
+                                // Autenticación
+                                "/api/auth/login",
+                                "/api/auth/refresh",
+
+                                // Registro
+                                "/api/user/create",
+                                "/api/auth/validate", // <-- TokenController
+
+                                // Recuperación de Contraseña
                                 "/api/auth/send-recover-mail",
-                                "/api/resend/validation", "/api/resend/password-recovery",
-                                "/reset-password", "/validate", "/forgot",
-                                "/validate-request", "/validate-recovery-token"
-                        ).permitAll()
+                                "/api/auth/validate-recovery-token", // <-- RecoverController (LA QUE DABA 401)
+                                "/api/auth/reset-password",         // <-- RecoverController
+
+                                // Reenvío de Emails (basado en tu resend.service.ts)
+                                "/api/resend/**"
+
+                        ).permitAll() // <-- Fin de rutas públicas
+
+                        // 3. Rutas de Admin
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+
+                        // 4. Todo lo demás
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

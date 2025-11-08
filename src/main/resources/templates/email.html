@@ -1,71 +1,67 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bienvenido a ARCash</title>
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            color: white;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4; /* Fondo claro para el resto de la página */
-        }
-        .contenido {
-            background-color: #1e1e1e;
-            padding: 30px;
-            border-radius: 10px;
-            width: 80%;
-            margin: 50px auto;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .contenido img {
-            width: 200px;
-        }
-        h2 {
-            color: #ffffff;
-        }
-        h3 {
-            color: #b3b3b3;
-        }
-        h4 {
-            font-size: 0.5rem;
-            color: #b3b3b3;
-        }
-        .AR {
-            color: #ffffff;
-            font-family: 'Unna', serif;
-        }
-        .Cash {
-            color: #2A4D7A;
-            font-family: 'Unna', serif;
-        }
-        .boton {
-            display: inline-block;
-            padding: 12px 24px;
-            background-color: #2A4D7A;
-            color: white;
-            text-decoration: none;
-            font-weight: 600;
-            border-radius: 8px;
-            transition: background-color 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .boton:hover {
-            background-color: #1d3657;
-        }
-    </style>
-
 </head>
-<body>
-<div class="contenido">
-    <h2>Bienvenido a <span class="AR">AR</span><span class="Cash">Cash</span>™, <span th:text="${username}">Usuario</span>!</h2>
-    <h3>Gracias por registrarte en la nueva billetera virtual argentina. <br>Tu cuenta se encuentra habilitada.</h3>
-    <a class="boton" th:href="@{'http://localhost:4200/validate'(token=${token})}">VERIFICA TU CUENTA</a>
-    <h4><br>Si no has sido tú, ignora este mensaje.</h4>
-</div>
+<body style="margin: 0; padding: 0; background-color: #0A0A0F; font-family: 'Inter', Arial, sans-serif;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td style="padding: 20px 0;">
+            <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse; background-color: #1A1A2E; border-radius: 12px; border: 1px solid #39FFCC;">
+
+                <!-- Encabezado -->
+                <tr>
+                    <td align="center" style="padding: 30px 20px; border-bottom: 1px solid rgba(57, 255, 204, 0.3);">
+                        <h1 style="margin: 0; color: #E8EAF6; font-size: 28px; font-weight: 700;">
+                            <span style="color: #E8EAF6;">AR</span><span style="color: #00D4FF;">Cash</span>™
+                        </h1>
+                    </td>
+                </tr>
+
+                <!-- Contenido Principal -->
+                <tr>
+                    <td style="padding: 40px 30px;">
+                        <h2 style="margin: 0 0 20px 0; color: #E8EAF6; font-size: 24px; font-weight: 600;">
+                            ¡Bienvenido, <span th:text="${username}" style="color: #00D4FF;">Usuario</span>!
+                        </h2>
+                        <p style="margin: 0 0 30px 0; color: #E8EAF6; font-size: 16px; line-height: 1.6;">
+                            Gracias por registrarte en la nueva billetera virtual argentina.
+                            <br>
+                            Tu cuenta está casi lista, solo falta un paso.
+                        </p>
+
+                        <!-- Botón de Acción -->
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                                <td align="center">
+                                    <a th:href="${validationUrl}"
+                                       target="_blank"
+                                       style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #00D4FF 0%, #6C5CE7 100%); color: #0A0A0F; text-decoration: none; font-weight: 700; font-size: 16px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);">
+                                        Validar mi cuenta
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="margin: 30px 0 0 0; color: #E8EAF6; font-size: 14px; line-height: 1.6;">
+                            Si no has sido tú, puedes ignorar este mensaje de forma segura.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Pie de página -->
+                <tr style="background-color: #0A0A0F;">
+                    <td style="padding: 20px 30px;">
+                        <p style="margin: 0; color: #E8EAF6; opacity: 0.7; font-size: 12px; text-align: center;">
+                            © 2025 ArCash. Todos los derechos reservados.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 </body>
 </html>
-

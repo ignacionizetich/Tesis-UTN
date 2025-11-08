@@ -30,6 +30,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final Key secretKey;
     private final UserDetailsService userDetailsService;
 
+    // Agregamos el Logger que estabas usando en el catch
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
     public JwtAuthenticationFilter(@Value("${spring.jwt.secret}") String signedJwt, UserDetailsService userDetailsService) {
         byte[] keyBytes = Base64.getDecoder().decode(signedJwt);
         secretKey = Keys.hmacShaKeyFor(keyBytes);
@@ -45,7 +48,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String username;
 
         // 1. Si no hay header o no empieza con "Bearer ", simplemente continúa.
-        // Spring Security se encargará de denegar el acceso si la ruta es protegida.
+        // Spring Security (SecurityConfig.java) se encargará de denegar el acceso
+        // si la ruta no está en la lista de .permitAll()
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -85,7 +89,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (JwtException e) {
             // 5. Si el token es inválido (expirado, malformado, etc.), responde con un error 401
-            logger.error("Error validando el token JWT: {}");
+            logger.error("Error validando el token JWT: {}", e.getMessage()); // Corregido para loguear el error
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 Unauthorized
             response.getWriter().write("{\"error\": \"Token JWT inválido o expirado\"}");
             return; // Detenemos la cadena de filtros
@@ -95,28 +99,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private boolean requiresAuthentication(String uri) {
-        return !uri.equals("/") &&
-                !uri.equals("/home") &&
-                !uri.equals("/register") &&
-                !uri.equals("/PreLogin") &&
-                !uri.startsWith("/css/") &&
-                !uri.startsWith("/js/") &&
-                !uri.startsWith("/api/auth/") &&
-                !uri.startsWith("/api/user/create") &&
-                !uri.startsWith("/api/resend/") &&
-                !uri.startsWith("/api/impuestos/") &&
-                !uri.equals("/error") &&
-                !uri.equals("/validate") &&
-                !uri.equals("/forgot") &&
-                !uri.equals("/reset-password") &&
-                !uri.equals("/api/auth/send-recover-mail") &&
-                !uri.equals("/validate-request") &&
-                !uri.equals("/swagger-ui.html") &&
-                !uri.startsWith("/swagger-ui/") &&
-                !(uri.equals("/v3/api-docs") || uri.startsWith("/v3/api-docs/")) &&
-                !uri.startsWith("/dashboard") &&
-                !uri.startsWith("/adminDashboard");
-
-    }
 }

@@ -17,11 +17,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/api/admin")
@@ -132,23 +134,79 @@ public class ApiAdminController {
     )
 
     @PostMapping("/users/create-admin")
-    public ResponseEntity<?> createAdminUser(@RequestBody AdminRequest adminRequest,HttpServletRequest request)  {
-        adminService.validarAdmin(request);
-        User user = new User();
-        user.setName(adminRequest.getName().substring(0,1).toUpperCase() + adminRequest.getName().substring(1).toLowerCase());
-        user.setLastName(adminRequest.getLastName().substring(0,1).toUpperCase() + adminRequest.getLastName().substring(1).toLowerCase());
-        user.setPermissions(Permissions.ADMIN);
-        user.setDni(adminRequest.getDni());
-        user.setEmail(adminRequest.getEmail());
-        user.setAlias(adminRequest.getUsername());
-        user.setEnabled(true);
-        user.setActive(true);
-        // Crear credenciales y token en cascada
-        user.setCredentials(new Credentials(user, user.getAlias(), passwordEncoder.encode(adminRequest.getPassword())));
+    public ResponseEntity<?> createAdminUser(@RequestBody AdminRequest adminRequest, HttpServletRequest request) {
+        try {
+            adminService.validarAdmin(request);
 
-        adminService.cargarAdmin(user);
-        return ResponseEntity.ok("Usuario administrador creado correctamente");
+            // Verificar si el username ya existe ANTES de intentar crear
+            if (adminService.existsByUsername(adminRequest.getUsername())) {
+                return ResponseEntity.status(409).body(Map.of(
+                        "mensaje", "nombre de usuario no está disponible",
+                        "campo", "username"
+                ));
+            }
 
+            // Verificar si el email ya existe
+            if (adminService.existsByEmail(adminRequest.getEmail())) {
+                return ResponseEntity.status(409).body(Map.of(
+                        "mensaje", "email ya se encuentra en uso",
+                        "campo", "email"
+                ));
+            }
+
+            // Verificar si el DNI ya existe
+            if (adminService.existsByDni(adminRequest.getDni())) {
+                return ResponseEntity.status(409).body(Map.of(
+                        "mensaje", "DNI ya está registrado",
+                        "campo", "dni"
+                ));
+            }
+
+            User user = new User();
+            user.setName(adminRequest.getName().substring(0,1).toUpperCase() + adminRequest.getName().substring(1).toLowerCase());
+            user.setLastName(adminRequest.getLastName().substring(0,1).toUpperCase() + adminRequest.getLastName().substring(1).toLowerCase());
+            user.setPermissions(Permissions.ADMIN);
+            user.setDni(adminRequest.getDni());
+            user.setEmail(adminRequest.getEmail());
+            user.setAlias(adminRequest.getUsername());
+            user.setEnabled(true);
+            user.setActive(true);
+            user.setCredentials(new Credentials(user, user.getAlias(), passwordEncoder.encode(adminRequest.getPassword())));
+
+            adminService.cargarAdmin(user);
+            return ResponseEntity.ok("Usuario administrador creado correctamente");
+
+        } catch (DataIntegrityViolationException e) {
+            // Capturar errores de constraint de la base de datos
+            String errorMessage = e.getMostSpecificCause().getMessage();
+
+            if (errorMessage.contains("users.UK22orgon25a45jt87hvbmknks2") || errorMessage.contains("alias")) {
+                return ResponseEntity.status(409).body(Map.of(
+                        "mensaje", "nombre de usuario no está disponible",
+                        "campo", "username"
+                ));
+            } else if (errorMessage.contains("email")) {
+                return ResponseEntity.status(409).body(Map.of(
+                        "mensaje", "email ya se encuentra en uso",
+                        "campo", "email"
+                ));
+            } else if (errorMessage.contains("dni")) {
+                return ResponseEntity.status(409).body(Map.of(
+                        "mensaje", "DNI ya está registrado",
+                        "campo", "dni"
+                ));
+            }
+
+            return ResponseEntity.status(409).body(Map.of(
+                    "mensaje", "Error de duplicación en la base de datos",
+                    "detalle", errorMessage
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of(
+                    "mensaje", "Error interno del servidor",
+                    "detalle", e.getMessage()
+            ));
+        }
     }
 
 

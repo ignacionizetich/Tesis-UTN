@@ -1,41 +1,57 @@
 package com.EDJ.ArCash.Service;
 
 import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Repository.UserRepository;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value; // <-- ¡IMPORTADO!
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
-
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
 
 @Service
 public class EmailService {
-    private final UserRepository userRepository;
     private final WebClient webClient;
     private final SpringTemplateEngine templateEngine;
 
-    public EmailService(WebClient resendWebClient, SpringTemplateEngine templateEngine, UserRepository userRepository) {
+    // === 1. INYECTAR LA URL DE PRODUCCIÓN ===
+    // (Asegúrate de tener 'app.frontend.url=https://arcash.me' en tu application.properties)
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+
+    public EmailService(WebClient resendWebClient, SpringTemplateEngine templateEngine) {
         this.webClient = resendWebClient;
         this.templateEngine = templateEngine;
-        this.userRepository = userRepository;
     }
 
     @Async
     public void sendVerificationEmail(User user, String token) {
+        // === 2. CREAR LAS VARIABLES Y LA URL COMPLETA ===
+        Map<String, Object> variables = Map.of(
+                "username", user.getName(),
+                "token", token,
+                // Armamos la URL completa aquí, en el backend
+                "validationUrl", frontendUrl + "/validate?token=" + token
+        );
+
         sendEmail(user.getEmail(), "¡Bienvenido a ArCashApp, " + user.getName() + "!",
-                "email", Map.of("username", user.getName(), "token", token));
+                "email", variables); // "email" es el nombre de tu plantilla (email.html)
     }
 
     @Async
     public void sendRecoverPasswordEmail(User user, String token) {
+        // === 2. CREAR LAS VARIABLES Y LA URL COMPLETA ===
+        Map<String, Object> variables = Map.of(
+                "username", user.getName(),
+                "token", token,
+                // Armamos la URL completa aquí, en el backend
+                "recoverUrl", frontendUrl + "/reset-password?token=" + token
+        );
 
         sendEmail(user.getEmail(), "Recupera tu contraseña en ArCash",
-                "email-recover", Map.of("username", user.getName(), "token", token));
+                "email-recover", variables); // "email-recover" es tu plantilla (email-recover.html)
     }
 
     private void sendEmail(String to, String subject, String template, Map<String, Object> variables) {
@@ -57,12 +73,12 @@ public class EmailService {
                     .retrieve()
                     .bodyToMono(String.class)
                     .doOnError(e -> System.err.println("Error enviando mail: " + e.getMessage()))
-                    .block();
+                    .block(); // Usar block aquí puede no ser ideal en un método @Async,
+            // pero es funcional para este ejemplo.
+            // Considera usar .subscribe() si quieres mantenerlo 100% reactivo.
 
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(); // Manejo de errores simple, considera un logger
         }
     }
-
-
 }

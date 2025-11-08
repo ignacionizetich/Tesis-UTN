@@ -22,5 +22,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByEnabledTrue();
     /// aca no agregamos nada, JPA maneja las operaciones CRUD con metodos predefinidos
 
-    List<User> findAllByEmail(String email);
+    boolean existsByAlias(String username);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByDni(String dni);
+
 }

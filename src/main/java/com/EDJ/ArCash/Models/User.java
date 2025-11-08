@@ -88,7 +88,6 @@ public class User {
     @PrePersist
     private void PrePersist() {
         GenerateCreationDate();
-
     }
 
     private void GenerateCreationDate() {

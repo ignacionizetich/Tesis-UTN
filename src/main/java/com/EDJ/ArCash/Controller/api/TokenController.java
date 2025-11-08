@@ -16,19 +16,20 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping(value = "/validate")
+@RequestMapping(value = "/api/auth") // <-- CAMBIADO: Unificado con el otro controller
 public class TokenController {
 
-   @Autowired
-   private ValidationTokenService validationTokenService;
+    @Autowired
+    private ValidationTokenService validationTokenService;
 
     @Autowired
     private UserService userService;
 
-    @GetMapping
+    @GetMapping("/validate") // <-- AÑADIDO: La ruta específica
+    // RUTA FINAL: /api/auth/validate
     public ResponseEntity<Map<String, Object>> validateUser(@RequestParam(value = "token", required = false) String tokenValue) {
         Map<String, Object> response = new HashMap<>();
-        
+
         if (tokenValue == null || tokenValue.trim().isEmpty()) {
             response.put("success", false);
             response.put("message", "Token no proporcionado");
@@ -41,27 +42,27 @@ public class TokenController {
             response.put("success", false);
             response.put("message", "El enlace de verificación no es válido o no existe.");
             return ResponseEntity.badRequest().body(response);
-            
+
         } else {
             ValidationToken token = optionalToken.get();
-            
+
             // Verificar si el token ya fue usado
             if (token.isUsed()) {
                 response.put("success", false);
                 response.put("message", "Este enlace de verificación ya fue utilizado. Tu cuenta ya está activada.");
                 return ResponseEntity.badRequest().body(response);
-                
-            // Verificar si el token ha expirado
+
+                // Verificar si el token ha expirado
             } else if (token.getExpirationDate().isBefore(LocalDateTime.now())) {
                 response.put("success", false);
                 response.put("message", "El enlace de verificación ha expirado. Solicita un nuevo enlace de activación.");
                 return ResponseEntity.badRequest().body(response);
-                
+
             } else {
                 // Validar usuario y marcar token como usado
                 userService.validarUsuario(token.getUser());
                 validationTokenService.usedToken(token.getUser());
-                
+
                 response.put("success", true);
                 response.put("message", "¡Cuenta verificada exitosamente! Ya puedes iniciar sesión.");
                 return ResponseEntity.ok(response);
