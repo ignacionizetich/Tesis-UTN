@@ -2,11 +2,13 @@
 package com.EDJ.ArCash.DTO.AuthDTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Datos de la solicitud de inicio de sesión")
 public class LoginRequest {
     @Schema(description = "Nombre de usuario o email", example = "usuario123")

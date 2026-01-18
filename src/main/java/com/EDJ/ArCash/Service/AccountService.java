@@ -3,9 +3,13 @@ package com.EDJ.ArCash.Service;
 import com.EDJ.ArCash.DTO.AuthDTO.AliasResponse;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Models.ValidationToken;
+
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.ValidationTokenRepository;
+import com.EDJ.ArCash.factory.AliasResponseFactory;
+import com.EDJ.ArCash.observer.Event;
+import com.EDJ.ArCash.observer.EventPublisher;
+import com.EDJ.ArCash.observer.EventType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -18,14 +22,20 @@ public class AccountService {
     @Autowired
     private final ValidationTokenRepository validationTokenRepository;
 
-
     @Autowired
     private final AccountRepository accountRepository;
 
+    @Autowired
+    private final AliasResponseFactory aliasResponseFactory;
 
-    public AccountService(AccountRepository accountRepository, ValidationTokenRepository validationTokenRepository) {
+    @Autowired
+    private final EventPublisher eventPublisher;
+
+    public AccountService(AccountRepository accountRepository, ValidationTokenRepository validationTokenRepository, AliasResponseFactory aliasResponseFactory, EventPublisher eventPublisher) {
         this.accountRepository = accountRepository;
         this.validationTokenRepository = validationTokenRepository;
+        this.aliasResponseFactory = aliasResponseFactory;
+        this.eventPublisher = eventPublisher;
     }
 
 
@@ -37,6 +47,13 @@ public class AccountService {
         account.setAccountNickname(generateUniqueNickname());
         account.setAccountCvu(generateUniqueCvu());
         accountRepository.save(account);
+        
+        // Publicar evento de cuenta creada
+        Event event = new Event(EventType.ACCOUNT_CREATED);
+        event.addData("user", user);
+        event.addData("accountAlias", account.getAccountNickname());
+        event.addData("accountCvu", account.getAccountCvu());
+        eventPublisher.publish(event);
     }
 
 
@@ -71,27 +88,36 @@ public class AccountService {
         String regex = "^(?=.*[A-Za-z])(?=^[A-Za-z0-9]+(\\.[A-Za-z0-9]+)+$)(?!.*\\.\\.)[A-Za-z0-9.]{4,25}$";
         if (!newAlias.matches(regex)) {
             return ResponseEntity.status(400).body(
-                    new AliasResponse(false, "Formato de alias inválido. Debe tener entre 4 y 25 caracteres, solo letras, números y puntos, al menos un punto en el medio, no puede ser solo números ni tener '..'.")
+                    aliasResponseFactory.createErrorResponse("Formato de alias inválido. Debe tener entre 4 y 25 caracteres, solo letras, números y puntos, al menos un punto en el medio, no puede ser solo números ni tener '..'.")
             );
         }
 
         Optional<Account> optionalAccount = accountRepository.findByIdAccount(id);
 
         if (optionalAccount.isEmpty()) {
-            return ResponseEntity.status(498).body(new AliasResponse(false, "Cuenta no encontrada."));
+            return ResponseEntity.status(498).body(aliasResponseFactory.createErrorResponse("Cuenta no encontrada."));
         }
         Account acc = optionalAccount.get();
 
         if (acc.getUser().getId().equals(responseEntity)) {
             if (!accountRepository.existsByAccountNickname(newAlias)) {
+                String oldAlias = acc.getAccountNickname();
                 acc.setAccountNickname(newAlias);
                 accountRepository.save(acc);
-                return ResponseEntity.status(200).body(new AliasResponse(true, "Alias actualizado exitosamente."));
+                
+                // Publicar evento de cambio de alias
+                Event event = new Event(EventType.ALIAS_CHANGED);
+                event.addData("user", acc.getUser());
+                event.addData("oldAlias", oldAlias);
+                event.addData("newAlias", newAlias);
+                eventPublisher.publish(event);
+                
+                return ResponseEntity.status(200).body(aliasResponseFactory.createSuccessResponse("Alias actualizado exitosamente."));
             }
         } else {
-            return ResponseEntity.status(403).body(new AliasResponse(false, "No tienes permisos para hacer eso."));
+            return ResponseEntity.status(403).body(aliasResponseFactory.createErrorResponse("No tienes permisos para hacer eso."));
         }
-        return ResponseEntity.status(403).body(new AliasResponse(false, "Alias actualmente en uso."));
+        return ResponseEntity.status(403).body(aliasResponseFactory.createErrorResponse("Alias actualmente en uso."));
     }
 
 

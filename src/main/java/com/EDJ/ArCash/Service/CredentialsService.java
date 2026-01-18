@@ -6,6 +6,9 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.CredentialRepository;
 import com.EDJ.ArCash.Repository.RecoveryTokenRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
+import com.EDJ.ArCash.observer.Event;
+import com.EDJ.ArCash.observer.EventPublisher;
+import com.EDJ.ArCash.observer.EventType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +24,14 @@ public class CredentialsService {
     private final CredentialRepository credentialRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EventPublisher eventPublisher;
 
-    public CredentialsService(CredentialRepository credentialRepository, PasswordEncoder passwordEncoder, RecoveryTokenRepository recoveryTokenRepository, UserRepository userRepository) {
+    public CredentialsService(CredentialRepository credentialRepository, PasswordEncoder passwordEncoder, RecoveryTokenRepository recoveryTokenRepository, UserRepository userRepository, EventPublisher eventPublisher) {
         this.credentialRepository = credentialRepository;
         this.passwordEncoder = passwordEncoder;
         this.recoveryTokenRepository = recoveryTokenRepository;
         this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public void createCredentials(User user, String rawPassword){
@@ -65,6 +70,15 @@ public class CredentialsService {
         token.setUsed(true);
         // Eliminar el token usado para permitir generar nuevos tokens
         recoveryTokenRepository.delete(token);
+
+        // Publicar evento de contraseña cambiada
+        try {
+            Event event = new Event(EventType.PASSWORD_CHANGED);
+            event.addData("user", user);
+            eventPublisher.publish(event);
+        } catch (Exception e) {
+            System.err.println("Error al publicar evento PASSWORD_CHANGED: " + e.getMessage());
+        }
 
         return "¡Contraseña actualizada exitosamente! Ya puedes iniciar sesión con tu nueva contraseña.";
     }

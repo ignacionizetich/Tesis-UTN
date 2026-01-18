@@ -1,5 +1,6 @@
 package com.EDJ.ArCash.Service;
 
+import com.EDJ.ArCash.Models.RefreshToken;
 import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.context.annotation.Lazy;
@@ -10,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class RefreshTokenCleanupService implements ApplicationListener<ContextRefreshedEvent> {
@@ -31,5 +33,9 @@ public class RefreshTokenCleanupService implements ApplicationListener<ContextRe
     public void removeExpiredOrRevokedTokens() {
         int deleted = refreshTokenRepository.deleteByRevokedTrueOrExpiresAtBefore(LocalDateTime.now());
         System.out.println("Refresh tokens eliminados: " + deleted);
+    }
+
+    public Optional<RefreshToken> getRefreshTokenAndRevokedFalse(String token){
+        return this.refreshTokenRepository.findByRefreshTokenAndRevokedFalse(token);
     }
 }

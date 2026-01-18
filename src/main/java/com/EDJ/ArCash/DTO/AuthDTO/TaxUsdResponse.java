@@ -1,12 +1,12 @@
 package com.EDJ.ArCash.DTO.AuthDTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder(toBuilder = true)
+@AllArgsConstructor
 @NoArgsConstructor
 @Schema(description = "Respuesta con el cálculo de impuestos sobre un monto en dólares")
 public class TaxUsdResponse {

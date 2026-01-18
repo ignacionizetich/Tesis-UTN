@@ -2,13 +2,13 @@
 package com.EDJ.ArCash.DTO.AuthDTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder(toBuilder = true)
 @Schema(description = "Respuesta de operación sobre la cuenta")
 public class AccountResponse {
     @Schema(description = "Indica si la operación fue exitosa", example = "true")

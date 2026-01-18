@@ -95,36 +95,44 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Permite todas las peticiones OPTIONS (para CORS pre-flight)
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // 1. Permite todas las peticiones OPTIONS (para CORS pre-flight)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
 
-                        .requestMatchers(
-                                // Autenticación
-                                "/api/auth/login",
-                                "/api/auth/refresh",
+                .requestMatchers(
+                        // Swagger UI
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**",
+                        "/webjars/**",
 
-                                // Registro
-                                "/api/user/create",
-                                "/api/auth/validate", // <-- TokenController
+                        // Autenticación
+                        "/api/auth/login",
+                        "/api/auth/refresh",
 
-                                // Recuperación de Contraseña
-                                "/api/auth/send-recover-mail",
-                                "/api/auth/validate-recovery-token", // <-- RecoverController (LA QUE DABA 401)
-                                "/api/auth/reset-password",         // <-- RecoverController
+                        // Registro
+                        "/api/user/create",
+                        "/api/auth/validate", // <-- TokenController
 
-                                // Reenvío de Emails (basado en tu resend.service.ts)
-                                "/api/resend/**"
+                        // Recuperación de Contraseña
+                        "/api/auth/send-recover-mail",
+                        "/api/auth/validate-recovery-token", // <-- RecoverController (LA QUE DABA 401)
+                        "/api/auth/reset-password",         // <-- RecoverController
 
-                        ).permitAll() // <-- Fin de rutas públicas
+                        // Reenvío de Emails (basado en tu resend.service.ts)
+                        "/api/resend/**"
 
-                        // 3. Rutas de Admin
-                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                ).permitAll() // <-- Fin de rutas públicas
 
-                        // 4. Todo lo demás
-                        .anyRequest().authenticated()
-                )
+                // 3. Rutas de Admin
+                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+
+                // 4. Todo lo demás
+                .anyRequest().authenticated()
+        )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

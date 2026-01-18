@@ -10,6 +10,7 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AuthService;
+import com.EDJ.ArCash.Service.RefreshTokenCleanupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -40,7 +41,7 @@ public class AuthController {
     private AuthService authService;
 
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private RefreshTokenCleanupService refreshTokenService;
 
     @Autowired
     private JwtUtils jwtUtils;
@@ -69,6 +70,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         try {
+
+
             LoginResponse loginResponse = authService.login(loginRequest);
 
             if (loginResponse.isSuccess()) {
@@ -338,7 +341,7 @@ public class AuthController {
         if (refreshToken == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Refresh token requerido"));
         }
-        Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByRefreshTokenAndRevokedFalse(refreshToken);
+        Optional<RefreshToken> tokenOpt = refreshTokenService.getRefreshTokenAndRevokedFalse(refreshToken);
         if (tokenOpt.isEmpty() || tokenOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
             return ResponseEntity.status(401).body(Map.of("error", "Refresh token inválido o expirado"));
         }

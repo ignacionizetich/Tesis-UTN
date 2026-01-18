@@ -1,12 +1,12 @@
 package com.EDJ.ArCash.DTO.AuthDTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder(toBuilder = true)
+@NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Respuesta con información de usuario")
 public class UserResponse {

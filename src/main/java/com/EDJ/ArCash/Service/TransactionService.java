@@ -5,6 +5,9 @@ import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Transaction;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.TransactionRepository;
+import com.EDJ.ArCash.observer.Event;
+import com.EDJ.ArCash.observer.EventPublisher;
+import com.EDJ.ArCash.observer.EventType;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -16,10 +19,12 @@ public class TransactionService {
 
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final EventPublisher eventPublisher;
 
-    public TransactionService(AccountRepository accountRepository, TransactionRepository transactionRepository) {
+    public TransactionService(AccountRepository accountRepository, TransactionRepository transactionRepository, EventPublisher eventPublisher) {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -65,6 +70,14 @@ public class TransactionService {
             accountRepository.save(cuentaOrigen);
             accountRepository.save(cuentaDestino);
             transactionRepository.save(transaction);
+            
+            // Publicar evento de transacción completada
+            Event event = new Event(EventType.TRANSACTION_COMPLETED);
+            event.addData("user", cuentaOrigen.getUser());
+            event.addData("amount", monto);
+            event.addData("destinationAlias", cuentaDestino.getAccountNickname());
+            eventPublisher.publish(event);
+            
             return true;
         }
     }

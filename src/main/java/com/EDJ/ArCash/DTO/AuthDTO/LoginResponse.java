@@ -2,13 +2,13 @@
         package com.EDJ.ArCash.DTO.AuthDTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
+        @Getter
 @Setter
-@AllArgsConstructor
+        @NoArgsConstructor
+        @AllArgsConstructor
+        @Builder(toBuilder = true)
 @Schema(description = "Respuesta al intentar iniciar sesión")
 public class LoginResponse {
     @Schema(description = "Indica si el inicio de sesión fue exitoso", example = "true")

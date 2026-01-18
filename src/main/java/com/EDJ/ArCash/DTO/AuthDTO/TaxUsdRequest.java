@@ -3,11 +3,13 @@ package com.EDJ.ArCash.DTO.AuthDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Solicitud para calcular impuestos sobre un monto en dólares")
 public class TaxUsdRequest {
 

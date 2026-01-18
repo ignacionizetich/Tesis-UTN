@@ -1,11 +1,13 @@
 package com.EDJ.ArCash.DTO.ApiCalloutDTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "Respuesta con información de la cotización del dólar")
 public class ApiUsdResponse {
     @Schema(description = "Moneda consultada", example = "USD")

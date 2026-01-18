@@ -1,13 +1,13 @@
 package com.EDJ.ArCash.DTO.AuthDTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder(toBuilder = true)
 @Schema(description = "Petición para crear un usuario administrador")
 public class AdminRequest {
     @Schema(description = "ID del usuario", example = "1")

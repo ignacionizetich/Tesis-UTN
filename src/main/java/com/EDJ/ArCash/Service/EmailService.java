@@ -17,7 +17,6 @@ public class EmailService {
     private final SpringTemplateEngine templateEngine;
 
     // === 1. INYECTAR LA URL DE PRODUCCIÓN ===
-    // (Asegúrate de tener 'app.frontend.url=https://arcash.me' en tu application.properties)
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
@@ -32,12 +31,12 @@ public class EmailService {
         Map<String, Object> variables = Map.of(
                 "username", user.getName(),
                 "token", token,
-                // Armamos la URL completa aquí, en el backend
+
                 "validationUrl", frontendUrl + "/validate?token=" + token
         );
 
         sendEmail(user.getEmail(), "¡Bienvenido a ArCashApp, " + user.getName() + "!",
-                "email", variables); // "email" es el nombre de tu plantilla (email.html)
+                "email", variables);
     }
 
     @Async
@@ -52,6 +51,54 @@ public class EmailService {
 
         sendEmail(user.getEmail(), "Recupera tu contraseña en ArCash",
                 "email-recover", variables); // "email-recover" es tu plantilla (email-recover.html)
+    }
+
+    @Async
+    public void sendTransactionCompletedEmail(User user, double amount, String destinationAlias) {
+        Map<String, Object> variables = Map.of(
+                "username", user.getName(),
+                "amount", amount,
+                "destinationAlias", destinationAlias,
+                "transactionDate", java.time.LocalDateTime.now().toString()
+        );
+
+        sendEmail(user.getEmail(), "Transacción completada exitosamente",
+                "email-transaction", variables);
+    }
+
+    @Async
+    public void sendAccountCreatedEmail(User user, String accountAlias, String accountCvu) {
+        Map<String, Object> variables = Map.of(
+                "username", user.getName(),
+                "accountAlias", accountAlias,
+                "accountCvu", accountCvu,
+                "dashboardUrl", frontendUrl + "/dashboard"
+        );
+
+        sendEmail(user.getEmail(), "¡Tu cuenta ArCash ha sido creada!",
+                "email-account-created", variables);
+    }
+
+    @Async
+    public void sendAliasChangedEmail(User user, String oldAlias, String newAlias) {
+        Map<String, Object> variables = Map.of(
+                "username", user.getName(),
+                "oldAlias", oldAlias,
+                "newAlias", newAlias
+        );
+
+        sendEmail(user.getEmail(), "Alias de cuenta actualizado",
+                "email-alias-changed", variables);
+    }
+
+    @Async
+    public void sendPasswordChangedEmail(User user) {
+        Map<String, Object> variables = Map.of(
+                "username", user.getName()
+        );
+
+        sendEmail(user.getEmail(), "Contraseña actualizada",
+                "email-password-changed", variables);
     }
 
     private void sendEmail(String to, String subject, String template, Map<String, Object> variables) {

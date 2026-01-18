@@ -5,10 +5,11 @@ import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Models.ValidationToken;
 import com.EDJ.ArCash.Repository.UserRepository;
-import jakarta.mail.MessagingException;
+import com.EDJ.ArCash.observer.Event;
+import com.EDJ.ArCash.observer.EventPublisher;
+import com.EDJ.ArCash.observer.EventType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.io.UnsupportedEncodingException;
 
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
@@ -25,12 +26,15 @@ public class UserService {
 
     private final ValidationTokenService validationTokenService;
 
-    public UserService(PasswordEncoder passwordEncoder,UserRepository userRepository, AccountService accountService, CredentialsService credentialsService, EmailService emailService, ValidationTokenService validationTokenService) {
+    private final EventPublisher eventPublisher;
+
+    public UserService(PasswordEncoder passwordEncoder,UserRepository userRepository, AccountService accountService, CredentialsService credentialsService, EmailService emailService, ValidationTokenService validationTokenService, EventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.accountService = accountService;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.validationTokenService = validationTokenService;
+        this.eventPublisher = eventPublisher;
     }
 
 
@@ -52,8 +56,14 @@ public class UserService {
         // Guardar todo de una sola vez
         userRepository.save(user);
 
-        // Enviar mail asincrónico
-        emailService.sendVerificationEmail(user, user.getValidationToken().getToken());
+        // Publicar evento de usuario registrado
+        Event event = new Event(EventType.USER_REGISTERED);
+        event.addData("user", user);
+        event.addData("token", user.getValidationToken().getToken());
+        eventPublisher.publish(event);
+
+        // El email se enviará a través del observer, comentamos el envío directo
+        // emailService.sendVerificationEmail(user, user.getValidationToken().getToken());
     }
     
     private void validateUserConflicts(User user) throws RuntimeException {

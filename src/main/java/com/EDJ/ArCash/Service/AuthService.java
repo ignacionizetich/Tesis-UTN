@@ -5,6 +5,11 @@ import com.EDJ.ArCash.DTO.AuthDTO.LoginResponse;
 import com.EDJ.ArCash.Models.*;
 import com.EDJ.ArCash.Repository.*;
 import com.EDJ.ArCash.Security.JwtUtils;
+import com.EDJ.ArCash.factory.LoginResponseFactory;
+
+import com.EDJ.ArCash.observer.Event;
+import com.EDJ.ArCash.observer.EventPublisher;
+import com.EDJ.ArCash.observer.EventType;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,8 +42,7 @@ public class AuthService {
     @Autowired
     private AccountRepository accountRepository;
 
-    @Autowired
-    private EmailService emailService;
+
 
     @Autowired
     private RecoveryTokenRepository recoveryTokenRepository;
@@ -46,7 +50,16 @@ public class AuthService {
     @Autowired
     private RecoveryTokenService recoveryTokenService;
 
+    @Autowired
+    private LoginResponseFactory loginResponseFactory;
+
+
+
+    @Autowired
+    private EventPublisher eventPublisher;
+
     public LoginResponse login(LoginRequest loginRequest) {
+
         Optional<Credentials> credentialsOptional = credentialRepository.findByUsername(loginRequest.getUsername());
 
 
@@ -55,11 +68,11 @@ public class AuthService {
             User usuario = credentials.getUser();
 
             if (!passwordEncoder.matches(loginRequest.getPassword(), credentials.getPass())) {
-                return new LoginResponse(false, "Credenciales incorrectas", null, null, null,null);
+                return loginResponseFactory.createErrorResponse("Credenciales incorrectas");
             }
 
             if (!usuario.isActive()) {
-                return new LoginResponse(false, "Usuario no habilitado", null, null, null,null);
+                return loginResponseFactory.createErrorResponse("Usuario no habilitado");
             }
 
             List<RefreshToken> activeTokens = refreshTokenRepository.findAllByUserAndRevokedFalse(usuario);
@@ -75,12 +88,16 @@ public class AuthService {
 
             Optional<Account> optionalAccount = accountRepository.findByUser_Id(usuario.getId());
             if (optionalAccount.isPresent()) {
+
                 Account account = optionalAccount.get();
-                return new LoginResponse(true, "Login exitoso", accessToken, refreshToken, account.getIdAccount(), usuario.getPermissions().name());
+                return loginResponseFactory.createSuccessResponse(accessToken, refreshToken, account.getIdAccount(), usuario.getPermissions().name());
             }
-            return new LoginResponse(false, "Cuenta no encontrada", null, null, null,null);
+            return loginResponseFactory.createErrorResponse("Cuenta no encontrada");
+        }else {
+
+            return loginResponseFactory.createErrorResponse("Usuario no encontrado");
         }
-        return new LoginResponse(false, "Usuario no encontrado", null, null, null,null);
+
     }
 
     public LogoutStatus logout(String accessToken) {
@@ -146,7 +163,15 @@ public class AuthService {
             // Usar el nuevo método que actualiza en lugar de borrar y crear
             String token = recoveryTokenService.createRecoveryToken(user);
             try {
-                emailService.sendRecoverPasswordEmail(user, token);
+                // Publicar evento de solicitud de recuperación
+                Event event = new Event(EventType.PASSWORD_RECOVERY_REQUESTED);
+                event.addData("user", user);
+                event.addData("token", token);
+                eventPublisher.publish(event);
+                
+                // El email se enviará a través del observer, comentamos el envío directo
+                // emailService.sendRecoverPasswordEmail(user, token);
+                
                 return true;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -173,11 +198,20 @@ public class AuthService {
 
         if (credentialRepository.findByUsername(nuevoAlias).isPresent()) return false;
 
+        String oldAlias = user.getAlias();
         user.setAlias(nuevoAlias);
         userRepository.saveAndFlush(user);
 
         credentials.setUsername(nuevoAlias);
         credentialRepository.save(credentials);
+        
+        // Publicar evento de cambio de alias
+        Event event = new Event(EventType.ALIAS_CHANGED);
+        event.addData("user", user);
+        event.addData("oldAlias", oldAlias);
+        event.addData("newAlias", nuevoAlias);
+        eventPublisher.publish(event);
+        
         return true;
     }
 

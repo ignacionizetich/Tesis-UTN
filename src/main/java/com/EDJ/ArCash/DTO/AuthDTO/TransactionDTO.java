@@ -2,13 +2,13 @@ package com.EDJ.ArCash.DTO.AuthDTO;
 
 import com.EDJ.ArCash.Models.Transaction;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 @Schema(description = "DTO para mostrar la información de una transacción")
 public class TransactionDTO {
     @Schema(description = "ID de la transacción", example = "1")
