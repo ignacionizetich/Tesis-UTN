@@ -21,6 +21,7 @@ public class EmailEventObserver implements EventObserver {
             EventType.PASSWORD_RECOVERY_REQUESTED,
             EventType.TRANSACTION_COMPLETED,
             EventType.ACCOUNT_CREATED,
+            EventType.USD_ACCOUNT_CREATED,
             EventType.ALIAS_CHANGED,
             EventType.PASSWORD_CHANGED
     );
@@ -62,6 +63,10 @@ public class EmailEventObserver implements EventObserver {
                 break;
             case PASSWORD_CHANGED:
                 handlePasswordChanged(event);
+                break;
+
+            case USD_ACCOUNT_CREATED:
+                handleUsdAccountCreated(event);
                 break;
             default:
                 System.out.println("Evento no manejado: " + event.getEventType());
@@ -113,9 +118,18 @@ public class EmailEventObserver implements EventObserver {
         User user = (User) event.getData("user");
         Double amount = (Double) event.getData("amount");
         String destinationAlias = (String) event.getData("destinationAlias");
+        String currency = (String) event.getData("currency");
+        Boolean converted = (Boolean) event.getData("converted");
+        Double amountUsd = (Double) event.getData("amountUsd");
+        Double exchangeRate = (Double) event.getData("exchangeRate");
+        Double taxAmount = (Double) event.getData("taxAmount");
+        Double taxPercentage = (Double) event.getData("taxPercentage");
+        Double totalDebitado = (Double) event.getData("totalDebitado");
 
         if (user != null && amount != null && destinationAlias != null) {
-            emailService.sendTransactionCompletedEmail(user, amount, destinationAlias);
+            emailService.sendTransactionCompletedEmail(user, amount, destinationAlias, currency, 
+                    converted != null ? converted : false, amountUsd, exchangeRate, 
+                    taxAmount, taxPercentage, totalDebitado);
 
         } else {
             System.err.println("Error: Datos incompletos para TRANSACTION_COMPLETED");
@@ -136,6 +150,16 @@ public class EmailEventObserver implements EventObserver {
 
         } else {
             System.err.println("Error: Datos incompletos para ACCOUNT_CREATED");
+        }
+    }
+
+    private void handleUsdAccountCreated(Event event){
+        User user = (User) event.getData("user");
+        String accountAlias = (String) event.getData("accountAlias");
+        String accountCvu = (String) event.getData("accountCvu");
+
+        if(user != null && accountAlias != null && accountCvu != null){
+            emailService.sendUsdAccountCreatedEmail(user,accountAlias,accountCvu);
         }
     }
 

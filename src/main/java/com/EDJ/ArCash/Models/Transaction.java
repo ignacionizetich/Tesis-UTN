@@ -1,5 +1,6 @@
 package com.EDJ.ArCash.Models;
 
+import com.EDJ.ArCash.Models.Imp.Currency;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -41,6 +42,25 @@ public class Transaction {
     @NotNull("El estado de la transacción no puede estar vacío")
     private String state;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "currency")
+    private Currency currency; // Moneda en la que se realizó la transacción
+
+    @Column(name = "original_amount")
+    private Double originalAmount; // Monto original antes de conversión (si aplica)
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "original_currency")
+    private Currency originalCurrency; // Moneda original (si hubo conversión)
+
+    @Column(name = "exchange_rate")
+    private Double exchangeRate; // Tasa de cambio aplicada (si hubo conversión)
+
+    @Column(name = "tax_amount")
+    private Double taxAmount; // Monto de impuestos aplicados
+    
+    @Column(name = "tax_percentage")
+    private Double taxPercentage; // Porcentaje de impuesto aplicado
 
     private String transaction_date;
 

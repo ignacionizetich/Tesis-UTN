@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuenta en Dólares Creada</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0A0A0F; font-family: 'Inter', Arial, sans-serif;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td style="padding: 20px 0;">
+            <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse; background-color: #1A1A2E; border-radius: 12px; border: 1px solid #39FFCC;">
+
+                <!-- Encabezado -->
+                <tr>
+                    <td align="center" style="padding: 30px 20px; border-bottom: 1px solid rgba(57, 255, 204, 0.3);">
+                        <h1 style="margin: 0; color: #E8EAF6; font-size: 28px; font-weight: 700;">
+                            <span style="color: #E8EAF6;">AR</span><span style="color: #00D4FF;">Cash</span>™
+                        </h1>
+                    </td>
+                </tr>
+
+                <!-- Contenido Principal -->
+                <tr>
+                    <td style="padding: 40px 30px;">
+                        <h2 style="margin: 0 0 20px 0; color: #E8EAF6; font-size: 24px; font-weight: 600;">
+                            ¡Cuenta en Dólares Activada, <span th:text="${username}" style="color: #39FFCC;">Usuario</span>!
+                        </h2>
+                        <p style="margin: 0 0 30px 0; color: #E8EAF6; font-size: 16px; line-height: 1.6;">
+                            Tu nueva cuenta en dólares estadounidenses (USD) ha sido creada exitosamente y ya está lista para usar.
+                        </p>
+
+                        <!-- Banner de cuenta USD -->
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #2ECC71 0%, #27AE60 100%); border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                            <tr>
+                                <td align="center">
+                                    <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; padding: 15px; margin-bottom: 10px;">
+                                        <span style="font-size: 40px;">💵</span>
+                                    </div>
+                                    <p style="margin: 0; color: #FFFFFF; font-size: 18px; font-weight: 700;">
+                                        Nueva Cuenta en USD
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Detalles de la cuenta USD -->
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: rgba(46, 204, 113, 0.1); border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(46, 204, 113, 0.3);">
+                            <tr>
+                                <td>
+                                    <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
+                                        Alias de cuenta:
+                                    </p>
+                                    <p style="margin: 0 0 20px 0; color: #2ECC71; font-size: 20px; font-weight: 600;">
+                                        <span th:text="${accountAlias}">mi.cuenta.usd</span>
+                                    </p>
+                                    <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
+                                        Número de cuenta USD:
+                                    </p>
+                                    <p style="margin: 0 0 20px 0; color: #2ECC71; font-size: 16px; font-family: 'Courier New', monospace;">
+                                        <span th:text="${accountCvu}">USD-1234567890</span>
+                                    </p>
+                                    <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
+                                        Saldo inicial:
+                                    </p>
+                                    <p style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 700;">
+                                        USD $<span th:text="${initialBalance}">0.00</span>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Beneficios -->
+                        <div style="background-color: rgba(57, 255, 204, 0.05); border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                            <p style="margin: 0 0 15px 0; color: #00D4FF; font-size: 16px; font-weight: 600;">
+                                ✨ Beneficios de tu cuenta en USD:
+                            </p>
+                            <ul style="margin: 0; padding-left: 20px; color: #E8EAF6; font-size: 14px; line-height: 1.8;">
+                                <li>Protege tu dinero de la inflación</li>
+                                <li>Realiza transferencias internacionales</li>
+                                <li>Recibe pagos en dólares</li>
+                                <li>Cambia entre pesos y dólares cuando quieras</li>
+                            </ul>
+                        </div>
+
+                        <!-- Botón de Acción -->
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                                <td align="center">
+                                    <a th:href="${dashboardUrl}"
+                                       target="_blank"
+                                       style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #2ECC71 0%, #27AE60 100%); color: #FFFFFF; text-decoration: none; font-weight: 700; font-size: 16px; border-radius: 8px; box-shadow: 0 4px 20px rgba(46, 204, 113, 0.4);">
+                                        Ver mi Cuenta USD
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="margin: 30px 0 0 0; color: #E8EAF6; font-size: 14px; line-height: 1.6;">
+                            Comienza a usar tu cuenta en dólares desde el dashboard. Puedes transferir fondos entre tus cuentas en pesos y dólares de forma inmediata.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Pie de página -->
+                <tr style="background-color: #0A0A0F;">
+                    <td style="padding: 20px 30px;">
+                        <p style="margin: 0; color: #E8EAF6; opacity: 0.7; font-size: 12px; text-align: center;">
+                            © 2025 ArCash. Todos los derechos reservados.
+                        </p>
+                        <p style="margin: 5px 0 0 0; color: #E8EAF6; opacity: 0.5; font-size: 11px; text-align: center;">
+                            Las operaciones en USD están sujetas a los términos y condiciones vigentes.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

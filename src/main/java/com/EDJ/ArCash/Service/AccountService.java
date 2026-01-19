@@ -2,6 +2,7 @@ package com.EDJ.ArCash.Service;
 
 import com.EDJ.ArCash.DTO.AuthDTO.AliasResponse;
 import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 
 import com.EDJ.ArCash.Repository.AccountRepository;
@@ -39,10 +40,10 @@ public class AccountService {
     }
 
 
-    public void createAccount(User user, String accountType) {
+    public void createAccount(User user) {
         Account account = new Account();
         account.setUser(user);
-        account.setAccountType(accountType);
+        account.setAccountType(Currency.ARS); ///se crea la cuenta como ARS por defecto
         account.setBalance(0.0);
         account.setAccountNickname(generateUniqueNickname());
         account.setAccountCvu(generateUniqueCvu());
@@ -54,6 +55,36 @@ public class AccountService {
         event.addData("accountAlias", account.getAccountNickname());
         event.addData("accountCvu", account.getAccountCvu());
         eventPublisher.publish(event);
+    }
+
+
+    public Account createUsdAccount(User user){
+        Account account = new Account();
+        account.setUser(user);
+        account.setAccountType(Currency.USD);
+        account.setBalance(0.0);
+        account.setAccountNickname(generateUniqueNickname());
+        account.setAccountCvu(generateUniqueCvu());
+
+        accountRepository.save(account);
+
+        Event event = new Event(EventType.USD_ACCOUNT_CREATED);
+        event.addData("user", user);
+        event.addData("accountAlias", account.getAccountNickname());
+        event.addData("accountCvu", account.getAccountCvu());
+        eventPublisher.publish(event);
+
+        return account;
+    }
+
+    public Account openUsdAccount(User user){
+        boolean alreadyHasAccount = accountRepository.existsByUserAndAccountType(user, Currency.USD);
+
+        if(alreadyHasAccount){
+            throw new IllegalStateException("El usuario ya cuenta con una cuenta en dolares");
+        }
+
+        return createUsdAccount(user);
     }
 
 

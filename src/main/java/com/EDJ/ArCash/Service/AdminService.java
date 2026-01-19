@@ -96,7 +96,7 @@ public class AdminService {
 
     public void cargarAdmin(User user){
         userRepository.save(user);
-        accountService.createAccount(user, "PESOS");
+        accountService.createAccount(user);
     }
 
     public boolean existsByUsername(String username){

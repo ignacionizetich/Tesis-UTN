@@ -79,14 +79,17 @@ public class TransactionController {
                 return ResponseEntity.status(403).body(new TransactionResponse(false, "No tiene permiso para operar esta cuenta"));
             }
 
-            if(transactionService.transaction(id1, id2, transcationRequest.getBalance())){
+            Map<String, Object> result = transactionService.transactionWithDetails(id1, id2, transcationRequest.getBalance());
+            boolean success = (boolean) result.get("success");
 
-                // NUEVO: Actualizar lastUsed si se transfiere a un contacto favorito
+            if(success){
+                // Actualizar lastUsed si se transfiere a un contacto favorito
                 updateLastUsedForFavoriteContact(userId, id2);
-
                 return ResponseEntity.ok(new TransactionResponse(true, "Transferencia realizada correctamente"));
             }else{
-                return ResponseEntity.status(403).body(new TransactionResponse(false, "Not enough cash, stranger."));
+                String errorMessage = result.containsKey("message") ? 
+                        (String) result.get("message") : "Not enough cash, stranger.";
+                return ResponseEntity.status(400).body(new TransactionResponse(false, errorMessage));
             }
         }
     }

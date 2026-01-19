@@ -1,6 +1,7 @@
 package com.EDJ.ArCash.Models;
 
 
+import com.EDJ.ArCash.Models.Imp.Currency;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,8 +42,9 @@ public class Account {
 
 
     /// SE SETEA POR DEFECTO LA CUENTA EN TIPO PESOS, LA DE DOLARES LA ABRE EL USUARIO SI ASI LO QUIERA
+    @Enumerated(EnumType.STRING)
     @Column(name = "type")
-    private String accountType;
+    private Currency accountType;
 
     @Column(name = "creation_date")
     private String creationDate;

@@ -54,13 +54,36 @@ public class EmailService {
     }
 
     @Async
-    public void sendTransactionCompletedEmail(User user, double amount, String destinationAlias) {
-        Map<String, Object> variables = Map.of(
-                "username", user.getName(),
-                "amount", amount,
-                "destinationAlias", destinationAlias,
-                "transactionDate", java.time.LocalDateTime.now().toString()
-        );
+    public void sendTransactionCompletedEmail(User user, double amount, String destinationAlias, 
+                                             String currency, boolean converted, Double amountUsd, Double exchangeRate,
+                                             Double taxAmount, Double taxPercentage, Double totalDebitado) {
+        Map<String, Object> variables = new java.util.HashMap<>();
+        variables.put("username", user.getName());
+        variables.put("amount", amount);
+        variables.put("destinationAlias", destinationAlias);
+        variables.put("transactionDate", java.time.LocalDateTime.now().format(
+                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        variables.put("currency", currency != null ? currency : "ARS");
+        variables.put("converted", converted);
+        
+        // Siempre agregar las variables, aunque sean null
+        variables.put("amountUsd", amountUsd);
+        variables.put("exchangeRate", exchangeRate);
+        variables.put("taxAmount", taxAmount);
+        variables.put("taxPercentage", taxPercentage);
+        variables.put("totalDebitado", totalDebitado);
+        
+        // Debug log
+        System.out.println("=== EMAIL TRANSACTION DATA ===");
+        System.out.println("Amount (original): " + amount);
+        System.out.println("AmountUsd (converted): " + amountUsd);
+        System.out.println("Currency: " + currency);
+        System.out.println("Converted: " + converted);
+        System.out.println("Exchange Rate: " + exchangeRate);
+        System.out.println("Tax Amount: " + taxAmount);
+        System.out.println("Tax Percentage: " + taxPercentage);
+        System.out.println("Total Debitado: " + totalDebitado);
+        System.out.println("==============================");
 
         sendEmail(user.getEmail(), "Transacción completada exitosamente",
                 "email-transaction", variables);
@@ -77,6 +100,20 @@ public class EmailService {
 
         sendEmail(user.getEmail(), "¡Tu cuenta ArCash ha sido creada!",
                 "email-account-created", variables);
+    }
+
+
+    @Async
+    public void sendUsdAccountCreatedEmail(User user, String accountAlias, String accountCvu){
+        Map<String, Object> variables = Map.of(
+                "username", user.getName(),
+                "accountAlias", accountAlias,
+                "accountCvu", accountCvu,
+                "dashboardUrl", frontendUrl + "/dashboard"
+        );
+
+        sendEmail(user.getEmail(), "Tu cuenta en dolares ha sido creada!",
+                "email-usd-account-created", variables);
     }
 
     @Async

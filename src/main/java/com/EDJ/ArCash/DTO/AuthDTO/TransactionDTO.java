@@ -44,6 +44,21 @@ public class TransactionDTO {
     @Schema(description = "Alias de la cuenta de destino", example = "cuenta.maria")
     private String destinationAlias;
 
+    @Schema(description = "Moneda de la transacción", example = "ARS")
+    private String currency;
+
+    @Schema(description = "Monto original antes de conversión", example = "10000.00")
+    private Double originalAmount;
+
+    @Schema(description = "Moneda original antes de conversión", example = "ARS")
+    private String originalCurrency;
+
+    @Schema(description = "Tasa de cambio aplicada", example = "1000.00")
+    private Double exchangeRate;
+
+    @Schema(description = "Indica si hubo conversión de moneda", example = "true")
+    private Boolean converted;
+
     public TransactionDTO(Transaction transaction) {
         setIdTransaction(transaction.getId());
         setIdOrigin(transaction.getIdOrigin().getIdAccount());
@@ -56,5 +71,12 @@ public class TransactionDTO {
         this.destinationUsername = transaction.getIdDestination().getUser().getAlias();
         this.originAlias = transaction.getIdOrigin().getAccountNickname();
         this.destinationAlias = transaction.getIdDestination().getAccountNickname();
+        
+        // Información de moneda y conversión
+        this.currency = transaction.getCurrency() != null ? transaction.getCurrency().toString() : null;
+        this.originalAmount = transaction.getOriginalAmount();
+        this.originalCurrency = transaction.getOriginalCurrency() != null ? transaction.getOriginalCurrency().toString() : null;
+        this.exchangeRate = transaction.getExchangeRate();
+        this.converted = transaction.getOriginalAmount() != null && transaction.getExchangeRate() != null;
     }
 }

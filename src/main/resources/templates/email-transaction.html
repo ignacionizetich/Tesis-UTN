@@ -37,9 +37,47 @@
                                     <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
                                         Monto transferido:
                                     </p>
-                                    <p style="margin: 0 0 20px 0; color: #00FF88; font-size: 28px; font-weight: 700;">
-                                        $ <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 2, 'POINT')}">1000.00</span>
+                                    <!-- Mostrar monto convertido si hubo conversión -->
+                                    <p th:if="${converted != null and converted}" style="margin: 0 0 20px 0; color: #00FF88; font-size: 28px; font-weight: 700;">
+                                        US$ <span th:text="${amountUsd != null ? #numbers.formatDecimal(amountUsd, 0, 'COMMA', 2, 'POINT') : '0.00'}">5.00</span>
+                                        <span style="font-size: 18px; opacity: 0.8;">USD</span>
                                     </p>
+                                    <!-- Mostrar monto normal si no hubo conversión -->
+                                    <p th:if="${converted == null or !converted}" style="margin: 0 0 20px 0; color: #00FF88; font-size: 28px; font-weight: 700;">
+                                        <span th:if="${currency == 'ARS'}">$</span>
+                                        <span th:if="${currency == 'USD'}">US$</span>
+                                        <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 2, 'POINT')}">1000.00</span>
+                                        <span th:text="${currency}" style="font-size: 18px; opacity: 0.8;">ARS</span>
+                                    </p>
+                                    
+                                    <!-- Información de conversión si aplica -->
+                                    <div th:if="${converted != null and converted and amountUsd != null}">
+                                        <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
+                                            Conversión aplicada:
+                                        </p>
+                                        <p style="margin: 0 0 10px 0; color: #00D4FF; font-size: 16px;">
+                                            <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 2, 'POINT')}">5000.00</span> ARS 
+                                            → 
+                                            <span th:text="${#numbers.formatDecimal(amountUsd, 0, 'COMMA', 2, 'POINT')}">5.00</span> USD
+                                        </p>
+                                        <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
+                                            Tasa de cambio: $<span th:text="${exchangeRate != null ? #numbers.formatDecimal(exchangeRate, 0, 'COMMA', 2, 'POINT') : '0.00'}">1000.00</span>/USD
+                                        </p>
+                                        
+                                        <!-- Información de comisión -->
+                                        <div th:if="${taxAmount != null and taxAmount > 0}" style="background-color: rgba(0, 212, 255, 0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                                            <p style="margin: 0 0 10px 0; color: #00D4FF; font-size: 14px; font-weight: 600;">
+                                                 Comisión por conversión
+                                            </p>
+                                            <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px;">
+                                                Comisión (<span th:text="${taxPercentage}">3</span>%): $<span th:text="${#numbers.formatDecimal(taxAmount, 0, 'COMMA', 2, 'POINT')}">300.00</span>
+                                            </p>
+                                            <p style="margin: 10px 0 0 0; color: #00FF88; font-size: 15px; font-weight: 700;">
+                                                Total debitado: $<span th:text="${totalDebitado != null ? #numbers.formatDecimal(totalDebitado, 0, 'COMMA', 2, 'POINT') : '0.00'}">10300.00</span> ARS
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
                                     <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
                                         Destinatario:
                                     </p>

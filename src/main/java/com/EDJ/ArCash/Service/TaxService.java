@@ -54,4 +54,27 @@ public class TaxService {
 
         return taxUsdResponse;
     }
+    
+    /**
+     * Calcula la comisión para conversión de ARS a USD
+     * Aplica 3% de comisión por conversión
+     * @param montoArs Monto en pesos argentinos
+     * @return Map con información de comisión
+     */
+    public java.util.Map<String, Double> calcularImpuestosConversion(double montoArs) {
+        // Comisión por conversión: 3%
+        double comision = montoArs * 0.03;
+        
+        // Porcentaje total
+        double porcentajeTotal = 3.0;
+        
+        java.util.Map<String, Double> resultado = new java.util.HashMap<>();
+        resultado.put("impuestoPais", 0.0);
+        resultado.put("percepcion", 0.0);
+        resultado.put("totalImpuestos", comision);
+        resultado.put("porcentajeTotal", porcentajeTotal);
+        resultado.put("montoConImpuestos", montoArs + comision);
+        
+        return resultado;
+    }
 }

@@ -11,6 +11,9 @@ import com.EDJ.ArCash.observer.EventType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
+import java.util.Optional;
+
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
 @Service
@@ -102,7 +105,7 @@ public class UserService {
 
 
     public void validarUsuario(User user){
-        accountService.createAccount(user, "PESOS"); ///UNA VEZ VALIDE SU CUENTA
+        accountService.createAccount(user); ///UNA VEZ VALIDE SU CUENTA
         user.setEnabled(true);
         user.setActive(true);
         userRepository.save(user);
@@ -145,6 +148,10 @@ public class UserService {
         }
     }
 
+
+    public Optional<User> findUserByAlias(String alias){
+        return userRepository.findByAlias(alias);
+    }
 
 
 }

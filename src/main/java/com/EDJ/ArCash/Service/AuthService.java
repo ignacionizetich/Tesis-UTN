@@ -4,199 +4,137 @@ import com.EDJ.ArCash.DTO.AuthDTO.LoginRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.LoginResponse;
 import com.EDJ.ArCash.Models.*;
 import com.EDJ.ArCash.Repository.*;
-import com.EDJ.ArCash.Security.JwtUtils;
-import com.EDJ.ArCash.factory.LoginResponseFactory;
-
+import com.EDJ.ArCash.Service.strategy.AuthenticationStrategy;
+import com.EDJ.ArCash.Service.strategy.PasswordRecoveryStrategy;
+import com.EDJ.ArCash.Service.strategy.TokenManagementStrategy;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
-import io.jsonwebtoken.Claims;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
+/**
+ * Servicio de autenticación refactorizado aplicando el Patrón Strategy y el Principio SRP
+ * Este servicio ahora actúa como fachada, delegando las responsabilidades específicas
+ * a servicios especializados:
+ * - AuthenticationStrategy: Autenticación de usuarios
+ * - TokenManagementStrategy: Gestión de tokens JWT
+ * - PasswordRecoveryStrategy: Recuperación de contraseñas
+ */
 @Service
 public class AuthService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    @Qualifier("userAuthenticationService")
+    private AuthenticationStrategy authenticationStrategy;
+
+    @Autowired
+    @Qualifier("jwtTokenManagementService")
+    private TokenManagementStrategy tokenManagementStrategy;
+
+    @Autowired
+    @Qualifier("emailPasswordRecoveryService")
+    private PasswordRecoveryStrategy passwordRecoveryStrategy;
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private JwtUtils jwtUtils;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private AccountRepository accountRepository;
 
     @Autowired
     private CredentialRepository credentialRepository;
 
     @Autowired
-    private AccountRepository accountRepository;
-
-
-
-    @Autowired
-    private RecoveryTokenRepository recoveryTokenRepository;
-
-    @Autowired
-    private RecoveryTokenService recoveryTokenService;
-
-    @Autowired
-    private LoginResponseFactory loginResponseFactory;
-
-
-
-    @Autowired
     private EventPublisher eventPublisher;
 
+    /**
+     * Autentica un usuario utilizando la estrategia de autenticación configurada
+     * 
+     * @param loginRequest Solicitud de login
+     * @return LoginResponse con el resultado
+     */
     public LoginResponse login(LoginRequest loginRequest) {
-
-        Optional<Credentials> credentialsOptional = credentialRepository.findByUsername(loginRequest.getUsername());
-
-
-        if (credentialsOptional.isPresent()) {
-            Credentials credentials = credentialsOptional.get();
-            User usuario = credentials.getUser();
-
-            if (!passwordEncoder.matches(loginRequest.getPassword(), credentials.getPass())) {
-                return loginResponseFactory.createErrorResponse("Credenciales incorrectas");
-            }
-
-            if (!usuario.isActive()) {
-                return loginResponseFactory.createErrorResponse("Usuario no habilitado");
-            }
-
-            List<RefreshToken> activeTokens = refreshTokenRepository.findAllByUserAndRevokedFalse(usuario);
-            String refreshToken;
-            if (!activeTokens.isEmpty()) {
-                refreshToken = activeTokens.get(0).getRefreshToken();
-            } else {
-                refreshToken = jwtUtils.generateRefreshToken(String.valueOf(usuario.getId()), usuario.getPermissions().name());
-                saveRefreshToken(usuario, refreshToken);
-            }
-
-            String accessToken = jwtUtils.generateToken(String.valueOf(usuario.getId()), usuario.getPermissions().name());
-
-            Optional<Account> optionalAccount = accountRepository.findByUser_Id(usuario.getId());
-            if (optionalAccount.isPresent()) {
-
-                Account account = optionalAccount.get();
-                return loginResponseFactory.createSuccessResponse(accessToken, refreshToken, account.getIdAccount(), usuario.getPermissions().name());
-            }
-            return loginResponseFactory.createErrorResponse("Cuenta no encontrada");
-        }else {
-
-            return loginResponseFactory.createErrorResponse("Usuario no encontrado");
-        }
-
+        logger.info("Procesando login para usuario: {}", loginRequest.getUsername());
+        return authenticationStrategy.authenticate(loginRequest);
     }
 
+    /**
+     * Cierra la sesión del usuario revocando sus tokens
+     * 
+     * @param accessToken Token de acceso del usuario
+     * @return Estado del logout
+     */
     public LogoutStatus logout(String accessToken) {
-        try {
-            Claims claims = jwtUtils.getClaimJWT(accessToken);
-            String userId = claims.get("userID", String.class);
-
-            if (userId == null) {
-                return LogoutStatus.ERROR;
-            }
-
-            Long userIdLong = Long.parseLong(userId);
-
-            Optional<User> userOptional = userRepository.findById(userIdLong);
-            if (userOptional.isPresent()) {
-                User user = userOptional.get();
-                List<RefreshToken> activeTokens = refreshTokenRepository.findAllByUserAndRevokedFalse(user);
-
-                if (activeTokens.isEmpty()) {
-                    return LogoutStatus.ALREADY_REVOKED;
-                }
-
-                jwtUtils.revokeAllUserTokens(userIdLong);
-                return LogoutStatus.SUCCESS;
-            }
-
-            return LogoutStatus.ERROR;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return LogoutStatus.ERROR;
-        }
+        logger.info("Procesando logout");
+        return tokenManagementStrategy.revokeUserTokens(accessToken);
     }
 
+    /**
+     * Valida si la sesión del usuario es válida
+     * 
+     * @param token Token de acceso
+     * @return true si la sesión es válida, false en caso contrario
+     */
     public boolean isValidSession(String token) {
-        try {
-            String userId = jwtUtils.extractUserId(token);
-            if (userId == null) return false;
-
-            return refreshTokenRepository.existsByUser_IdAndRevokedFalse(Long.parseLong(userId));
-
-        } catch (Exception e) {
-            return false;
-        }
+        return authenticationStrategy.isValidSession(token);
     }
 
-    public void saveRefreshToken(User usuario, String refreshToken) {
-        RefreshToken token = new RefreshToken();
-        token.setUser(usuario);
-        token.setRefreshToken(refreshToken);
-        token.setIssuedAt(LocalDateTime.now());
-        token.setExpiresAt(LocalDateTime.now().plusDays(7));
-        token.setRevoked(false);
-        refreshTokenRepository.save(token);
-    }
-
-
+    /**
+     * Envía un correo de recuperación de contraseña
+     * 
+     * @param email Email del usuario
+     * @return true si se envió correctamente, false en caso contrario
+     */
     @Transactional
     public boolean enviarCorreoRecuperacion(String email) {
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-
-            // Usar el nuevo método que actualiza en lugar de borrar y crear
-            String token = recoveryTokenService.createRecoveryToken(user);
-            try {
-                // Publicar evento de solicitud de recuperación
-                Event event = new Event(EventType.PASSWORD_RECOVERY_REQUESTED);
-                event.addData("user", user);
-                event.addData("token", token);
-                eventPublisher.publish(event);
-                
-                // El email se enviará a través del observer, comentamos el envío directo
-                // emailService.sendRecoverPasswordEmail(user, token);
-                
-                return true;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-        return false;
+        logger.info("Enviando correo de recuperación para: {}", email);
+        return passwordRecoveryStrategy.sendRecoveryEmail(email);
     }
 
+    /**
+     * Cambia el alias y username del usuario
+     * Esta funcionalidad permanece aquí ya que involucra lógica de negocio
+     * relacionada con múltiples entidades (User, Account, Credentials)
+     * 
+     * @param userId ID del usuario
+     * @param nuevoAlias Nuevo alias
+     * @return true si el cambio fue exitoso, false en caso contrario
+     */
     @Transactional
     public boolean cambiarAliasYUsername(Long userId, String nuevoAlias) {
+        logger.info("Cambiando alias para usuario: {}", userId);
+        
         String regex = "^(?=.*[A-Za-z])[A-Za-z\\d]{4,25}$";
         if (nuevoAlias == null || nuevoAlias.trim().isEmpty() ||
                 !nuevoAlias.matches(regex) ||
-                nuevoAlias.matches("^\\d+$")) { // solo números
+                nuevoAlias.matches("^\\d+$")) {
+            logger.warn("Formato de alias inválido para usuario: {}", userId);
             return false;
         }
 
         Optional<Account> accountOpt = accountRepository.findByUser_Id(userId);
-        if (accountOpt.isEmpty()) return false;
+        if (accountOpt.isEmpty()) {
+            logger.warn("Cuenta no encontrada para usuario: {}", userId);
+            return false;
+        }
+        
         Credentials credentials = accountOpt.get().getUser().getCredentials();
         User user = accountOpt.get().getUser();
 
-
-        if (credentialRepository.findByUsername(nuevoAlias).isPresent()) return false;
+        if (credentialRepository.findByUsername(nuevoAlias).isPresent()) {
+            logger.warn("El alias ya está en uso: {}", nuevoAlias);
+            return false;
+        }
 
         String oldAlias = user.getAlias();
         user.setAlias(nuevoAlias);
@@ -212,38 +150,28 @@ public class AuthService {
         event.addData("newAlias", nuevoAlias);
         eventPublisher.publish(event);
         
+        logger.info("Alias cambiado exitosamente para usuario: {}", userId);
         return true;
     }
 
+    /**
+     * Valida si un token de recuperación es válido
+     * 
+     * @param tokenValue Valor del token
+     * @return true si el token es válido, false en caso contrario
+     */
     public boolean tokenValido(String tokenValue) {
-        Optional<RecoveryToken> optionalToken = recoveryTokenRepository.findByToken(tokenValue);
-        if (optionalToken.isEmpty()) return false;
-        RecoveryToken token = optionalToken.get();
-        return !token.isUsed() && token.getExpirationDate().isAfter(LocalDateTime.now());
+        return passwordRecoveryStrategy.validateRecoveryToken(tokenValue);
     }
 
     /**
      * Reenvía el enlace de recuperación de contraseña
+     * 
      * @param email Email del usuario
      * @return true si se envió exitosamente, false si no se pudo enviar
      */
     public boolean resendPasswordRecovery(String email) {
-        try {
-            System.out.println("Iniciando reenvío de recuperación para email: " + email);
-            boolean result = enviarCorreoRecuperacion(email);
-            System.out.println("Resultado del reenvío: " + result);
-            return result;
-        } catch (Exception e) {
-            System.err.println("Error al reenviar email de recuperación: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
+        logger.info("Reenviando recuperación de contraseña para: {}", email);
+        return passwordRecoveryStrategy.resendRecoveryLink(email);
     }
-
-
-
-
-
-
-
 }

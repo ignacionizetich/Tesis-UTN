@@ -1,10 +1,15 @@
 package com.EDJ.ArCash.Repository;
 
 import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.Models.Imp.Currency;
+import com.EDJ.ArCash.Models.User;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -32,8 +37,20 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     /// METODO PAR ENCONTRAR UNA CUENTA CON SU ID
     Optional<Account> findByIdAccount(Long id);
 
-    /// METODO PAR ENCONTRAR UNA CUENTA CON EL ID DEL USUARIO
-    Optional<Account> findByUser_Id(Long userId);
+    /// METODO PAR ENCONTRAR LA CUENTA EN PESOS DE UN USUARIO (cuenta principal)
+    @Query("SELECT a FROM Account a WHERE a.user.id = :userId AND a.accountType = 'ARS'")
+    Optional<Account> findArsAccountByUserId(@Param("userId") Long userId);
+
+    /// METODO PAR ENCONTRAR TODAS LAS CUENTAS DE UN USUARIO
+    List<Account> findAllByUser_Id(Long userId);
+
+    /// METODO PAR ENCONTRAR UNA CUENTA CON EL ID DEL USUARIO (DEPRECADO - usar findArsAccountByUserId)
+    @Deprecated
+    @Query("SELECT a FROM Account a WHERE a.user.id = :userId AND a.accountType = 'ARS'")
+    Optional<Account> findByUser_Id(@Param("userId") Long userId);
+
+    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Account a WHERE a.user = :user AND a.accountType = :currency")
+    boolean existsByUserAndAccountType(@Param("user") User user, @Param("currency") Currency currency);
 
 
 }
