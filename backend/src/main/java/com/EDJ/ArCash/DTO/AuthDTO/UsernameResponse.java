@@ -1,0 +1,18 @@
+package com.EDJ.ArCash.DTO.AuthDTO;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+
+@Getter
+@Setter
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
+@Schema(description = "Respuesta al cambiar el nombre de usuario")
+public class UsernameResponse {
+    @Schema(description = "Indica si el cambio fue exitoso", example = "true")
+    private boolean success;
+
+    @Schema(description = "Mensaje descriptivo del resultado", example = "Nombre de usuario actualizado correctamente")
+    private String message;
+}
