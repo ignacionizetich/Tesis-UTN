@@ -1,0 +1,895 @@
+:root {
+    /* Variables CSS para mouse tracking */
+    --mouse-x: 50%;
+    --mouse-y: 50%;
+    
+    /* Colores base tecnológicos */
+    --obsidian: #0A0A0F;
+    --carbon: #1A1A2E;
+    --carbon-rgb: 26, 26, 46;
+    --slate: #16213E;
+    --titanium: #E8EAF6;
+    --platinum: rgba(248, 250, 255, 0.98);
+    --platinum-rgb: 248, 250, 255;
+    --cyber-blue-rgb: 0, 212, 255;
+    
+    /* Paleta neón tecnológica */
+    --cyber-blue: #00D4FF;
+    --electric-purple: #8B5FBF;
+    --neon-cyan: #39FFCC;
+    --plasma-pink: #FF006E;
+    --laser-green: #00FF88;
+    --quantum-violet: #6C5CE7;
+    --neural-orange: #FF7F50;
+    --hologram-blue: #4ECDC4;
+    --love-pink: #FF006E;
+    --love-red: #FF0000;
+    
+    /* Gradientes tecnológicos */
+    --tech-gradient-primary: linear-gradient(135deg, var(--cyber-blue) 0%, var(--quantum-violet) 100%);
+    --tech-gradient-secondary: linear-gradient(135deg, var(--electric-purple) 0%, var(--plasma-pink) 100%);
+    --tech-gradient-accent: linear-gradient(135deg, var(--neon-cyan) 0%, var(--laser-green) 100%);
+    --tech-gradient-god:  linear-gradient(135deg, var(--text-primary), var(--text-accent) 100%);
+    /* Modo claro - elegante y tecnológico */
+    --bg-primary: var(--platinum);
+    --bg-secondary: rgba(248, 250, 255, 0.9);
+    --text-primary: var(--obsidian);
+    --text-accent: var(--cyber-blue);
+    --text-secondary: var(--electric-purple);
+    --border-light: rgba(0, 212, 255, 0.15);
+    --border-color: rgba(0, 212, 255, 0.25);
+    --shadow-primary: rgba(0, 212, 255, 0.3);
+    --shadow-secondary: rgba(139, 95, 191, 0.2);
+
+    /* Variables específicas para componentes */
+    --back-circle-fill: var(--platinum);
+    --back-circle-stroke: var(--cyber-blue);
+    --back-arrow-color: var(--cyber-blue);
+    
+    /* Efectos glassmorphism */
+    --glass-bg-light: rgba(255, 255, 255, 0.08);
+    --glass-border-light: rgba(0, 212, 255, 0.2);
+    --glass-shadow-light: 0 8px 32px rgba(0, 212, 255, 0.15);
+
+    /* Variables para toasts */
+    --verde-neon: #00FF9D;
+    --cyan-electrico: #00FFFF;
+    --rosa-plasma: #FF1493;
+    --amarillo-tech: #FFD700;
+    --azul-cyber: #0080FF;
+}
+
+[data-theme="dark"] {
+    /* Modo oscuro - cyberpunk elegante */
+    --bg-primary: var(--carbon);
+    --bg-secondary: var(--obsidian);
+    --text-primary: var(--titanium);
+    --text-accent: var(--neon-cyan);
+    --text-secondary: var(--plasma-pink);
+    --border-light: rgba(57, 255, 204, 0.15);
+    --border-color: rgba(57, 255, 204, 0.3);
+    --shadow-primary: rgba(57, 255, 204, 0.4);
+    --shadow-secondary: rgba(255, 0, 110, 0.3);
+
+    /* Variables específicas para modo oscuro */
+    --back-circle-fill: var(--carbon);
+    --back-circle-stroke: var(--neon-cyan);
+    --back-arrow-color: var(--neon-cyan);
+    
+    /* Efectos glassmorphism oscuro */
+    --glass-bg-dark: rgba(26, 26, 46, 0.3);
+    --glass-border-dark: rgba(57, 255, 204, 0.25);
+    --glass-shadow-dark: 0 8px 32px rgba(57, 255, 204, 0.2);
+
+    /* Variables para toasts en modo oscuro */
+    --verde-neon: #00FF9D;
+    --cyan-electrico: #00FFFF;
+    --rosa-plasma: #FF1493;
+    --amarillo-tech: #FFD700;
+    --azul-cyber: #0080FF;
+}
+
+/* Modo claro específico - sobreescribe las variables para modo claro */
+:root:not([data-theme="dark"]) {
+    --bg-primary: #F8F9FA;
+    --bg-secondary: #FFFFFF;
+    --text-primary: #2C3E50;
+    --text-accent: #667EEA;
+    --text-secondary: #FF6B6B;
+    --border-light: rgba(102, 126, 234, 0.15);
+    --border-color: rgba(102, 126, 234, 0.25);
+    --shadow-primary: rgba(102, 126, 234, 0.2);
+    --shadow-secondary: rgba(255, 107, 107, 0.15);
+    
+    --back-circle-fill: #FFFFFF;
+    --back-circle-stroke: #667EEA;
+    --back-arrow-color: #667EEA;
+    
+    --glass-bg-light: rgba(255, 255, 255, 0.85);
+    --glass-border-light: rgba(102, 126, 234, 0.2);
+    --glass-shadow-light: 0 8px 32px rgba(102, 126, 234, 0.12);
+}
+
+/* Reset CSS Global con transiciones optimizadas */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    transition: 
+        background-color 0.4s ease,
+        color 0.4s ease,
+        border-color 0.4s ease,
+        box-shadow 0.4s ease,
+        fill 0.4s ease,
+        stroke 0.4s ease;
+}
+
+/* Aplicar tema globalmente con transiciones optimizadas */
+* {
+    transition: 
+        background-color 0.4s ease,
+        color 0.4s ease,
+        border-color 0.4s ease,
+        box-shadow 0.4s ease,
+        fill 0.4s ease,
+        stroke 0.4s ease;
+}
+
+html, body {
+    transition: all 0.4s ease;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    color: var(--text-primary);
+    font-family: 'Inter', 'JetBrains Mono', 'Fira Code', monospace;
+    position: relative;
+    font-weight: 400;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at var(--mouse-x, 20%) var(--mouse-y, 20%), rgba(255, 0, 110, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at calc(100% - var(--mouse-x, 80%)) calc(100% - var(--mouse-y, 80%)), rgba(0, 212, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at var(--mouse-x, 40%) var(--mouse-y, 60%), rgba(139, 95, 191, 0.04) 0%, transparent 50%),
+        conic-gradient(from 0deg at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+            rgba(255, 0, 111, 0.025) 0deg, 
+            rgba(0, 212, 255, 0.015) 120deg, 
+            rgba(139, 95, 191, 0.015) 240deg, 
+            rgba(255, 0, 110, 0.02) 360deg);
+    pointer-events: none;
+    z-index: -1;
+    transition: all 0.4s ease;
+    animation: techPulse 8s ease-in-out infinite;
+}
+
+@keyframes techPulse {
+    0%, 100% { 
+        opacity: 0.4; 
+        filter: hue-rotate(0deg);
+    }
+    50% { 
+        opacity: 0.6; 
+        filter: hue-rotate(10deg);
+    }
+}
+
+/* Animación específica para modo claro - tonos rositas */
+:root:not([data-theme="dark"]) body::before {
+    animation: rosePulse 10s ease-in-out infinite;
+}
+
+@keyframes rosePulse {
+    0%, 100% { 
+        opacity: 0.5; 
+        filter: hue-rotate(0deg) saturate(1.25);
+    }
+    33% { 
+        opacity: 0.7; 
+        filter: hue-rotate(12deg) saturate(1.35);
+    }
+    66% { 
+        opacity: 0.6; 
+        filter: hue-rotate(-8deg) saturate(1.3);
+    }
+}
+
+/* Tema oscuro global - cyberpunk avanzado */
+[data-theme="dark"] body::before {
+    background: 
+        radial-gradient(circle at var(--mouse-x, 20%) var(--mouse-y, 20%), rgba(57, 255, 204, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at calc(100% - var(--mouse-x, 80%)) calc(100% - var(--mouse-y, 80%)), rgba(255, 0, 110, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at var(--mouse-x, 40%) var(--mouse-y, 60%), rgba(0, 212, 255, 0.05) 0%, transparent 50%),
+        conic-gradient(from 180deg at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+            rgba(57, 255, 204, 0.04) 0deg, 
+            rgba(255, 0, 110, 0.03) 120deg, 
+            rgba(0, 212, 255, 0.02) 240deg, 
+            rgba(57, 255, 204, 0.04) 360deg);
+    animation: cyberpunkPulse 6s ease-in-out infinite;
+}
+
+@keyframes cyberpunkPulse {
+    0%, 100% { 
+        opacity: 0.8; 
+        transform: scale(1); 
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1.02); 
+    }
+}
+
+/* Efectos adicionales para elementos tecnológicos */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--text-accent) transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--text-accent);
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(var(--text-accent), 0.5);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+    box-shadow: 0 0 15px rgba(var(--text-secondary), 0.7);
+}
+
+/* Efectos de transición optimizados */
+.smooth-transitions {
+    transition: all 0.6s ease !important;
+}
+
+/* Transiciones específicas para elementos interactivos */
+button, input, .access-btn {
+    transition: all 0.3s ease !important;
+}
+
+/* Efectos de carga de página simplificados */
+.page-enter {
+    animation: pageEnter 0.6s ease-out forwards;
+}
+
+@keyframes pageEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Estilos de botones en modo claro - excluye botón de cerrar sesión, password toggle y elementos toast */
+:root:not([data-theme="dark"]) button:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]) {
+    color: var(--text-accent) ; /* Color oscuro en modo claro */
+    background: transparent !important; /* Fondo transparente por defecto */
+    border: 1px solid rgba(44, 62, 80, 0.2) !important; /* Borde sutil oscuro */
+    transition: all 0.3s ease !important;
+}
+
+:root:not([data-theme="dark"]) button:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]):hover {
+    color: var(--carbon) !important;
+    border: var(--text-accent) !important; /* Sin borde en hover */
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    
+}
+
+/* Estilos específicos para inputs tipo button y submit - excluye logout, password toggle y elementos toast */
+:root:not([data-theme="dark"]) input[type="button"]:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]),
+:root:not([data-theme="dark"]) input[type="submit"]:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]) {
+    color: var(--carbon) !important;
+    background: transparent !important;
+    border: 1px solid rgba(44, 62, 80, 0.2) !important;
+}
+
+:root:not([data-theme="dark"]) input[type="button"]:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]):hover,
+:root:not([data-theme="dark"]) input[type="submit"]:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]):hover {
+    color: #FFFFFF !important;
+    background: linear-gradient(135deg, #667EEA 0%, #FF6B6B 100%) !important;
+    border: none !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+
+
+
+
+
+
+
+
+
+/* Estilos de botones en modo oscuro - excluye logout, password toggle y elementos toast */
+[data-theme="dark"] button:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]) {
+    color: #39FFCC !important; /* Neon verde/cyan en estado normal */
+    background: transparent !important; /* Fondo transparente por defecto */
+    border: 1px solid rgba(57, 255, 204, 0.2) !important; /* Borde sutil neon cyan */
+    transition: all 0.3s ease !important;
+}
+
+[data-theme="dark"] button:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]):hover {
+    color: #FFFFFF !important; /* Blanco en hover */
+    border: none !important; /* Sin borde en hover */
+    transform: translateY(-2px);
+    background: var(--text-accent);
+    box-shadow: 0 8px 25px rgba(57, 255, 204, 0.4);
+}
+
+/* Estilos específicos para inputs tipo button y submit en modo oscuro - excluye logout, password toggle y elementos toast */
+[data-theme="dark"] input[type="button"]:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]),
+[data-theme="dark"] input[type="submit"]:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]) {
+    color: #39FFCC !important; /* Neon verde/cyan en estado normal */
+    background: transparent !important;
+    border: 1px solid rgba(57, 255, 204, 0.2) !important;
+}
+
+[data-theme="dark"] input[type="button"]:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]):hover,
+[data-theme="dark"] input[type="submit"]:not(.logout-btn):not([class*="logout"]):not([id*="logout"]):not(.password-toggle):not(.toast-close-btn):not(.toast-close):not([class*="toast"]):hover {
+    color: #FFFFFF !important; /* Blanco en hover */
+    background: linear-gradient(135deg, #39FFCC 0%, #FF006E 100%) !important;
+    border: none !important;
+    transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(57, 255, 204, 0.4);
+}
+
+
+
+/* Estilos para el logo QR según el tema */
+/* Modo claro - logo QR negro */
+:root:not([data-theme="dark"]) .action-icon.QR {
+    color: #000000 !important; /* Negro en modo claro */
+}
+
+/* Modo oscuro - logo QR blanco */
+[data-theme="dark"] .action-icon.QR {
+    color: #FFFFFF !important; /* Blanco en modo oscuro */
+}
+
+[data-theme="dark"] .form-group textarea{
+    color: var(--platinum) !important;
+    background-color: transparent !important;
+}
+
+/* * =================================================================
+ * FIX: BOTONES DE COLOR DESHABILITADOS (Modo Oscuro)
+ * =================================================================
+*/
+[data-theme="dark"] .formulario button[type="submit"]:disabled,
+[data-theme="dark"] .access-btn:disabled,
+[data-theme="dark"] .users-btn:disabled,
+[data-theme="dark"] .admin-btn:disabled,
+[data-theme="dark"] .habilitar-btn:disabled,
+[data-theme="dark"] .inhabilitar-btn:disabled,
+[data-theme="dark"] .confirm-btn:disabled {
+    filter: saturate(80%) brightness(70%);
+    opacity: 1 !important;
+    background: unset !important; 
+    color: var(--text-primary) !important;
+    cursor: not-allowed;
+}
+
+/* * =================================================================
+ * FIX: BOTONES DE COLOR DESHABILITADOS (Modo Claro)
+ * =================================================================
+*/
+:root:not([data-theme="dark"]) .formulario button[type="submit"]:disabled,
+:root:not([data-theme="dark"]) .access-btn:disabled,
+:root:not([data-theme="dark"]) .users-btn:disabled,
+:root:not([data-theme="dark"]) .admin-btn:disabled,
+:root:not([data-theme="dark"]) .habilitar-btn:disabled,
+:root:not([data-theme="dark"]) .inhabilitar-btn:disabled,
+:root:not([data-theme="dark"]) .confirm-btn:disabled {
+    filter: saturate(80%) brightness(110%) opacity(80%);
+    opacity: 1 !important; 
+    background: unset !important; 
+    color: var(--text-accent) !important;
+    border: unset !important;
+    cursor: not-allowed;
+}
+
+/* * =================================================================
+ * FIX: EFECTO DE BRILLO "SHINE" (Modo Claro)
+ * =================================================================
+*/
+:root:not([data-theme="dark"]) button::before,
+:root:not([data-theme="dark"]) .btn::before,
+:root:not([data-theme="dark"]) [class*="btn"]::before,
+:root:not([data-theme="dark"]) [class*="button"]::before,
+:root:not([data-theme="dark"]) [type="button"]::before,
+:root:not([data-theme="dark"]) [type="submit"]::before,
+:root:not([data-theme="dark"]) [type="reset"]::before,
+:root:not([data-theme="dark"]) input[type="button"]::before,
+:root:not([data-theme="dark"]) input[type="submit"]::before {
+    background: linear-gradient(
+        90deg, 
+        transparent, 
+        rgba(var(--cyber-blue-rgb), 0.3),
+        transparent
+    ) !important;
+}
+
+:root:not([data-theme="dark"]) .transfer-details{
+    background: rgba(212, 212, 212, 0.281);
+}
+
+:root:not([data-theme="dark"]) .transfer-details li{
+   border-bottom: 1px solid rgba(201, 200, 200, 0.74) !important;
+}
+
+:root:not([data-theme="dark"]) .form-group input{
+    color: var(--carbon) !important;
+}
+
+:root:not([data-theme="dark"]) .transaction-item-modal:hover{
+  background-color: rgba(110, 110, 110, 0.11) !important;
+}
+
+
+
+/* === PASSWORD TOGGLE STYLES - GLOBAL === */
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    z-index: 2;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle:hover {
+    color: var(--accent-color);
+    background: rgba(var(--accent-rgb), 0.1);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.2);
+}
+
+.password-toggle:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.password-toggle svg {
+    transition: all 0.3s ease;
+}
+
+.password-wrapper {
+    position: relative;
+}
+
+
+
+/* === ESTILOS MINIMALISTAS PARA BOTONES DE TOAST === */
+.toast-close, .toast-close-btn {
+    background: transparent !important;
+    border: none !important;
+    padding: 4px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    color: inherit !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: auto !important;
+    width: auto !important;
+    height: auto !important;
+    box-shadow: none !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    opacity: 0.7 !important;
+}
+
+.toast-close:hover, .toast-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    opacity: 1 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.toast-close:active, .toast-close-btn:active {
+    transform: scale(0.95) !important;
+    transition: transform 0.1s ease !important;
+}
+
+.toast svg {
+    transition: none !important;
+}
+
+/* Texto en inputs modo oscuro */
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] .input-wrapper input,
+[data-theme="dark"] .effect-1 {
+ 
+    color: var(--text-primary) !important; /* !important AÑADIDO */
+    -webkit-text-fill-color: var(--text-primary) !important; /* !important AÑADIDO */
+
+    /* Tu borde original (login.css) no lo tenía, 
+       pero el de styles.css sí. Lo unifico: */
+    border-bottom: 1px solid var(--border-color); 
+    
+    /* V--- CORRECCIÓN PARA EL CURSOR (caret) ---V */
+    caret-color: var(--text-primary) !important; 
+    /* ^----------------------------------------^ */
+}
+
+/* Placeholders modo oscuro */
+[data-theme="dark"] input[type="text"]::placeholder,
+[data-theme="dark"] input[type="email"]::placeholder,
+[data-theme="dark"] input[type="password"]::placeholder,
+[data-theme="dark"] .input-wrapper input::placeholder,
+[data-theme="dark"] .effect-1::placeholder {
+    color: rgba(140, 140, 140, 0.6) !important;
+    -webkit-text-fill-color: rgba(140, 140, 140, 0.6) !important;
+}
+
+/* Reemplaza '.modal-content' por la clase real de tu modal si es diferente */
+[data-theme="dark"] .modal-content input[type="text"],
+[data-theme="dark"] .modal-content input[type="email"],
+[data-theme="dark"] .modal-content input[type="password"] {
+    background: var(--glass-bg-dark) !important;
+    color: var(--platinum) !important; 
+    -webkit-text-fill-color: var(--platinum) !important;
+    /* V--- CORRECCIÓN PARA EL CURSOR (caret) EN MODALES ---V */
+    caret-color: var(--platinum) !important;
+    /* ^-------------------------------------------------^ */
+}
+
+
+/* #################################################################
+   V---               ¡AQUÍ ESTÁ LA SOLUCIÓN!               ---V
+   ################################################################# */
+
+/* * FIX: ESTILOS DE AUTOCOMPLETAR (AUTOFILL) DEL NAVEGADOR
+ * Esto fuerza al navegador a usar TUS colores en lugar de los suyos
+ * cuando sugiere o autocompleta un campo.
+*/
+
+/* --- FIX PARA MODO OSCURO --- */
+[data-theme="dark"] input:-webkit-autofill,
+[data-theme="dark"] input:-webkit-autofill:hover, 
+[data-theme="dark"] input:-webkit-autofill:focus, 
+[data-theme="dark"] input:-webkit-autofill:active {
+    
+    /* 1. Hack para el fondo: 
+       Usamos un box-shadow interno con el color de fondo 
+       de tu .input-wrapper en modo oscuro.
+    */
+    box-shadow: 0 0 0 40px rgba(255, 255, 255, 0.02) inset !important; /* Color de tu .input-wrapper dark */
+    
+    /* 2. Arregla el color del TEXTO autocompletado */
+    -webkit-text-fill-color: var(--text-primary) !important; /* Tu texto claro */
+    
+    /* 3. Arregla el color del CURSOR (caret) */
+    caret-color: var(--text-primary) !important; /* Tu cursor claro */
+    
+    /* 4. Mantiene el borde que le diste al input-wrapper */
+    border-radius: 12px !important;
+}
+
+/* --- FIX PARA MODO CLARO --- */
+:root:not([data-theme="dark"]) input:-webkit-autofill,
+:root:not([data-theme="dark"]) input:-webkit-autofill:hover, 
+:root:not([data-theme="dark"]) input:-webkit-autofill:focus, 
+:root:not([data-theme="dark"]) input:-webkit-autofill:active {
+    
+    /* 1. Hack para el fondo (con el color de fondo claro) */
+    box-shadow: 0 0 0 40px rgba(255, 255, 255, 0.6) inset !important; /* Color de tu .input-wrapper light */
+    
+    /* 2. Arregla el color del TEXTO autocompletado */
+    -webkit-text-fill-color: var(--text-primary) !important; /* Tu texto oscuro */
+    
+    /* 3. Arregla el color del CURSOR (caret) */
+    caret-color: var(--text-primary) !important; /* Tu cursor oscuro */
+    
+    /* 4. Mantiene el borde que le diste al input-wrapper */
+
+    border-radius: 12px !important;
+}
+
+/* === GLOBAL FOOTER === */
+.global-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 15px 20px;
+    background: transparent;
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: background-color, color, border-color;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Modo claro - solo ajustar borde y sombra */
+:not([data-theme="dark"]) .global-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.05);
+}
+
+/* Efectos de glassmorphism para el footer */
+.global-footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.03) 0%,
+        rgba(var(--quantum-violet-rgb, 108, 92, 231), 0.02) 50%,
+        rgba(var(--neon-cyan-rgb, 57, 255, 204), 0.03) 100%
+    );
+    pointer-events: none;
+    z-index: -1;
+    border-radius: 0;
+}
+
+/* Texto del footer con efectos tecnológicos */
+.global-footer p {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    position: relative;
+}
+
+/* Separador tecnológico */
+.global-footer p::before {
+    content: '';
+    width: 30px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--text-accent), transparent);
+    flex-shrink: 0;
+}
+
+.global-footer p::after {
+    content: '';
+    width: 30px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--text-accent), transparent);
+    flex-shrink: 0;
+}
+
+.global-footer a {
+    color: var(--text-accent);
+    text-decoration: none;
+    font-weight: 600;
+    position: relative;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background: rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.1);
+    border: 1px solid rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.2);
+    backdrop-filter: blur(10px);
+    letter-spacing: 0.3px;
+    display: inline-block;
+    white-space: nowrap;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+/* Modo claro para enlaces */
+:not([data-theme="dark"]) .global-footer a {
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.2);
+    color: #3498db;
+}
+
+/* Hover solo para el enlace específico del email */
+.global-footer a.email-link:hover {
+    transform: translateY(-2px) scale(1.05);
+    background: rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.2);
+    border-color: var(--text-accent);
+    box-shadow: 
+        0 8px 25px rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.3),
+        0 0 20px rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.2);
+    text-decoration: none;
+}
+
+/* Modo claro para hover del email */
+:not([data-theme="dark"]) .global-footer a.email-link:hover {
+    background: rgba(52, 152, 219, 0.2);
+    border-color: #3498db;
+    box-shadow: 
+        0 8px 25px rgba(52, 152, 219, 0.3),
+        0 0 20px rgba(52, 152, 219, 0.2);
+}
+
+/* Efecto de brillo en el enlace - SOLO para el email */
+.global-footer a.email-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: width 0.4s ease;
+    z-index: 1;
+    opacity: 0;
+    border-radius: inherit;
+}
+
+.global-footer a.email-link:hover::before {
+    width: 100%;
+    opacity: 1;
+}
+
+/* Media queries para global footer */
+@media (max-width: 768px) {
+    .global-footer {
+        padding: 15px;
+        font-size: 12px;
+    }
+
+    .global-footer p::before,
+    .global-footer p::after {
+        width: 15px;
+    }
+
+    .global-footer a {
+        padding: 3px 8px;
+        font-size: 11px;
+    }
+}
+
+
+/* ============================================
+   FIX AGGRESIVO PARA AUTOFILL - TRANSPARENTE
+   ============================================ */
+
+/* RESET PARA TODOS LOS INPUTS EN AMBOS TEMAS */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-text-fill-color: inherit !important;
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+    background-color: transparent !important;
+    transition: all 5000s ease-in-out 0s !important;
+    caret-color: inherit !important;
+    border-color: inherit !important;
+}
+
+/* MODO OSCURO ESPECÍFICO */
+[data-theme="dark"] input:-webkit-autofill,
+[data-theme="dark"] input:-webkit-autofill:hover,
+[data-theme="dark"] input:-webkit-autofill:focus,
+[data-theme="dark"] input:-webkit-autofill:active {
+    -webkit-text-fill-color: #E8EAF6 !important;
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+    background-color: transparent !important;
+    transition: all 5000s ease-in-out 0s !important;
+    caret-color: #39FFCC !important;
+    border-color: var(--border-color) !important;
+}
+
+/* MODO CLARO ESPECÍFICO */
+[data-theme="light"] input:-webkit-autofill,
+[data-theme="light"] input:-webkit-autofill:hover,
+[data-theme="light"] input:-webkit-autofill:focus,
+[data-theme="light"] input:-webkit-autofill:active {
+    -webkit-text-fill-color: #2C3E50 !important;
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+    background-color: transparent !important;
+    transition: all 5000s ease-in-out 0s !important;
+    caret-color: #667EEA !important;
+    border-color: var(--border-color) !important;
+}
+
+/* FIREFOX */
+[data-theme="dark"] input:-moz-ui-valid {
+    background-color: transparent !important;
+    color: #E8EAF6 !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="light"] input:-moz-ui-valid {
+    background-color: transparent !important;
+    color: #2C3E50 !important;
+    border-color: var(--border-color) !important;
+}
+
+/* EDGE Y OTROS NAVEGADORES */
+[data-theme="dark"] input:autofill {
+    background-color: transparent !important;
+    color: #E8EAF6 !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="light"] input:autofill {
+    background-color: transparent !important;
+    color: #2C3E50 !important;
+    border-color: var(--border-color) !important;
+}
+
+/* FORZAR TRANSPARENCIA EN TODOS LOS INPUTS */
+[data-theme="dark"] input {
+    background-color: transparent !important;
+    color: #E8EAF6 !important;
+}
+
+[data-theme="light"] input {
+    background-color: transparent !important;
+    color: #2C3E50 !important;
+}
+
+/* ESPECÍFICO PARA INPUTS DEL LOGIN */
+[data-theme="dark"] .formulario input,
+[data-theme="dark"] .input-wrapper input,
+[data-theme="dark"] .effect-1 {
+    background-color: transparent !important;
+    color: #E8EAF6 !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="light"] .formulario input,
+[data-theme="light"] .input-wrapper input,
+[data-theme="light"] .effect-1 {
+    background-color: transparent !important;
+    color: #2C3E50 !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Asegurar que se aplique en móviles */
+@media (max-width: 768px) {
+  [data-theme="dark"] body,
+  [data-theme="dark"] .dashboard,
+  [data-theme="dark"] .admin-panel {
+    background: #1A1A2E !important;
+    color: #E8EAF6 !important;
+  }
+}

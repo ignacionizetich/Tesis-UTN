@@ -1,0 +1,647 @@
+<div class="usd-account-page">
+  
+  <!-- Loader -->
+  @if (isLoading) {
+  <div class="loader-overlay">
+    <div class="loader-spinner"></div>
+    <p>Cargando cuenta en dólares...</p>
+  </div>
+  }
+
+  <!-- Header -->
+  <header class="usd-header">
+    <button class="back-button" (click)="goBack()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Volver
+    </button>
+    
+    <div class="header-title">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" 
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h1>Cuenta en Dólares</h1>
+    </div>
+  </header>
+
+  <div class="usd-content">
+    
+    <!-- Si no tiene cuenta USD -->
+    @if (!hasUsdAccount && !isLoading) {
+    <div class="create-account-section">
+      <div class="create-account-card">
+        <div class="icon-container">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+            <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" 
+                  stroke="var(--text-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        
+        <h2>Abrí tu Cuenta en Dólares</h2>
+        <p class="description">Empezá a ahorrar en dólares y protegé tu dinero de la inflación.</p>
+        
+        <div class="benefits-grid">
+          <div class="benefit">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="var(--text-accent)" stroke-width="2"/>
+            </svg>
+            <span>Sin comisiones de apertura</span>
+          </div>
+          <div class="benefit">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="var(--text-accent)" stroke-width="2"/>
+            </svg>
+            <span>Comprá dólares al instante</span>
+          </div>
+          <div class="benefit">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="var(--text-accent)" stroke-width="2"/>
+            </svg>
+            <span>Transferí en dólares</span>
+          </div>
+          <div class="benefit">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="var(--text-accent)" stroke-width="2"/>
+            </svg>
+            <span>Vendé cuando quieras</span>
+          </div>
+        </div>
+        
+        <button class="primary create-btn" (click)="createUsdAccount()" 
+                [disabled]="isCreatingUsdAccount" [class.loading]="isCreatingUsdAccount">
+          <span class="button-text">
+            {{ isCreatingUsdAccount ? 'Creando cuenta...' : 'Abrir Cuenta en Dólares' }}
+          </span>
+          @if (isCreatingUsdAccount) {
+          <div class="progress-bar"></div>
+          }
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- Si tiene cuenta USD -->
+    @if (hasUsdAccount && !isLoading) {
+    <div class="account-overview">
+      
+      <!-- Balances -->
+      <div class="balances-section">
+        <div class="balance-card usd-card">
+          <div class="balance-header">
+            <span class="balance-label">Saldo en Dólares</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" 
+                    stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="balance-amount">
+            <span class="currency">USD</span>
+            <span class="amount">{{formatMoney(usdBalance)}}</span>
+          </div>
+        </div>
+
+        <div class="balance-card ars-card">
+          <div class="balance-header">
+            <span class="balance-label">Saldo en Pesos</span>
+            <span class="currency-symbol">$</span>
+          </div>
+          <div class="balance-amount">
+            <span class="currency">ARS</span>
+            <span class="amount">{{formatMoney(arsBalance)}}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions Grid -->
+      <div class="actions-grid">
+        <div class="action-card" (click)="openBuyUsdSection()">
+          <div class="action-icon buy">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Comprar USD</h3>
+          <p>Convertir pesos a dólares</p>
+        </div>
+
+        <div class="action-card" (click)="openSellUsdSection()">
+          <div class="action-icon sell">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 19V5m-7 7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Vender USD</h3>
+          <p>Convertir dólares a pesos</p>
+        </div>
+
+        <div class="action-card" (click)="openTransferSection()">
+          <div class="action-icon transfer">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M21 12H3M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Transferir</h3>
+          <p>Enviar dinero a otros</p>
+        </div>
+
+        <div class="action-card" (click)="openReceiveSection()">
+          <div class="action-icon receive">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2v20M5 9l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Recibir</h3>
+          <p>Ver datos de cuenta</p>
+        </div>
+      </div>
+
+      <!-- Transactions -->
+      @if (usdTransactions.length > 0) {
+      <div class="transactions-section">
+        <div class="section-header">
+          <h2 class="section-title">Movimientos</h2>
+          <div class="filter-tabs">
+            <button 
+              class="filter-tab" 
+              [class.active]="selectedFilter === 'ALL'"
+              (click)="setFilter('ALL')">
+              Todos
+            </button>
+            <button 
+              class="filter-tab" 
+              [class.active]="selectedFilter === 'ARS'"
+              (click)="setFilter('ARS')">
+              Pesos
+            </button>
+            <button 
+              class="filter-tab" 
+              [class.active]="selectedFilter === 'USD'"
+              (click)="setFilter('USD')">
+              Dólares
+            </button>
+          </div>
+        </div>
+        
+        <div class="transactions-list">
+          @for (transaction of filteredTransactions; track transaction.id) {
+          <div class="transaction-item" (click)="openTransactionDetail(transaction)">
+            <div class="transaction-icon" [class]="transaction.type">
+              @if (transaction.type === 'income') {
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2v20M5 9l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              } @else {
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 22V2M19 15l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              }
+            </div>
+            <div class="transaction-details">
+              <h4>{{transaction.description}}</h4>
+              <p>{{formatDate(transaction.date)}}</p>
+            </div>
+            <div class="transaction-amount" [class]="transaction.type">
+              <span class="amount-value">{{transaction.type === 'income' ? '+' : '-'}}${{formatMoney(getDisplayAmount(transaction))}}</span>
+              <span class="currency-badge" [class.usd]="getDisplayCurrency(transaction) === 'USD'">
+                {{getDisplayCurrency(transaction)}}
+              </span>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+</div>
+
+<!-- Comprar USD Section -->
+@if (showBuyUsdSection) {
+<div class="modal-overlay" (click)="closeBuyUsdSection()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Comprar Dólares</h2>
+      <button class="close-btn" (click)="closeBuyUsdSection()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="info-cards">
+        <div class="info-card">
+          <span class="label">Tu saldo en pesos:</span>
+          <span class="value">${{formatMoney(arsBalance)}} ARS</span>
+        </div>
+        <div class="info-card">
+          <span class="label">Tu saldo en dólares:</span>
+          <span class="value">${{formatMoney(usdBalance)}} USD</span>
+        </div>
+      </div>
+
+      <div class="warning-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                stroke="var(--text-secondary)" stroke-width="2"/>
+        </svg>
+        <span>Se aplicará una comisión del 3% por el servicio</span>
+      </div>
+
+      <form (ngSubmit)="buyUsd()">
+        <div class="form-group">
+          <input type="number" [(ngModel)]="amountToBuyUsd" name="amountToBuyUsd" 
+                 (ngModelChange)="onAmountToBuyChange()"
+                 placeholder=" " required min="1" step="0.01" [disabled]="isBuyingUsd">
+          <label>Monto en pesos (ARS)</label>
+        </div>
+
+        @if (amountToBuyUsd && amountToBuyUsd > 0) {
+        <div class="conversion-preview">
+          <div class="preview-label">Estimación:</div>
+          <div class="preview-amount">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" 
+                    stroke="var(--text-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>≈ {{formatMoney(estimatedUsdAmount)}} USD</span>
+          </div>
+          <div class="preview-note">(Monto aproximado, incluye impuestos del {{taxPercentage}}%)</div>
+        </div>
+        }
+
+        <div class="modal-actions">
+          <button type="submit" class="primary" 
+                  [disabled]="!amountToBuyUsd || amountToBuyUsd <= 0 || isBuyingUsd" 
+                  [class.loading]="isBuyingUsd">
+            <span class="button-text">
+              {{ isBuyingUsd ? 'Procesando...' : 'Comprar' }}
+            </span>
+            @if (isBuyingUsd) {
+            <div class="progress-bar"></div>
+            }
+          </button>
+          @if (!isBuyingUsd) {
+          <button type="button" class="secondary" (click)="closeBuyUsdSection()">Cancelar</button>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Vender USD Section -->
+@if (showSellUsdSection) {
+<div class="modal-overlay" (click)="closeSellUsdSection()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Vender Dólares</h2>
+      <button class="close-btn" (click)="closeSellUsdSection()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="info-cards">
+        <div class="info-card">
+          <span class="label">Tu saldo en dólares:</span>
+          <span class="value">${{formatMoney(usdBalance)}} USD</span>
+        </div>
+        <div class="info-card">
+          <span class="label">Tu saldo en pesos:</span>
+          <span class="value">${{formatMoney(arsBalance)}} ARS</span>
+        </div>
+      </div>
+
+      <form (ngSubmit)="sellUsd()">
+        <div class="form-group">
+          <input type="number" [(ngModel)]="amountToSellUsd" name="amountToSellUsd" 
+                 (ngModelChange)="onAmountToSellChange()"
+                 placeholder=" " required min="1" step="0.01" [disabled]="isSellingUsd">
+          <label>Monto en dólares (USD)</label>
+        </div>
+
+        @if (amountToSellUsd && amountToSellUsd > 0) {
+        <div class="conversion-preview">
+          <div class="preview-label">Estimación:</div>
+          <div class="preview-amount">
+            <span class="currency-symbol">$</span>
+            <span>≈ {{formatMoney(estimatedArsAmount)}} ARS</span>
+          </div>
+          <div class="preview-note">(Monto aproximado)</div>
+        </div>
+        }
+
+        <div class="modal-actions">
+          <button type="submit" class="primary" 
+                  [disabled]="!amountToSellUsd || amountToSellUsd <= 0 || isSellingUsd" 
+                  [class.loading]="isSellingUsd">
+            <span class="button-text">
+              {{ isSellingUsd ? 'Procesando...' : 'Vender' }}
+            </span>
+            @if (isSellingUsd) {
+            <div class="progress-bar"></div>
+            }
+          </button>
+          @if (!isSellingUsd) {
+          <button type="button" class="secondary" (click)="closeSellUsdSection()">Cancelar</button>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Transfer Section -->
+@if (showTransferSection) {
+<div class="modal-overlay" (click)="closeTransferSection()">
+  <div class="modal-content transfer-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Transferir</h2>
+      <button class="close-btn" (click)="closeTransferSection()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      
+      <!-- Selector de moneda -->
+      <div class="currency-selector">
+        <label>Transferir desde:</label>
+        <div class="currency-options">
+          <button type="button" class="currency-option" 
+                  [class.active]="selectedCurrency === 'ARS'" 
+                  (click)="selectedCurrency = 'ARS'">
+            <span class="currency">ARS</span>
+            <span class="balance">${{formatMoney(arsBalance)}}</span>
+          </button>
+          <button type="button" class="currency-option" 
+                  [class.active]="selectedCurrency === 'USD'" 
+                  (click)="selectedCurrency = 'USD'">
+            <span class="currency">USD</span>
+            <span class="balance">${{formatMoney(usdBalance)}}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 1: Buscar cuenta -->
+      @if (transferStep === 1) {
+      <div class="transfer-step">
+        <div class="form-group">
+          <input type="text" [(ngModel)]="destinationInput" placeholder=" " required>
+          <label>Alias o CVU del destinatario</label>
+        </div>
+
+        <button class="primary" (click)="searchDestinationAccount()" 
+                [disabled]="!destinationInput.trim() || isSearchingAccount" 
+                [class.loading]="isSearchingAccount">
+          <span class="button-text">
+            {{ isSearchingAccount ? 'Buscando...' : 'Buscar cuenta' }}
+          </span>
+          @if (isSearchingAccount) {
+          <div class="progress-bar"></div>
+          }
+        </button>
+      </div>
+      }
+
+      <!-- Step 2: Confirmar cuenta -->
+      @if (transferStep === 2 && destinationAccountData) {
+      <div class="transfer-step">
+        <h3>Datos de la cuenta destino:</h3>
+        <div class="account-details">
+          <div class="detail-row">
+            <span class="label">Alias:</span>
+            <span class="value">{{destinationAccountData.alias}}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">CVU:</span>
+            <span class="value">{{destinationAccountData.cvu}}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Titular:</span>
+            <span class="value">{{destinationAccountData.user.nombre}} {{destinationAccountData.user.apellido}}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Tipo de cuenta:</span>
+            <span class="value currency-badge" [class.usd]="destinationAccountData.currency === 'USD'">
+              {{getCurrencyLabel(destinationAccountData.currency || 'ARS')}}
+            </span>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="primary" (click)="confirmDestinationAccount()">Confirmar</button>
+          <button class="secondary" (click)="cancelSearch()">Cancelar</button>
+        </div>
+      </div>
+      }
+
+      <!-- Step 3: Ingresar monto -->
+      @if (transferStep === 3) {
+      <div class="transfer-step">
+        <h3>¿Cuánto querés transferir?</h3>
+        <p class="transfer-info">
+          A: {{destinationAccountData.user.nombre}} {{destinationAccountData.user.apellido}} 
+          ({{destinationAccountData.alias}})
+        </p>
+        <p class="transfer-currency">
+          Cuenta: <strong>{{getCurrencyLabel(destinationAccountData.currency || 'ARS')}}</strong>
+        </p>
+
+        <form (ngSubmit)="executeTransfer()">
+          <div class="form-group">
+            <input type="number" [(ngModel)]="amountToTransfer" name="amountToTransfer" 
+                   placeholder=" " required min="1" step="0.01" [disabled]="isTransferring">
+            <label>Monto en {{selectedCurrency}}</label>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="primary" 
+                    [disabled]="!amountToTransfer || amountToTransfer <= 0 || isTransferring" 
+                    [class.loading]="isTransferring">
+              <span class="button-text">
+                {{ isTransferring ? 'Transfiriendo...' : 'Transferir' }}
+              </span>
+              @if (isTransferring) {
+              <div class="progress-bar"></div>
+              }
+            </button>
+            @if (!isTransferring) {
+            <button type="button" class="secondary" (click)="cancelSearch()">Volver</button>
+            }
+          </div>
+        </form>
+      </div>
+      }
+    </div>
+  </div>
+</div>
+}
+
+<!-- Receive Section -->
+@if (showReceiveSection) {
+<div class="modal-overlay" (click)="closeReceiveSection()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Recibir Dinero</h2>
+      <button class="close-btn" (click)="closeReceiveSection()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="receive-info">
+        <h3>Datos de tu cuenta en Dólares:</h3>
+        
+        <div class="info-item">
+          <span class="label">Alias:</span>
+          <div class="info-value">
+            <span>{{usdAlias || userData.alias}}</span>
+            <button class="copy-btn" (click)="copyToClipboard(usdAlias || userData.alias, 'Alias')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" 
+                      stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <span class="label">CVU:</span>
+          <div class="info-value">
+            <span>{{usdCvu || userData.cvu}}</span>
+            <button class="copy-btn" (click)="copyToClipboard(usdCvu || userData.cvu, 'CVU')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" 
+                      stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="info-note">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                  stroke="var(--text-accent)" stroke-width="2"/>
+          </svg>
+          <span>Estos datos son específicos para recibir dólares (USD)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Transaction Detail Modal -->
+@if (showTransactionDetail && selectedTransaction) {
+<div class="modal-overlay" (click)="closeTransactionDetail()">
+  <div class="modal-content detail-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Detalles de la Transacción</h2>
+      <button class="close-btn" (click)="closeTransactionDetail()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="detail-section">
+        <div class="detail-header">
+          <div class="detail-icon" [class]="selectedTransaction.type">
+            @if (selectedTransaction.type === 'income') {
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2v20M5 9l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            } @else {
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M12 22V2M19 15l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            }
+          </div>
+          <div class="detail-title">
+            <h3>{{selectedTransaction.description}}</h3>
+            <p>{{formatDate(selectedTransaction.date)}}</p>
+          </div>
+        </div>
+
+        @if (selectedTransaction.currency === 'USD') {
+        <!-- Detalles para transacciones USD -->
+        <div class="transfer-type-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                  stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <span>{{getTransferType(selectedTransaction)}}</span>
+        </div>
+
+        <div class="detail-amounts">
+          @if (selectedTransaction.currency === 'USD' && selectedTransaction.originalCurrency === 'USD') {
+          <!-- Transferencia directa USD → USD -->
+          <div class="detail-row highlight">
+            <span class="label">Monto Transferido:</span>
+            <span class="value usd">
+              {{selectedTransaction.type === 'income' ? '+' : '-'}}${{formatMoney(selectedTransaction.amount)}} USD
+            </span>
+          </div>
+          
+          @if (selectedTransaction.exchangeRate && selectedTransaction.amountInArs) {
+          <div class="info-note-small">
+            <span>Equivalente aproximado: ${{formatMoney(selectedTransaction.amountInArs)}} ARS</span>
+          </div>
+          }
+          } @else {
+          <!-- Transferencia USD usando conversión a ARS -->
+          <div class="detail-row highlight">
+            <span class="label">Monto en Pesos:</span>
+            <span class="value ars">
+              {{selectedTransaction.type === 'income' ? '+' : '-'}}${{formatMoney(selectedTransaction.amountInArs || selectedTransaction.amount)}} ARS
+            </span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="label">Monto Original (USD):</span>
+            <span class="value usd-secondary">${{formatMoney(selectedTransaction.amount)}} USD</span>
+          </div>
+          
+          @if (selectedTransaction.exchangeRate) {
+          <div class="detail-row">
+            <span class="label">Tipo de Cambio:</span>
+            <span class="value">${{formatMoney(selectedTransaction.exchangeRate)}} ARS/USD</span>
+          </div>
+          }
+          }
+        </div>
+        } @else {
+        <!-- Detalles para transacciones ARS -->
+        <div class="detail-amounts">
+          <div class="detail-row highlight">
+            <span class="label">Monto:</span>
+            <span class="value">
+              {{selectedTransaction.type === 'income' ? '+' : '-'}}${{formatMoney(selectedTransaction.amount)}} ARS
+            </span>
+          </div>
+        </div>
+        }
+
+        <div class="detail-info">
+          @if (selectedTransaction.from) {
+          <div class="info-row">
+            <span class="info-label">Desde:</span>
+            <span class="info-value">{{selectedTransaction.from}}</span>
+          </div>
+          }
+          @if (selectedTransaction.to) {
+          <div class="info-row">
+            <span class="info-label">Para:</span>
+            <span class="info-value">{{selectedTransaction.to}}</span>
+          </div>
+          }
+          @if (selectedTransaction.status) {
+          <div class="info-row">
+            <span class="info-label">Estado:</span>
+            <span class="status-badge" [class]="selectedTransaction.status.toLowerCase()">
+              {{selectedTransaction.status === 'COMPLETED' ? 'Completada' : 'Fallida'}}
+            </span>
+          </div>
+          }
+        </div>
+      </div>
+
+      <button class="primary full-width" (click)="closeTransactionDetail()">Cerrar</button>
+    </div>
+  </div>
+</div>
+}

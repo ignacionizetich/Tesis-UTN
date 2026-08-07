@@ -1,0 +1,107 @@
+/* ==================== Selector de Moneda para Transferencias ==================== */
+.currency-selector {
+  margin-bottom: 1.5rem;
+}
+
+.currency-label {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.currency-options {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+}
+
+.currency-option {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.currency-option:hover:not(.disabled) {
+  border-color: var(--text-accent);
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.currency-option input[type="radio"] {
+  margin-right: 1rem;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--text-accent);
+}
+
+.currency-option input[type="radio"]:checked + .currency-info {
+  color: var(--text-accent);
+}
+
+.currency-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.currency-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.currency-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.currency-balance {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: 'Courier New', monospace;
+}
+
+.conversion-warning,
+.conversion-info {
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.conversion-warning {
+  background: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  color: #ff9800;
+}
+
+.conversion-info {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  color: var(--text-accent);
+}
+
+.transfer-destination-currency {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0.5rem 0 1rem 0;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+
+.transfer-destination-currency strong {
+  color: var(--text-accent);
+}

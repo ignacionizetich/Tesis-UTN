@@ -1,0 +1,17 @@
+<app-theme-toggle></app-theme-toggle>
+<app-back-button></app-back-button>
+
+<main class="main">
+    
+    <aside class="left-panel">
+        <app-brand-logo></app-brand-logo>
+    </aside>
+
+    <div class="right-panel">
+        <app-register-form (registerSuccess)="onRegisterSuccess($event)"></app-register-form>
+    </div>
+</main>
+
+<footer>
+    <app-global-footer></app-global-footer>
+</footer>

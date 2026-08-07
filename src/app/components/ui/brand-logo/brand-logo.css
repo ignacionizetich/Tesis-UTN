@@ -1,0 +1,111 @@
+.logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo h1 {
+    color: var(--text-primary);
+    font-family: 'Unna', serif;
+    font-size: 48px;
+    font-weight: bold;
+    margin: 0;
+    transition: all 0.4s ease;
+}
+
+.logo span {
+    color: var(--text-accent);
+    transition: all 0.4s ease;
+}
+
+.logo h4 {
+    color: var(--text-primary);
+    font-family: 'Manrope', sans-serif;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 300;
+    letter-spacing: 2px;
+    opacity: 0.8;
+    transition: all 0.4s ease;
+}
+
+/* Estilos del logo SVG */
+.brand-mark {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 1rem;
+}
+
+.vault-shape {
+    fill: none;
+    stroke: var(--text-accent);
+    stroke-width: 2.5;
+    transition: stroke 0.4s ease;
+}
+
+.security-core {
+    fill: var(--text-accent);
+    stroke: var(--bg-primary);
+    stroke-width: 2;
+    transition: fill 0.4s ease, stroke 0.4s ease;
+}
+
+.access-cross {
+    stroke: var(--bg-primary);
+    stroke-width: 2;
+    stroke-linecap: round;
+    transition: stroke 0.4s ease;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Media queries específicas para el logo */
+@media (max-width: 768px) {
+    .logo {
+        gap: 12px;
+    }
+    
+    .logo h1 {
+        font-size: 36px;
+    }
+    
+    .logo h4 {
+        font-size: 0.9rem;
+        letter-spacing: 1.5px;
+    }
+    
+    .brand-mark {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo {
+        gap: 10px;
+    }
+    
+    .logo h1 {
+        font-size: 32px;
+    }
+    
+    .logo h4 {
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+    }
+    
+    .brand-mark {
+        width: 70px;
+        height: 70px;
+        margin-bottom: 0.6rem;
+    }
+}

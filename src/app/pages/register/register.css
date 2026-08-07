@@ -1,0 +1,533 @@
+:root {
+    --cyber-blue-rgb: 0, 212, 255;
+    --quantum-violet-rgb: 108, 92, 231;
+    --neon-cyan-rgb: 57, 255, 204;
+}
+
+html, body {
+    height: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ===== LAYOUT PRINCIPAL RESPONSIVE ===== */
+.main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    padding-bottom: 80px; /* Espacio para el footer */
+}
+
+.left-panel {
+    display: grid;
+    place-items: center start;
+    height: 100vh;
+    text-align: center;
+    padding-left: 10rem;
+}
+
+.right-panel {
+    display: grid;
+    place-items: center;
+    height: 100vh;
+    padding: 2rem;
+}
+
+/* ===== FOOTER RESPONSIVE MEJORADO ===== */
+.global-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 20px;
+    background: transparent;
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    z-index: 100;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: background-color, color, border-color;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Modo claro - solo ajustar borde y sombra */
+:not([data-theme="dark"]) .global-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.05);
+}
+
+/* Efectos de glassmorphism para el footer */
+.global-footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.03) 0%,
+        rgba(var(--quantum-violet-rgb, 108, 92, 231), 0.02) 50%,
+        rgba(var(--neon-cyan-rgb, 57, 255, 204), 0.03) 100%
+    );
+    pointer-events: none;
+    z-index: -1;
+    border-radius: 0;
+}
+
+/* Texto del footer con efectos tecnológicos */
+.global-footer p {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+/* Separador tecnológico */
+.global-footer p::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--text-accent), transparent);
+    margin-right: 8px;
+}
+
+.global-footer p::after {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--text-accent), transparent);
+    margin-left: 8px;
+}
+
+.global-footer a {
+    color: var(--text-accent);
+    text-decoration: none;
+    font-weight: 600;
+    position: relative;
+    padding: 4px 12px;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background: rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.1);
+    border: 1px solid rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.2);
+    backdrop-filter: blur(10px);
+    letter-spacing: 0.3px;
+    display: inline-block;
+}
+
+/* Modo claro para enlaces */
+:not([data-theme="dark"]) .global-footer a {
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.2);
+    color: #3498db;
+}
+
+/* Hover solo para el enlace específico del email */
+.global-footer a.email-link:hover {
+    transform: translateY(-2px) scale(1.05);
+    background: rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.2);
+    border-color: var(--text-accent);
+    box-shadow: 
+        0 8px 25px rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.3),
+        0 0 20px rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.2);
+    text-decoration: none;
+}
+
+/* Modo claro para hover del email */
+:not([data-theme="dark"]) .global-footer a.email-link:hover {
+    background: rgba(52, 152, 219, 0.2);
+    border-color: #3498db;
+    box-shadow: 
+        0 8px 25px rgba(52, 152, 219, 0.3),
+        0 0 20px rgba(52, 152, 219, 0.2);
+}
+
+/* Efecto de brillo en el enlace - SOLO para el email */
+.global-footer a.email-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: width 0.4s ease;
+    z-index: 1;
+    opacity: 0;
+    border-radius: inherit;
+}
+
+.global-footer a.email-link:hover::before {
+    width: 100%;
+    opacity: 1;
+}
+
+/* ===== RESPONSIVE DESIGN COMPLETO ===== */
+
+/* Tablets grandes */
+@media (max-width: 1200px) {
+    .left-panel {
+        padding-left: 6rem;
+    }
+    
+    .right-panel {
+        padding: 1.5rem;
+    }
+}
+
+/* Tablets */
+@media (max-width: 1024px) {
+    .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        height: auto;
+        min-height: 100vh;
+    }
+    
+    .left-panel {
+        height: auto;
+        padding: 3rem 2rem 1rem 2rem;
+        place-items: center;
+        padding-left: 0;
+    }
+    
+    .right-panel {
+        height: auto;
+        padding: 1rem 2rem 3rem 2rem;
+        place-items: start center;
+    }
+    
+    .global-footer {
+        position: relative;
+        margin-top: auto;
+    }
+}
+
+/* Tablets pequeñas */
+@media (max-width: 900px) {
+    .left-panel {
+        padding: 2rem 1.5rem 0.5rem 1.5rem;
+    }
+    
+    .right-panel {
+        padding: 0.5rem 1.5rem 2rem 1.5rem;
+    }
+    
+    .global-footer {
+        padding: 15px;
+        font-size: 13px;
+    }
+}
+
+/* Móviles grandes */
+@media (max-width: 768px) {
+    .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        padding: 0;
+        padding-bottom: 60px;
+    }
+
+    .left-panel, .right-panel {
+        height: auto;
+        padding: 1rem;
+    }
+
+    .left-panel {
+        grid-row: 1;
+        padding: 2rem 1rem 0.5rem 1rem;
+    }
+
+    .right-panel {
+        grid-row: 2;
+        padding: 0.5rem 1rem 1rem 1rem;
+    }
+
+    /* Centrar completamente el logo */
+    .left-panel {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+    
+    app-brand-logo {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .global-footer {
+        position: fixed;
+        padding: 15px 10px;
+        font-size: 12px;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    /* Ajustes responsive para el texto del footer */
+    .global-footer p::before,
+    .global-footer p::after {
+        width: 12px;
+        margin: 0 4px;
+    }
+
+    .global-footer a {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+}
+
+/* Móviles medianos */
+@media (max-width: 640px) {
+    .left-panel {
+        padding: 1.5rem 0.5rem 0.5rem 0.5rem;
+    }
+    
+    .right-panel {
+        padding: 0.5rem 0.5rem 1rem 0.5rem;
+    }
+    
+    .global-footer {
+        padding: 12px 8px;
+        font-size: 11px;
+        gap: 4px;
+    }
+    
+    .global-footer p {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px;
+    }
+    
+    .global-footer p::before,
+    .global-footer p::after {
+        display: none;
+    }
+}
+
+/* Móviles pequeños */
+@media (max-width: 480px) {
+    .main {
+        padding-bottom: 50px;
+    }
+    
+    .left-panel {
+        padding: 1rem 0.25rem 0.25rem 0.25rem;
+    }
+    
+    .right-panel {
+        padding: 0.25rem 0.25rem 0.5rem 0.25rem;
+    }
+    
+    .global-footer {
+        padding: 10px 6px;
+        font-size: 10px;
+        gap: 3px;
+    }
+    
+    .global-footer a {
+        padding: 3px 6px;
+        font-size: 10px;
+    }
+}
+
+/* Móviles muy pequeños */
+@media (max-width: 400px) {
+    .left-panel {
+        padding: 0.75rem 0.25rem 0.25rem 0.25rem;
+    }
+    
+    .right-panel {
+        padding: 0.25rem 0.25rem 0.25rem 0.25rem;
+    }
+    
+    .global-footer {
+        padding: 8px 4px;
+        font-size: 9px;
+    }
+    
+    .global-footer a {
+        padding: 2px 4px;
+        font-size: 9px;
+    }
+}
+
+/* Móviles extra pequeños (ej: Galaxy Fold) */
+@media (max-width: 360px) {
+    .main {
+        padding-bottom: 45px;
+    }
+    
+    .global-footer {
+        padding: 6px 3px;
+        font-size: 8px;
+        gap: 2px;
+    }
+    
+    .global-footer p {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .global-footer a {
+        padding: 2px 3px;
+        font-size: 8px;
+    }
+}
+
+/* Orientación landscape en móviles */
+@media (max-height: 500px) and (orientation: landscape) {
+    .main {
+        grid-template-rows: auto 1fr;
+        height: auto;
+        min-height: 100vh;
+    }
+    
+    .left-panel {
+        height: auto;
+        padding: 1rem;
+    }
+    
+    .right-panel {
+        height: auto;
+        padding: 1rem;
+    }
+    
+    .global-footer {
+        position: relative;
+        margin-top: auto;
+    }
+}
+
+/* Pantallas muy altas */
+@media (min-height: 1000px) {
+    .main {
+        padding-bottom: 100px;
+    }
+    
+    .left-panel {
+        padding: 4rem 2rem;
+    }
+    
+    .right-panel {
+        padding: 2rem;
+    }
+    
+    .global-footer {
+        padding: 25px;
+        font-size: 16px;
+    }
+}
+
+/* Alta densidad de píxeles */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .global-footer {
+        backdrop-filter: blur(30px);
+    }
+}
+
+/* Soporte para dispositivos con notch y áreas seguras */
+@supports (padding: max(0px)) {
+    .main {
+        padding-bottom: max(80px, env(safe-area-inset-bottom));
+    }
+    
+    .global-footer {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    
+    @media (max-width: 768px) {
+        .main {
+            padding-bottom: max(60px, env(safe-area-inset-bottom));
+        }
+        
+        .global-footer {
+            padding-left: max(10px, env(safe-area-inset-left));
+            padding-right: max(10px, env(safe-area-inset-right));
+            padding-bottom: max(15px, env(safe-area-inset-bottom));
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .main {
+            padding-bottom: max(50px, env(safe-area-inset-bottom));
+        }
+        
+        .global-footer {
+            padding-left: max(6px, env(safe-area-inset-left));
+            padding-right: max(6px, env(safe-area-inset-right));
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+    }
+}
+
+/* Modo toque - optimizar hover */
+@media (hover: none) and (pointer: coarse) {
+    .global-footer a.email-link:hover {
+        transform: none;
+    }
+    
+    .global-footer a.email-link:active {
+        transform: scale(0.95);
+        background: rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.2);
+    }
+}
+
+/* Soporte para reduce-motion */
+@media (prefers-reduced-motion: reduce) {
+    .main,
+    .left-panel,
+    .right-panel,
+    .global-footer,
+    .global-footer a {
+        transition: none;
+    }
+    
+    .global-footer a.email-link:hover {
+        transform: none;
+    }
+}
+
+/* Modo contraste alto */
+@media (prefers-contrast: high) {
+    .global-footer {
+        background: var(--bg-primary);
+        border-top: 2px solid var(--text-primary);
+    }
+    
+    .global-footer a {
+        text-decoration: underline;
+        border: 2px solid var(--text-accent);
+    }
+}
