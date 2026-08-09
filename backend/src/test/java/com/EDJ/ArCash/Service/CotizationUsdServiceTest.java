@@ -7,7 +7,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,9 +26,8 @@ class CotizationUsdServiceTest {
 
     @BeforeEach
     void setUp() {
-        cotizationUsdService = new CotizationUsdService();
         restTemplate = mock(RestTemplate.class);
-        ReflectionTestUtils.setField(cotizationUsdService, "restTemplate", restTemplate);
+        cotizationUsdService = new CotizationUsdService(restTemplate, "https://proveedor.test/dolar");
     }
 
     @Test

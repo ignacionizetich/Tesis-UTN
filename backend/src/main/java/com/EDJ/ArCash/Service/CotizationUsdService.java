@@ -2,6 +2,9 @@ package com.EDJ.ArCash.Service;
 
 import com.EDJ.ArCash.DTO.ApiCalloutDTO.ApiUsdResponse;
 import com.EDJ.ArCash.exception.ExchangeRateUnavailableException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -9,38 +12,56 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class CotizationUsdService {
-    private final RestTemplate restTemplate = new RestTemplate();
-    private Double cachedVenta = null;
-    private final String URL = "https://dolarapi.com/v1/dolares/oficial";
 
+    private static final Logger log = LoggerFactory.getLogger(CotizationUsdService.class);
 
-    public double obtenerCotizacionVenta(){
-        if(cachedVenta == null){
+    private static final long INTERVALO_ACTUALIZACION_MS = 10 * 60 * 1000;
+
+    private final RestTemplate restTemplate;
+    private final String urlProveedor;
+
+    /** La escribe la tarea programada y la leen los hilos que atienden requests. */
+    private volatile Double cachedVenta;
+
+    public CotizationUsdService(
+            RestTemplate restTemplate,
+            @Value("${app.dolar.api.url}") String urlProveedor) {
+        this.restTemplate = restTemplate;
+        this.urlProveedor = urlProveedor;
+    }
+
+    public double obtenerCotizacionVenta() {
+        Double cotizacion = cachedVenta;
+
+        if (cotizacion == null) {
             actualizarCotizacion();
+            cotizacion = cachedVenta;
         }
-        if(cachedVenta == null){
-            throw new ExchangeRateUnavailableException("No se pudo obtener la cotizacion del dolar desde el proveedor externo.");
+
+        if (cotizacion == null) {
+            throw new ExchangeRateUnavailableException(
+                    "No se pudo obtener la cotizacion del dolar desde el proveedor externo.");
         }
-        return cachedVenta;
+
+        return cotizacion;
     }
 
-    @Scheduled(fixedRate = 10*60*1000) // actualiza la cotizacion del dolar cada 10 minutos(aumentar o disminuir si queremos)
-    public void actualizarCotizacion(){
-        try{
-            ResponseEntity<ApiUsdResponse> response = restTemplate.getForEntity(URL, ApiUsdResponse.class);
-               ApiUsdResponse apiUsdResponse = response.getBody();
+    @Scheduled(fixedRate = INTERVALO_ACTUALIZACION_MS)
+    public void actualizarCotizacion() {
+        try {
+            ResponseEntity<ApiUsdResponse> response =
+                    restTemplate.getForEntity(urlProveedor, ApiUsdResponse.class);
+            ApiUsdResponse cotizacion = response.getBody();
 
-               if(apiUsdResponse != null && apiUsdResponse.getVenta() > 0){
-                   cachedVenta = apiUsdResponse.getVenta();
-
-
-               }else {
-                   System.err.println("Respuesta invalida al actualizar cotizacion dolar.");
-               }
-
-        }catch (Exception e){
-            System.out.println("ERROR: error al actualizar el precio del dolar: "+e.getMessage());
+            if (cotizacion != null && cotizacion.getVenta() > 0) {
+                cachedVenta = cotizacion.getVenta();
+            } else {
+                log.warn("Respuesta invalida al actualizar la cotizacion del dolar.");
+            }
+        } catch (Exception e) {
+            // Se traga la excepcion a proposito: si ya hay un valor cacheado, el
+            // fallo del proveedor no debe tumbar las operaciones en curso.
+            log.error("Error al actualizar el precio del dolar: {}", e.getMessage());
         }
     }
-
 }
