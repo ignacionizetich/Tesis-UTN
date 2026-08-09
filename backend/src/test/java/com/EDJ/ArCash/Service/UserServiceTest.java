@@ -63,7 +63,6 @@ class UserServiceTest {
         emailService = mock(EmailService.class);
         validationTokenService = mock(ValidationTokenService.class);
         eventPublisher = mock(EventPublisher.class);
-        CredentialsService credentialsService = mock(CredentialsService.class);
 
         userService = new UserService(
                 passwordEncoder,
@@ -71,7 +70,6 @@ class UserServiceTest {
                 accountService,
                 accountRepository,
                 credentialRepository,
-                credentialsService,
                 emailService,
                 validationTokenService,
                 eventPublisher

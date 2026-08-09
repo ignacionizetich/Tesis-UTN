@@ -59,9 +59,8 @@ public class TokenController {
                 return ResponseEntity.badRequest().body(response);
 
             } else {
-                // Validar usuario y marcar token como usado
+                // validarUsuario marca el token como usado
                 userService.validarUsuario(token.getUser());
-                validationTokenService.usedToken(token.getUser());
 
                 response.put("success", true);
                 response.put("message", "¡Cuenta verificada exitosamente! Ya puedes iniciar sesión.");

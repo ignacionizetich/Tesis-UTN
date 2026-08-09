@@ -47,7 +47,6 @@ public class UserService {
                        AccountService accountService,
                        AccountRepository accountRepository,
                        CredentialRepository credentialRepository,
-                       CredentialsService credentialsService,
                        EmailService emailService,
                        ValidationTokenService validationTokenService,
                        EventPublisher eventPublisher) {
