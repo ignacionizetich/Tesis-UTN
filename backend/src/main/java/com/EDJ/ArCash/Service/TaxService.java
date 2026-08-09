@@ -2,79 +2,75 @@ package com.EDJ.ArCash.Service;
 
 import com.EDJ.ArCash.DTO.AuthDTO.TaxPesosResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TaxUsdResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class TaxService {
 
-    @Autowired
-    private CotizationUsdService cotizationUsdService;
+    private static final double ALICUOTA_IVA = 0.21;
+    private static final double ALICUOTA_COMISION_CONVERSION = 0.03;
+    private static final double PORCENTAJE_COMISION_CONVERSION = 3.0;
 
-    public TaxPesosResponse calcularPesos(double monto){
-        return calcularARS(monto, "ARS");
+    private static final String MONEDA_PESOS = "ARS";
+    private static final String MONEDA_DOLARES = "USD";
+
+    private final CotizationUsdService cotizationUsdService;
+
+    public TaxService(CotizationUsdService cotizationUsdService) {
+        this.cotizationUsdService = cotizationUsdService;
     }
 
+    public TaxPesosResponse calcularPesos(double monto) {
+        double iva = calcularIva(monto);
 
-    public TaxUsdResponse calcularUSD(double monto){
+        TaxPesosResponse respuesta = new TaxPesosResponse();
+        respuesta.setMontoOriginal(monto);
+        respuesta.setMoneda(MONEDA_PESOS);
+        respuesta.setIVA(iva);
+        respuesta.setTotalFinal(monto + iva);
+        return respuesta;
+    }
+
+    /**
+     * Recibe un monto en dolares y devuelve el calculo ya convertido a pesos,
+     * aunque la respuesta quede etiquetada como USD: el dashboard lee
+     * montoOriginal como importe en ARS.
+     */
+    public TaxUsdResponse calcularUSD(double monto) {
         double tipoCambio = cotizationUsdService.obtenerCotizacionVenta();
         double montoEnPesos = monto * tipoCambio;
-        return calcularUSD(montoEnPesos, "USD");
+        double iva = calcularIva(montoEnPesos);
+
+        TaxUsdResponse respuesta = new TaxUsdResponse();
+        respuesta.setMontoOriginal(montoEnPesos);
+        respuesta.setMoneda(MONEDA_DOLARES);
+        respuesta.setPrecioDolar(tipoCambio);
+        respuesta.setIVA(iva);
+        respuesta.setTotalFinal(montoEnPesos + iva);
+        return respuesta;
     }
 
-
-
-    private TaxPesosResponse calcularARS(double montoBase, String moneda){
-         double iva = montoBase * 0.21;
-
-         double total = montoBase + iva;
-
-         TaxPesosResponse taxPesosResponse = new TaxPesosResponse();
-         taxPesosResponse.setMontoOriginal(montoBase);
-         taxPesosResponse.setMoneda(moneda);
-         taxPesosResponse.setIVA(iva);
-         taxPesosResponse.setTotalFinal(total);
-         return taxPesosResponse;
-
+    private double calcularIva(double montoBase) {
+        return montoBase * ALICUOTA_IVA;
     }
 
-    private TaxUsdResponse calcularUSD(double montoBase, String moneda){
-        double iva = montoBase * 0.21;
-
-
-
-        double total = montoBase + iva ;
-
-        TaxUsdResponse taxUsdResponse = new TaxUsdResponse();
-        taxUsdResponse.setMontoOriginal(montoBase);
-        taxUsdResponse.setMoneda(moneda);
-        taxUsdResponse.setPrecioDolar(cotizationUsdService.obtenerCotizacionVenta());
-        taxUsdResponse.setIVA(iva);
-        taxUsdResponse.setTotalFinal(total);
-
-        return taxUsdResponse;
-    }
-    
     /**
-     * Calcula la comisión para conversión de ARS a USD
-     * Aplica 3% de comisión por conversión
-     * @param montoArs Monto en pesos argentinos
-     * @return Map con información de comisión
+     * Calcula la comision del 3% por conversion de ARS a USD.
+     * TransactionService lee estas claves por nombre.
      */
-    public java.util.Map<String, Double> calcularImpuestosConversion(double montoArs) {
-        // Comisión por conversión: 3%
-        double comision = montoArs * 0.03;
-        
-        // Porcentaje total
-        double porcentajeTotal = 3.0;
-        
-        java.util.Map<String, Double> resultado = new java.util.HashMap<>();
+    public Map<String, Double> calcularImpuestosConversion(double montoArs) {
+        double comision = montoArs * ALICUOTA_COMISION_CONVERSION;
+
+        Map<String, Double> resultado = new HashMap<>();
         resultado.put("impuestoPais", 0.0);
         resultado.put("percepcion", 0.0);
         resultado.put("totalImpuestos", comision);
-        resultado.put("porcentajeTotal", porcentajeTotal);
+        resultado.put("porcentajeTotal", PORCENTAJE_COMISION_CONVERSION);
         resultado.put("montoConImpuestos", montoArs + comision);
-        
+
         return resultado;
     }
 }

@@ -6,7 +6,6 @@ import com.EDJ.ArCash.exception.ExchangeRateUnavailableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Map;
 
@@ -30,11 +29,8 @@ class TaxServiceTest {
 
     @BeforeEach
     void setUp() {
-        TaxService servicio = new TaxService();
         cotizationUsdService = mock(CotizationUsdService.class);
-        // TaxService inyecta la dependencia por campo con @Autowired y no expone constructor.
-        ReflectionTestUtils.setField(servicio, "cotizationUsdService", cotizationUsdService);
-        taxService = servicio;
+        taxService = new TaxService(cotizationUsdService);
     }
 
     @Test
