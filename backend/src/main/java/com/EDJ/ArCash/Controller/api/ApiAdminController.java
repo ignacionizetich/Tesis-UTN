@@ -11,27 +11,24 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Endpoints de administracion.
+ * La autorizacion ROLE_ADMIN la aplica SecurityConfig sobre /api/admin/**.
+ * Evaluar @EnableMethodSecurity / @PreAuthorize en Fase 8 (hoy no esta activo).
+ */
 @RestController
 @RequestMapping(value = "/api/admin")
-@PreAuthorize("hasRole('ADMIN')")
 public class ApiAdminController {
-
 
     @Autowired
     private AdminService adminService;
-
-
-
-
 
     @Operation(
             summary = "Obtener todos los usuarios autenticados",
@@ -52,12 +49,9 @@ public class ApiAdminController {
             )
     })
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getAllAuthenticatedUsers(HttpServletRequest request) {
-        adminService.validarAdmin(request);
-
+    public ResponseEntity<List<UserResponse>> getAllAuthenticatedUsers() {
         return ResponseEntity.ok(adminService.getAuthUsers());
     }
-
 
     @Operation(
             summary = "Deshabilitar usuario",
@@ -73,14 +67,11 @@ public class ApiAdminController {
                     description = "Acceso denegado"
             )
     })
-
     @PutMapping("/users/{id}/disable")
-    public ResponseEntity<?> disableUser(@PathVariable Long id, HttpServletRequest request) {
-        adminService.validarAdmin(request);
+    public ResponseEntity<?> disableUser(@PathVariable Long id) {
         adminService.disableUser(id);
         return ResponseEntity.ok("usuario deshabilitado correctamente");
     }
-
 
     @Operation(
             summary = "Habilitar usuario",
@@ -96,14 +87,11 @@ public class ApiAdminController {
                     description = "Acceso denegado"
             )
     })
-
     @PutMapping("/users/{id}/enable")
-    public ResponseEntity<?> enableUser(@PathVariable Long id, HttpServletRequest request) {
-        adminService.validarAdmin(request);
+    public ResponseEntity<?> enableUser(@PathVariable Long id) {
         adminService.enableUser(id);
         return ResponseEntity.ok("usuario habilitado correctamente");
     }
-
 
     @Operation(
             summary = "Crear usuario administrador",
@@ -124,11 +112,9 @@ public class ApiAdminController {
             required = true,
             content = @Content(schema = @Schema(implementation = AdminRequest.class))
     )
-
     @PostMapping("/users/create-admin")
-    public ResponseEntity<?> createAdminUser(@RequestBody AdminRequest adminRequest, HttpServletRequest request) {
+    public ResponseEntity<?> createAdminUser(@RequestBody AdminRequest adminRequest) {
         try {
-            adminService.validarAdmin(request);
             AdminCreateResult resultado = adminService.createAdmin(adminRequest);
 
             if (resultado.isSuccess()) {
@@ -148,7 +134,6 @@ public class ApiAdminController {
         }
     }
 
-
     @Operation(
             summary = "Verificar acceso de administrador",
             description = "Verifica si el usuario autenticado tiene acceso de administrador."
@@ -163,14 +148,8 @@ public class ApiAdminController {
                     description = "Acceso denegado"
             )
     })
-
     @GetMapping("/check-access")
     public ResponseEntity<?> checkAdminAccess() {
         return ResponseEntity.ok().build();
     }
-
 }
-
-
-
-

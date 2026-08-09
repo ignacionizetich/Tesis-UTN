@@ -6,15 +6,11 @@ import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.UserRepository;
-import com.EDJ.ArCash.Security.JwtService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,9 +23,6 @@ public class AdminService {
 
     @Autowired
     private AccountService accountService;
-
-    @Autowired
-    private JwtService jwtService;
 
     @Autowired
     private SessionService sessionService;
@@ -82,18 +75,6 @@ public class AdminService {
         User user = userOpt.get();
         user.setActive(true);
         userRepository.save(user);
-    }
-
-    public void validarAdmin(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token no proporcionado");
-        }
-        String token = authHeader.substring(7);
-        String role = jwtService.getClaimJWT(token).get("role", String.class);
-        if (!"ADMIN".equals(role)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos de administrador");
-        }
     }
 
     /**

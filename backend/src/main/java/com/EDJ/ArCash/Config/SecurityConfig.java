@@ -127,7 +127,7 @@ public class SecurityConfig {
 
                 ).permitAll() // <-- Fin de rutas públicas
 
-                // 3. Rutas de Admin
+                // 3. Rutas de Admin (unica defensa hoy; evaluar @EnableMethodSecurity en Fase 8)
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
                 // 4. Todo lo demás
