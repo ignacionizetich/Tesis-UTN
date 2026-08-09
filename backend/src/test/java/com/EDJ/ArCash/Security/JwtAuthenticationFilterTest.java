@@ -164,6 +164,22 @@ class JwtAuthenticationFilterTest {
                 .andExpect(jsonPath("$.accessToken").isNotEmpty());
     }
 
+    @Test
+    @DisplayName("Un Bearer vencido no bloquea /api/auth/refresh si la cookie es valida")
+    void bearerVencidoNoBloqueaElRefreshPublico() throws Exception {
+        // El interceptor de Angular manda el access token vencido en Authorization
+        // tambien a /refresh. Antes el filtro cortaba con 401 y el endpoint nunca
+        // se ejecutaba; ahora las rutas publicas ignoran el header.
+        String refreshJwt = jwtUtils.generateRefreshToken(String.valueOf(usuario.getId()), "USER");
+        persistirRefreshToken(refreshJwt, false);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .header("Authorization", "Bearer " + tokenVencido())
+                        .cookie(new Cookie("refreshToken", refreshJwt)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty());
+    }
+
     private void persistirRefreshToken(boolean revoked) {
         persistirRefreshToken("refresh-de-prueba-" + usuario.getId(), revoked);
     }

@@ -9,12 +9,16 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.slf4j.Logger;
@@ -23,6 +27,7 @@ import java.io.IOException;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -30,6 +35,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final Key secretKey;
     private final UserDetailsService userDetailsService;
     private final JwtUtils jwtUtils;
+
+    /**
+     * Debe coincidir con el permitAll de SecurityConfig. En estas rutas el
+     * Authorization header se ignora: un access token vencido (como el que
+     * manda el interceptor de Angular a /api/auth/refresh) no puede bloquear
+     * un endpoint publico.
+     */
+    private final RequestMatcher rutasPublicas = new OrRequestMatcher(List.of(
+            new AntPathRequestMatcher("/**", HttpMethod.OPTIONS.name()),
+            new AntPathRequestMatcher("/swagger-ui/**"),
+            new AntPathRequestMatcher("/swagger-ui.html"),
+            new AntPathRequestMatcher("/v3/api-docs/**"),
+            new AntPathRequestMatcher("/swagger-resources/**"),
+            new AntPathRequestMatcher("/webjars/**"),
+            new AntPathRequestMatcher("/api/auth/login"),
+            new AntPathRequestMatcher("/api/auth/refresh"),
+            new AntPathRequestMatcher("/api/user/create"),
+            new AntPathRequestMatcher("/api/auth/validate"),
+            new AntPathRequestMatcher("/api/auth/send-recover-mail"),
+            new AntPathRequestMatcher("/api/auth/validate-recovery-token"),
+            new AntPathRequestMatcher("/api/auth/reset-password"),
+            new AntPathRequestMatcher("/api/resend/**")
+    ));
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
@@ -45,6 +73,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
+        if (rutasPublicas.matches(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
