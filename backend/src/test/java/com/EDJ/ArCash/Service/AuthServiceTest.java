@@ -3,25 +3,18 @@ package com.EDJ.ArCash.Service;
 import com.EDJ.ArCash.DTO.AuthDTO.LoginRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.LoginResponse;
 import com.EDJ.ArCash.Models.Account;
-import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.AccountRepository;
-import com.EDJ.ArCash.Repository.CredentialRepository;
-import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.Service.strategy.AuthenticationResult;
 import com.EDJ.ArCash.Service.strategy.AuthenticationStrategy;
 import com.EDJ.ArCash.Service.strategy.PasswordRecoveryStrategy;
 import com.EDJ.ArCash.Service.strategy.TokenManagementStrategy;
 import com.EDJ.ArCash.factory.LoginResponseFactory;
 import com.EDJ.ArCash.factory.LoginResponseFactoryImpl;
-import com.EDJ.ArCash.observer.Event;
-import com.EDJ.ArCash.observer.EventPublisher;
-import com.EDJ.ArCash.observer.EventType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
@@ -48,9 +41,6 @@ class AuthServiceTest {
     private AuthenticationStrategy authenticationStrategy;
     private TokenManagementStrategy tokenManagementStrategy;
     private AccountRepository accountRepository;
-    private UserRepository userRepository;
-    private CredentialRepository credentialRepository;
-    private EventPublisher eventPublisher;
     private AuthService authService;
 
     @BeforeEach
@@ -60,9 +50,6 @@ class AuthServiceTest {
         PasswordRecoveryStrategy passwordRecoveryStrategy = mock(PasswordRecoveryStrategy.class);
         LoginResponseFactory loginResponseFactory = new LoginResponseFactoryImpl();
         accountRepository = mock(AccountRepository.class);
-        userRepository = mock(UserRepository.class);
-        credentialRepository = mock(CredentialRepository.class);
-        eventPublisher = mock(EventPublisher.class);
 
         authService = new AuthService();
         ReflectionTestUtils.setField(authService, "authenticationStrategy", authenticationStrategy);
@@ -70,9 +57,6 @@ class AuthServiceTest {
         ReflectionTestUtils.setField(authService, "passwordRecoveryStrategy", passwordRecoveryStrategy);
         ReflectionTestUtils.setField(authService, "loginResponseFactory", loginResponseFactory);
         ReflectionTestUtils.setField(authService, "accountRepository", accountRepository);
-        ReflectionTestUtils.setField(authService, "userRepository", userRepository);
-        ReflectionTestUtils.setField(authService, "credentialRepository", credentialRepository);
-        ReflectionTestUtils.setField(authService, "eventPublisher", eventPublisher);
     }
 
     @Test
@@ -161,57 +145,6 @@ class AuthServiceTest {
         verify(tokenManagementStrategy).isValidSession("token");
     }
 
-    @Test
-    @DisplayName("cambiarAliasYUsername rechaza formato invalido")
-    void cambiarAliasFormatoInvalido() {
-        assertFalse(authService.cambiarAliasYUsername(ID_USUARIO, "ab"));
-        assertFalse(authService.cambiarAliasYUsername(ID_USUARIO, "12345"));
-        assertFalse(authService.cambiarAliasYUsername(ID_USUARIO, null));
-        verify(accountRepository, never()).findByUser_Id(any());
-    }
-
-    @Test
-    @DisplayName("cambiarAliasYUsername falla si no hay cuenta ARS")
-    void cambiarAliasSinCuenta() {
-        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.empty());
-
-        assertFalse(authService.cambiarAliasYUsername(ID_USUARIO, "nuevoalias"));
-        verify(userRepository, never()).saveAndFlush(any());
-    }
-
-    @Test
-    @DisplayName("cambiarAliasYUsername falla si el username ya esta tomado")
-    void cambiarAliasUsernameTomado() {
-        User user = usuarioConCredenciales("viejoalias");
-        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.of(cuenta(user)));
-        when(credentialRepository.findByUsername("nuevoalias")).thenReturn(Optional.of(new Credentials()));
-
-        assertFalse(authService.cambiarAliasYUsername(ID_USUARIO, "nuevoalias"));
-        verify(userRepository, never()).saveAndFlush(any());
-    }
-
-    @Test
-    @DisplayName("cambiarAliasYUsername exitoso actualiza alias/username y publica ALIAS_CHANGED")
-    void cambiarAliasExitoso() {
-        User user = usuarioConCredenciales("viejoalias");
-        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.of(cuenta(user)));
-        when(credentialRepository.findByUsername("nuevoalias")).thenReturn(Optional.empty());
-
-        assertTrue(authService.cambiarAliasYUsername(ID_USUARIO, "nuevoalias"));
-
-        assertEquals("nuevoalias", user.getAlias());
-        assertEquals("nuevoalias", user.getCredentials().getUsername());
-        verify(userRepository).saveAndFlush(user);
-        verify(credentialRepository).save(user.getCredentials());
-
-        ArgumentCaptor<Event> eventoCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventPublisher).publish(eventoCaptor.capture());
-        Event evento = eventoCaptor.getValue();
-        assertEquals(EventType.ALIAS_CHANGED, evento.getEventType());
-        assertEquals("viejoalias", evento.getData("oldAlias"));
-        assertEquals("nuevoalias", evento.getData("newAlias"));
-    }
-
     private LoginRequest pedido() {
         return LoginRequest.builder().username("ana.gomez").password("secreta").build();
     }
@@ -224,14 +157,6 @@ class AuthServiceTest {
         return user;
     }
 
-    private User usuarioConCredenciales(String alias) {
-        User user = usuario();
-        user.setAlias(alias);
-        Credentials credentials = new Credentials(user, alias, "hash");
-        user.setCredentials(credentials);
-        return user;
-    }
-
     private Account cuenta(User user) {
         Account account = new Account();
         account.setIdAccount(ID_CUENTA);
@@ -239,4 +164,3 @@ class AuthServiceTest {
         return account;
     }
 }
-

@@ -1,17 +1,22 @@
 package com.EDJ.ArCash.Service;
 
+import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Models.ValidationToken;
+import com.EDJ.ArCash.Repository.AccountRepository;
+import com.EDJ.ArCash.Repository.CredentialRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.text.html.Option;
 import java.util.Optional;
 
 import static org.apache.commons.lang3.StringUtils.capitalize;
@@ -19,9 +24,15 @@ import static org.apache.commons.lang3.StringUtils.capitalize;
 @Service
 public class UserService {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+
     private final UserRepository userRepository;
 
     private final AccountService accountService;
+
+    private final AccountRepository accountRepository;
+
+    private final CredentialRepository credentialRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -31,9 +42,19 @@ public class UserService {
 
     private final EventPublisher eventPublisher;
 
-    public UserService(PasswordEncoder passwordEncoder,UserRepository userRepository, AccountService accountService, CredentialsService credentialsService, EmailService emailService, ValidationTokenService validationTokenService, EventPublisher eventPublisher) {
+    public UserService(PasswordEncoder passwordEncoder,
+                       UserRepository userRepository,
+                       AccountService accountService,
+                       AccountRepository accountRepository,
+                       CredentialRepository credentialRepository,
+                       CredentialsService credentialsService,
+                       EmailService emailService,
+                       ValidationTokenService validationTokenService,
+                       EventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.accountService = accountService;
+        this.accountRepository = accountRepository;
+        this.credentialRepository = credentialRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.validationTokenService = validationTokenService;
@@ -149,5 +170,51 @@ public class UserService {
         return userRepository.findByAlias(alias);
     }
 
+    /**
+     * Actualiza User.alias y Credentials.username en conjunto.
+     *
+     * @return true si el cambio fue exitoso, false en caso contrario
+     */
+    @Transactional
+    public boolean cambiarAliasYUsername(Long userId, String nuevoAlias) {
+        logger.info("Cambiando alias para usuario: {}", userId);
 
+        String regex = "^(?=.*[A-Za-z])[A-Za-z\\d]{4,25}$";
+        if (nuevoAlias == null || nuevoAlias.trim().isEmpty() ||
+                !nuevoAlias.matches(regex) ||
+                nuevoAlias.matches("^\\d+$")) {
+            logger.warn("Formato de alias inválido para usuario: {}", userId);
+            return false;
+        }
+
+        Optional<Account> accountOpt = accountRepository.findByUser_Id(userId);
+        if (accountOpt.isEmpty()) {
+            logger.warn("Cuenta no encontrada para usuario: {}", userId);
+            return false;
+        }
+
+        Credentials credentials = accountOpt.get().getUser().getCredentials();
+        User user = accountOpt.get().getUser();
+
+        if (credentialRepository.findByUsername(nuevoAlias).isPresent()) {
+            logger.warn("El alias ya está en uso: {}", nuevoAlias);
+            return false;
+        }
+
+        String oldAlias = user.getAlias();
+        user.setAlias(nuevoAlias);
+        userRepository.saveAndFlush(user);
+
+        credentials.setUsername(nuevoAlias);
+        credentialRepository.save(credentials);
+
+        Event event = new Event(EventType.ALIAS_CHANGED);
+        event.addData("user", user);
+        event.addData("oldAlias", oldAlias);
+        event.addData("newAlias", nuevoAlias);
+        eventPublisher.publish(event);
+
+        logger.info("Alias cambiado exitosamente para usuario: {}", userId);
+        return true;
+    }
 }

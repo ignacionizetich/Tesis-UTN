@@ -1,7 +1,11 @@
 package com.EDJ.ArCash.Service;
 
+import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
+import com.EDJ.ArCash.Repository.AccountRepository;
+import com.EDJ.ArCash.Repository.CredentialRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
@@ -27,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Caracterizacion del registro en UserService (conflictos y camino feliz).
+ * Caracterizacion de UserService: registro (conflictos/camino feliz) y cambio de alias/username.
  */
 class UserServiceTest {
 
@@ -36,8 +40,12 @@ class UserServiceTest {
     private static final String DNI = "30111222";
     private static final String PASSWORD = "secreta";
     private static final String HASH = "hash";
+    private static final long ID_USUARIO = 5L;
+    private static final long ID_CUENTA = 50L;
 
     private UserRepository userRepository;
+    private AccountRepository accountRepository;
+    private CredentialRepository credentialRepository;
     private AccountService accountService;
     private PasswordEncoder passwordEncoder;
     private EmailService emailService;
@@ -48,6 +56,8 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
+        accountRepository = mock(AccountRepository.class);
+        credentialRepository = mock(CredentialRepository.class);
         accountService = mock(AccountService.class);
         passwordEncoder = mock(PasswordEncoder.class);
         emailService = mock(EmailService.class);
@@ -59,6 +69,8 @@ class UserServiceTest {
                 passwordEncoder,
                 userRepository,
                 accountService,
+                accountRepository,
+                credentialRepository,
                 credentialsService,
                 emailService,
                 validationTokenService,
@@ -156,7 +168,75 @@ class UserServiceTest {
                 && !user.getValidationToken().getToken().isBlank());
     }
 
+    @Test
+    @DisplayName("cambiarAliasYUsername rechaza formato invalido")
+    void cambiarAliasFormatoInvalido() {
+        assertFalse(userService.cambiarAliasYUsername(ID_USUARIO, "ab"));
+        assertFalse(userService.cambiarAliasYUsername(ID_USUARIO, "12345"));
+        assertFalse(userService.cambiarAliasYUsername(ID_USUARIO, null));
+        verify(accountRepository, never()).findByUser_Id(any());
+    }
+
+    @Test
+    @DisplayName("cambiarAliasYUsername falla si no hay cuenta ARS")
+    void cambiarAliasSinCuenta() {
+        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.empty());
+
+        assertFalse(userService.cambiarAliasYUsername(ID_USUARIO, "nuevoalias"));
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("cambiarAliasYUsername falla si el username ya esta tomado")
+    void cambiarAliasUsernameTomado() {
+        User user = usuarioConCredenciales("viejoalias");
+        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.of(cuenta(user)));
+        when(credentialRepository.findByUsername("nuevoalias")).thenReturn(Optional.of(new Credentials()));
+
+        assertFalse(userService.cambiarAliasYUsername(ID_USUARIO, "nuevoalias"));
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("cambiarAliasYUsername exitoso actualiza alias/username y publica ALIAS_CHANGED")
+    void cambiarAliasExitoso() {
+        User user = usuarioConCredenciales("viejoalias");
+        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.of(cuenta(user)));
+        when(credentialRepository.findByUsername("nuevoalias")).thenReturn(Optional.empty());
+
+        assertTrue(userService.cambiarAliasYUsername(ID_USUARIO, "nuevoalias"));
+
+        assertEquals("nuevoalias", user.getAlias());
+        assertEquals("nuevoalias", user.getCredentials().getUsername());
+        verify(userRepository).saveAndFlush(user);
+        verify(credentialRepository).save(user.getCredentials());
+
+        ArgumentCaptor<Event> eventoCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventPublisher).publish(eventoCaptor.capture());
+        Event evento = eventoCaptor.getValue();
+        assertEquals(EventType.ALIAS_CHANGED, evento.getEventType());
+        assertEquals("viejoalias", evento.getData("oldAlias"));
+        assertEquals("nuevoalias", evento.getData("newAlias"));
+    }
+
     private User usuarioNuevo() {
         return new User("ana", "gomez", DNI, EMAIL, ALIAS);
+    }
+
+    private User usuarioConCredenciales(String alias) {
+        User user = new User();
+        user.setId(ID_USUARIO);
+        user.setActive(true);
+        user.setPermissions(Permissions.USER);
+        user.setAlias(alias);
+        user.setCredentials(new Credentials(user, alias, "hash"));
+        return user;
+    }
+
+    private Account cuenta(User user) {
+        Account account = new Account();
+        account.setIdAccount(ID_CUENTA);
+        account.setUser(user);
+        return account;
     }
 }

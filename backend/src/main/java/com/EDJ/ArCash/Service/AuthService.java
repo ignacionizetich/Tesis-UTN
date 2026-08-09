@@ -9,9 +9,6 @@ import com.EDJ.ArCash.Service.strategy.AuthenticationStrategy;
 import com.EDJ.ArCash.Service.strategy.PasswordRecoveryStrategy;
 import com.EDJ.ArCash.Service.strategy.TokenManagementStrategy;
 import com.EDJ.ArCash.factory.LoginResponseFactory;
-import com.EDJ.ArCash.observer.Event;
-import com.EDJ.ArCash.observer.EventPublisher;
-import com.EDJ.ArCash.observer.EventType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,16 +46,7 @@ public class AuthService {
     private LoginResponseFactory loginResponseFactory;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private AccountRepository accountRepository;
-
-    @Autowired
-    private CredentialRepository credentialRepository;
-
-    @Autowired
-    private EventPublisher eventPublisher;
 
     /**
      * Valida credenciales, exige cuenta ARS y recien entonces emite tokens.
@@ -136,59 +124,6 @@ public class AuthService {
     public boolean enviarCorreoRecuperacion(String email) {
         logger.info("Enviando correo de recuperación para: {}", email);
         return passwordRecoveryStrategy.sendRecoveryEmail(email);
-    }
-
-    /**
-     * Cambia el alias y username del usuario
-     * Esta funcionalidad permanece aquí ya que involucra lógica de negocio
-     * relacionada con múltiples entidades (User, Account, Credentials)
-     * 
-     * @param userId ID del usuario
-     * @param nuevoAlias Nuevo alias
-     * @return true si el cambio fue exitoso, false en caso contrario
-     */
-    @Transactional
-    public boolean cambiarAliasYUsername(Long userId, String nuevoAlias) {
-        logger.info("Cambiando alias para usuario: {}", userId);
-        
-        String regex = "^(?=.*[A-Za-z])[A-Za-z\\d]{4,25}$";
-        if (nuevoAlias == null || nuevoAlias.trim().isEmpty() ||
-                !nuevoAlias.matches(regex) ||
-                nuevoAlias.matches("^\\d+$")) {
-            logger.warn("Formato de alias inválido para usuario: {}", userId);
-            return false;
-        }
-
-        Optional<Account> accountOpt = accountRepository.findByUser_Id(userId);
-        if (accountOpt.isEmpty()) {
-            logger.warn("Cuenta no encontrada para usuario: {}", userId);
-            return false;
-        }
-        
-        Credentials credentials = accountOpt.get().getUser().getCredentials();
-        User user = accountOpt.get().getUser();
-
-        if (credentialRepository.findByUsername(nuevoAlias).isPresent()) {
-            logger.warn("El alias ya está en uso: {}", nuevoAlias);
-            return false;
-        }
-
-        String oldAlias = user.getAlias();
-        user.setAlias(nuevoAlias);
-        userRepository.saveAndFlush(user);
-
-        credentials.setUsername(nuevoAlias);
-        credentialRepository.save(credentials);
-        
-        // Publicar evento de cambio de alias
-        Event event = new Event(EventType.ALIAS_CHANGED);
-        event.addData("user", user);
-        event.addData("oldAlias", oldAlias);
-        event.addData("newAlias", nuevoAlias);
-        eventPublisher.publish(event);
-        
-        logger.info("Alias cambiado exitosamente para usuario: {}", userId);
-        return true;
     }
 
     /**

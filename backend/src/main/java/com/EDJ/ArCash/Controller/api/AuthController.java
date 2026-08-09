@@ -8,9 +8,11 @@ import com.EDJ.ArCash.Models.Imp.LogoutStatus;
 import com.EDJ.ArCash.Models.RefreshToken;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.RefreshTokenRepository;
+import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Security.JwtService;
 import com.EDJ.ArCash.Service.AuthService;
 import com.EDJ.ArCash.Service.RefreshTokenCleanupService;
+import com.EDJ.ArCash.Service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,12 +20,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -39,6 +41,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private RefreshTokenCleanupService refreshTokenService;
@@ -270,25 +275,15 @@ public class AuthController {
     @PutMapping("/changeUsername")
     public ResponseEntity<?> changeUsername(
             @RequestBody UsernameRequest usernameRequest,
-            HttpServletRequest request
+            @AuthenticationPrincipal CustomUserDetails principal
     ) {
         String newUsername = usernameRequest.getNewUsername();
         if (newUsername == null || newUsername.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(new UsernameResponse(false, "El nombre de usuario no puede estar vacio"));
         }
 
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(401).body(new UsernameResponse(false, "Token no proporcionado"));
-        }
-        String token = authHeader.substring(7);
-
-        String userIdStr = jwtService.extractUserId(token);
-        if (userIdStr == null) {
-            return ResponseEntity.status(401).body(new UsernameResponse(false, "Token invalido"));
-        }
-
-        boolean result = authService.cambiarAliasYUsername(Long.parseLong(userIdStr), newUsername.trim());
+        Long userId = principal.getUser().getId();
+        boolean result = userService.cambiarAliasYUsername(userId, newUsername.trim());
         if (result) {
             return ResponseEntity.ok(new UsernameResponse(true, "Nombre de usuario actualizado correctamente"));
         } else {
