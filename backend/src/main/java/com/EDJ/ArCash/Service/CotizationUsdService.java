@@ -1,6 +1,7 @@
 package com.EDJ.ArCash.Service;
 
 import com.EDJ.ArCash.DTO.ApiCalloutDTO.ApiUsdResponse;
+import com.EDJ.ArCash.exception.ExchangeRateUnavailableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,9 @@ public class CotizationUsdService {
     public double obtenerCotizacionVenta(){
         if(cachedVenta == null){
             actualizarCotizacion();
+        }
+        if(cachedVenta == null){
+            throw new ExchangeRateUnavailableException("No se pudo obtener la cotizacion del dolar desde el proveedor externo.");
         }
         return cachedVenta;
     }
