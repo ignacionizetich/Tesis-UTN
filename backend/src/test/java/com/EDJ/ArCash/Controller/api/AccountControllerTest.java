@@ -5,10 +5,8 @@ import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Service.SessionService;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.AliasChangeResult;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,18 +61,10 @@ class AccountControllerTest {
     @MockitoBean
     private AccountService accountService;
 
-    @MockitoBean
-    private SessionService sessionService;
-
-    @BeforeEach
-    void setUp() {
-        when(sessionService.tieneSesionActiva(ID_USUARIO)).thenReturn(true);
-    }
-
     // --- PUT /{id}/balance ---
 
     @Test
-    @DisplayName("Ingresar un monto negativo devuelve 400 antes de mirar la sesion")
+    @DisplayName("Ingresar un monto negativo devuelve 400")
     void balanceConMontoNegativoDevuelve400() throws Exception {
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
@@ -84,22 +74,6 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("El monto a ingresar no puede ser negativo."))
                 .andExpect(jsonPath("$.newBalance").value(-1.0));
-
-        verify(sessionService, never()).tieneSesionActiva(anyLong());
-    }
-
-    @Test
-    @DisplayName("Con la sesion revocada devuelve 498")
-    void balanceConSesionRevocadaDevuelve498() throws Exception {
-        when(sessionService.tieneSesionActiva(ID_USUARIO)).thenReturn(false);
-
-        mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
-                        .with(comoUsuarioAutenticado())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"balance\":100}"))
-                .andExpect(status().is(498))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Usuario invalido"));
     }
 
     @Test
@@ -201,21 +175,6 @@ class AccountControllerTest {
     }
 
     // --- PUT /{id}/changeAlias ---
-
-    @Test
-    @DisplayName("Cambiar alias con la sesion revocada devuelve 498 sin llamar al service")
-    void changeAliasConSesionRevocadaDevuelve498() throws Exception {
-        when(sessionService.tieneSesionActiva(ID_USUARIO)).thenReturn(false);
-
-        mockMvc.perform(put("/api/accounts/{id}/changeAlias", ID_CUENTA_ARS)
-                        .with(comoUsuarioAutenticado())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"newAlias\":\"mi.alias.nuevo\"}"))
-                .andExpect(status().is(498))
-                .andExpect(jsonPath("$.message").value("Usuario invalido."));
-
-        verify(accountService, never()).changeAlias(any(), anyLong(), any());
-    }
 
     @Test
     @DisplayName("El cambio de alias exitoso devuelve 200")

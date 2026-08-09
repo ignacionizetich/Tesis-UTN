@@ -6,7 +6,6 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.AliasChangeResult;
-import com.EDJ.ArCash.Service.SessionService;
 import com.EDJ.ArCash.factory.AliasResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,12 +28,10 @@ import java.util.Optional;
 public class AccountController {
 
     private final AccountService accountService;
-    private final SessionService sessionService;
     private final AliasResponseFactory aliasResponseFactory;
 
-    public AccountController(AccountService accountService, SessionService sessionService, AliasResponseFactory aliasResponseFactory) {
+    public AccountController(AccountService accountService, AliasResponseFactory aliasResponseFactory) {
         this.accountService = accountService;
-        this.sessionService = sessionService;
         this.aliasResponseFactory = aliasResponseFactory;
     }
 
@@ -76,10 +73,6 @@ public class AccountController {
         }
 
         Long userId = principal.getUser().getId();
-
-        if (!sessionService.tieneSesionActiva(userId)) {
-            return ResponseEntity.status(498).body(new AccountResponse(false ,"Usuario invalido",0));
-        }
 
         Optional<Account> optionalAccount = accountService.findAccountByID(id);
 
@@ -179,10 +172,6 @@ public class AccountController {
             @RequestBody AliasRequest aliasRequest,
             @AuthenticationPrincipal CustomUserDetails principal){
         Long userId = principal.getUser().getId();
-
-        if(!sessionService.tieneSesionActiva(userId)){
-            return ResponseEntity.status(498).body(new AliasResponse(false, "Usuario invalido."));
-        }
 
         AliasChangeResult resultado = accountService.changeAlias(aliasRequest.getNewAlias(), id, userId);
 
