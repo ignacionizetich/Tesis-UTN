@@ -6,6 +6,8 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AccountService;
+import com.EDJ.ArCash.Service.AliasChangeResult;
+import com.EDJ.ArCash.factory.AliasResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -27,10 +29,12 @@ public class AccountController {
 
     private final AccountService accountService;
     private final JwtUtils jwtUtils;
+    private final AliasResponseFactory aliasResponseFactory;
 
-    public AccountController(AccountService accountService, JwtUtils jwtUtils) {
+    public AccountController(AccountService accountService, JwtUtils jwtUtils, AliasResponseFactory aliasResponseFactory) {
         this.accountService = accountService;
         this.jwtUtils = jwtUtils;
+        this.aliasResponseFactory = aliasResponseFactory;
     }
 
     @Operation(
@@ -179,7 +183,20 @@ public class AccountController {
             return ResponseEntity.status(498).body(new AliasResponse(false, "Usuario invalido."));
         }
 
-        return accountService.changeAlias(aliasRequest.getNewAlias(), id, userId);
+        AliasChangeResult resultado = accountService.changeAlias(aliasRequest.getNewAlias(), id, userId);
+
+        return switch (resultado) {
+            case OK -> ResponseEntity.ok(
+                    aliasResponseFactory.createSuccessResponse("Alias actualizado exitosamente."));
+            case FORMATO_INVALIDO -> ResponseEntity.status(400).body(
+                    aliasResponseFactory.createErrorResponse("Formato de alias inválido. Debe tener entre 4 y 25 caracteres, solo letras, números y puntos, al menos un punto en el medio, no puede ser solo números ni tener '..'."));
+            case CUENTA_NO_ENCONTRADA -> ResponseEntity.status(498).body(
+                    aliasResponseFactory.createErrorResponse("Cuenta no encontrada."));
+            case NO_ES_PROPIETARIO -> ResponseEntity.status(403).body(
+                    aliasResponseFactory.createErrorResponse("No tienes permisos para hacer eso."));
+            case ALIAS_EN_USO -> ResponseEntity.status(403).body(
+                    aliasResponseFactory.createErrorResponse("Alias actualmente en uso."));
+        };
     }
 
     @Operation(

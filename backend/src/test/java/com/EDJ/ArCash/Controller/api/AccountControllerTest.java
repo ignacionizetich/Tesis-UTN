@@ -1,6 +1,5 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.DTO.AuthDTO.AliasResponse;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Currency;
@@ -8,6 +7,7 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AccountService;
+import com.EDJ.ArCash.Service.AliasChangeResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,11 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.util.List;
@@ -218,19 +218,45 @@ class AccountControllerTest {
     }
 
     @Test
-    @DisplayName("Cambiar alias delega en el service y devuelve su respuesta tal cual")
-    void changeAliasDelegaEnElService() throws Exception {
-        when(accountService.changeAlias(eq("mi.alias.nuevo"), eq(ID_CUENTA_ARS), eq(ID_USUARIO)))
-                .thenReturn(ResponseEntity.ok(
-                        AliasResponse.builder().success(true).message("Alias actualizado exitosamente.").build()));
-
-        mockMvc.perform(put("/api/accounts/{id}/changeAlias", ID_CUENTA_ARS)
-                        .with(comoUsuarioAutenticado())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"newAlias\":\"mi.alias.nuevo\"}"))
+    @DisplayName("El cambio de alias exitoso devuelve 200")
+    void changeAliasExitosoDevuelve200() throws Exception {
+        cambiarAliasDevuelve(AliasChangeResult.OK)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Alias actualizado exitosamente."));
+    }
+
+    @Test
+    @DisplayName("Un alias mal formado devuelve 400")
+    void changeAliasConFormatoInvalidoDevuelve400() throws Exception {
+        cambiarAliasDevuelve(AliasChangeResult.FORMATO_INVALIDO)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Formato de alias inválido. Debe tener entre 4 y 25 caracteres, solo letras, números y puntos, al menos un punto en el medio, no puede ser solo números ni tener '..'."));
+    }
+
+    @Test
+    @DisplayName("Una cuenta inexistente devuelve 498, no 404")
+    void changeAliasSobreCuentaInexistenteDevuelve498() throws Exception {
+        cambiarAliasDevuelve(AliasChangeResult.CUENTA_NO_ENCONTRADA)
+                .andExpect(status().is(498))
+                .andExpect(jsonPath("$.message").value("Cuenta no encontrada."));
+    }
+
+    @Test
+    @DisplayName("Una cuenta ajena devuelve 403")
+    void changeAliasSobreCuentaAjenaDevuelve403() throws Exception {
+        cambiarAliasDevuelve(AliasChangeResult.NO_ES_PROPIETARIO)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("No tienes permisos para hacer eso."));
+    }
+
+    @Test
+    @DisplayName("Un alias ya tomado devuelve 403")
+    void changeAliasConAliasEnUsoDevuelve403() throws Exception {
+        cambiarAliasDevuelve(AliasChangeResult.ALIAS_EN_USO)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Alias actualmente en uso."));
     }
 
     // --- GET /{id}/qr-data ---
@@ -303,6 +329,16 @@ class AccountControllerTest {
     }
 
     // --- helpers ---
+
+    private ResultActions cambiarAliasDevuelve(AliasChangeResult resultado) throws Exception {
+        when(accountService.changeAlias(eq("mi.alias.nuevo"), eq(ID_CUENTA_ARS), eq(ID_USUARIO)))
+                .thenReturn(resultado);
+
+        return mockMvc.perform(put("/api/accounts/{id}/changeAlias", ID_CUENTA_ARS)
+                .with(comoUsuarioAutenticado())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"newAlias\":\"mi.alias.nuevo\"}"));
+    }
 
     /**
      * Publica en el SecurityContext el mismo principal que arma el filtro JWT en

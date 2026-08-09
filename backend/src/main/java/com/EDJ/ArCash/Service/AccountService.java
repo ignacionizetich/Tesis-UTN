@@ -1,18 +1,15 @@
 package com.EDJ.ArCash.Service;
 
-import com.EDJ.ArCash.DTO.AuthDTO.AliasResponse;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.ValidationTokenRepository;
-import com.EDJ.ArCash.factory.AliasResponseFactory;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -27,15 +24,11 @@ public class AccountService {
     private final AccountRepository accountRepository;
 
     @Autowired
-    private final AliasResponseFactory aliasResponseFactory;
-
-    @Autowired
     private final EventPublisher eventPublisher;
 
-    public AccountService(AccountRepository accountRepository, ValidationTokenRepository validationTokenRepository, AliasResponseFactory aliasResponseFactory, EventPublisher eventPublisher) {
+    public AccountService(AccountRepository accountRepository, ValidationTokenRepository validationTokenRepository, EventPublisher eventPublisher) {
         this.accountRepository = accountRepository;
         this.validationTokenRepository = validationTokenRepository;
-        this.aliasResponseFactory = aliasResponseFactory;
         this.eventPublisher = eventPublisher;
     }
 
@@ -114,41 +107,40 @@ public class AccountService {
         return accountRepository.findByAccountCvu(cvu);
     }
 
-    public ResponseEntity<AliasResponse> changeAlias(String newAlias, Long id, Object responseEntity) {
+    public AliasChangeResult changeAlias(String newAlias, Long id, Long userId) {
         // Regex mejorado: exige al menos una letra
         String regex = "^(?=.*[A-Za-z])(?=^[A-Za-z0-9]+(\\.[A-Za-z0-9]+)+$)(?!.*\\.\\.)[A-Za-z0-9.]{4,25}$";
         if (!newAlias.matches(regex)) {
-            return ResponseEntity.status(400).body(
-                    aliasResponseFactory.createErrorResponse("Formato de alias inválido. Debe tener entre 4 y 25 caracteres, solo letras, números y puntos, al menos un punto en el medio, no puede ser solo números ni tener '..'.")
-            );
+            return AliasChangeResult.FORMATO_INVALIDO;
         }
 
         Optional<Account> optionalAccount = accountRepository.findByIdAccount(id);
 
         if (optionalAccount.isEmpty()) {
-            return ResponseEntity.status(498).body(aliasResponseFactory.createErrorResponse("Cuenta no encontrada."));
+            return AliasChangeResult.CUENTA_NO_ENCONTRADA;
         }
         Account acc = optionalAccount.get();
 
-        if (acc.getUser().getId().equals(responseEntity)) {
-            if (!accountRepository.existsByAccountNickname(newAlias)) {
-                String oldAlias = acc.getAccountNickname();
-                acc.setAccountNickname(newAlias);
-                accountRepository.save(acc);
-                
-                // Publicar evento de cambio de alias
-                Event event = new Event(EventType.ALIAS_CHANGED);
-                event.addData("user", acc.getUser());
-                event.addData("oldAlias", oldAlias);
-                event.addData("newAlias", newAlias);
-                eventPublisher.publish(event);
-                
-                return ResponseEntity.status(200).body(aliasResponseFactory.createSuccessResponse("Alias actualizado exitosamente."));
-            }
-        } else {
-            return ResponseEntity.status(403).body(aliasResponseFactory.createErrorResponse("No tienes permisos para hacer eso."));
+        if (!acc.getUser().getId().equals(userId)) {
+            return AliasChangeResult.NO_ES_PROPIETARIO;
         }
-        return ResponseEntity.status(403).body(aliasResponseFactory.createErrorResponse("Alias actualmente en uso."));
+
+        if (accountRepository.existsByAccountNickname(newAlias)) {
+            return AliasChangeResult.ALIAS_EN_USO;
+        }
+
+        String oldAlias = acc.getAccountNickname();
+        acc.setAccountNickname(newAlias);
+        accountRepository.save(acc);
+
+        // Publicar evento de cambio de alias
+        Event event = new Event(EventType.ALIAS_CHANGED);
+        event.addData("user", acc.getUser());
+        event.addData("oldAlias", oldAlias);
+        event.addData("newAlias", newAlias);
+        eventPublisher.publish(event);
+
+        return AliasChangeResult.OK;
     }
 
 

@@ -1,12 +1,10 @@
 package com.EDJ.ArCash.Service;
 
-import com.EDJ.ArCash.DTO.AuthDTO.AliasResponse;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.ValidationTokenRepository;
-import com.EDJ.ArCash.factory.AliasResponseFactory;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
@@ -14,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.http.ResponseEntity;
 
 import java.util.Optional;
 
@@ -50,10 +47,7 @@ class AccountServiceTest {
         accountRepository = mock(AccountRepository.class);
         validationTokenRepository = mock(ValidationTokenRepository.class);
         eventPublisher = mock(EventPublisher.class);
-        // La factory es trivial y sin dependencias: usarla de verdad hace que
-        // los tests verifiquen los mensajes reales y no los de un mock.
-        accountService = new AccountService(
-                accountRepository, validationTokenRepository, new AliasResponseFactory(), eventPublisher);
+        accountService = new AccountService(accountRepository, validationTokenRepository, eventPublisher);
     }
 
     // --- alta de cuentas ---
@@ -191,66 +185,59 @@ class AccountServiceTest {
     // --- changeAlias ---
 
     @Test
-    @DisplayName("Rechaza con 400 un alias con formato invalido")
+    @DisplayName("Rechaza un alias con formato invalido sin tocar la base")
     void changeAliasRechazaFormatoInvalido() {
-        ResponseEntity<AliasResponse> respuesta = accountService.changeAlias("sinpunto", ID_CUENTA, ID_USUARIO);
+        assertEquals(AliasChangeResult.FORMATO_INVALIDO,
+                accountService.changeAlias("sinpunto", ID_CUENTA, ID_USUARIO));
 
-        assertEquals(400, respuesta.getStatusCode().value());
-        assertFalse(respuesta.getBody().isSuccess());
         verify(accountRepository, never()).findByIdAccount(any());
     }
 
     @Test
     @DisplayName("Rechaza un alias que no tiene ninguna letra")
     void changeAliasRechazaAliasSoloNumerico() {
-        ResponseEntity<AliasResponse> respuesta = accountService.changeAlias("123.456", ID_CUENTA, ID_USUARIO);
-
-        assertEquals(400, respuesta.getStatusCode().value());
+        assertEquals(AliasChangeResult.FORMATO_INVALIDO,
+                accountService.changeAlias("123.456", ID_CUENTA, ID_USUARIO));
     }
 
     @Test
     @DisplayName("Rechaza un alias con dos puntos seguidos")
     void changeAliasRechazaPuntosConsecutivos() {
-        ResponseEntity<AliasResponse> respuesta = accountService.changeAlias("mi..alias", ID_CUENTA, ID_USUARIO);
-
-        assertEquals(400, respuesta.getStatusCode().value());
+        assertEquals(AliasChangeResult.FORMATO_INVALIDO,
+                accountService.changeAlias("mi..alias", ID_CUENTA, ID_USUARIO));
     }
 
     @Test
-    @DisplayName("Devuelve 498, y no 404, cuando la cuenta no existe")
-    void changeAliasDevuelve498SiLaCuentaNoExiste() {
+    @DisplayName("Informa que la cuenta no existe")
+    void changeAliasInformaCuentaInexistente() {
         when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.empty());
 
-        ResponseEntity<AliasResponse> respuesta = accountService.changeAlias("mi.alias.nuevo", ID_CUENTA, ID_USUARIO);
-
-        assertEquals(498, respuesta.getStatusCode().value());
-        assertEquals("Cuenta no encontrada.", respuesta.getBody().getMessage());
+        assertEquals(AliasChangeResult.CUENTA_NO_ENCONTRADA,
+                accountService.changeAlias("mi.alias.nuevo", ID_CUENTA, ID_USUARIO));
     }
 
     @Test
-    @DisplayName("Devuelve 403 si la cuenta es de otro usuario")
-    void changeAliasDevuelve403SiNoEsPropietario() {
+    @DisplayName("Informa que la cuenta es de otro usuario")
+    void changeAliasInformaQueNoEsPropietario() {
         Account ajena = cuenta(usuario(99L));
         when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.of(ajena));
 
-        ResponseEntity<AliasResponse> respuesta = accountService.changeAlias("mi.alias.nuevo", ID_CUENTA, ID_USUARIO);
+        assertEquals(AliasChangeResult.NO_ES_PROPIETARIO,
+                accountService.changeAlias("mi.alias.nuevo", ID_CUENTA, ID_USUARIO));
 
-        assertEquals(403, respuesta.getStatusCode().value());
-        assertEquals("No tienes permisos para hacer eso.", respuesta.getBody().getMessage());
         verify(accountRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Devuelve 403 si el alias ya esta tomado")
-    void changeAliasDevuelve403SiElAliasEstaEnUso() {
+    @DisplayName("Informa que el alias ya esta tomado")
+    void changeAliasInformaAliasEnUso() {
         Account propia = cuenta(usuario());
         when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.of(propia));
         when(accountRepository.existsByAccountNickname("mi.alias.nuevo")).thenReturn(true);
 
-        ResponseEntity<AliasResponse> respuesta = accountService.changeAlias("mi.alias.nuevo", ID_CUENTA, ID_USUARIO);
+        assertEquals(AliasChangeResult.ALIAS_EN_USO,
+                accountService.changeAlias("mi.alias.nuevo", ID_CUENTA, ID_USUARIO));
 
-        assertEquals(403, respuesta.getStatusCode().value());
-        assertEquals("Alias actualmente en uso.", respuesta.getBody().getMessage());
         verify(accountRepository, never()).save(any());
     }
 
@@ -262,11 +249,9 @@ class AccountServiceTest {
         when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.of(propia));
         when(accountRepository.existsByAccountNickname("mi.alias.nuevo")).thenReturn(false);
 
-        ResponseEntity<AliasResponse> respuesta = accountService.changeAlias("mi.alias.nuevo", ID_CUENTA, ID_USUARIO);
+        assertEquals(AliasChangeResult.OK,
+                accountService.changeAlias("mi.alias.nuevo", ID_CUENTA, ID_USUARIO));
 
-        assertEquals(200, respuesta.getStatusCode().value());
-        assertTrue(respuesta.getBody().isSuccess());
-        assertEquals("Alias actualizado exitosamente.", respuesta.getBody().getMessage());
         assertEquals("mi.alias.nuevo", propia.getAccountNickname());
         verify(accountRepository).save(propia);
 
