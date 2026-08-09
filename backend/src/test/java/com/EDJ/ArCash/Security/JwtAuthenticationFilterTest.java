@@ -137,10 +137,28 @@ class JwtAuthenticationFilterTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    @DisplayName("AGUJERO: un refresh token valido mandado como Bearer entra (hoy)")
+    void refreshTokenComoBearerHoyDevuelve200() throws Exception {
+        // El filtro no distingue access de refresh: solo mira firma, expiracion
+        // y sesion activa. Un refresh token JWT (7 dias) sirve como access token.
+        // El commit siguiente agrega el claim type y cambia esta expectativa a 401.
+        String refreshJwt = jwtUtils.generateRefreshToken(String.valueOf(usuario.getId()), "USER");
+        persistirRefreshToken(refreshJwt, false);
+
+        mockMvc.perform(get("/api/accounts/user-accounts")
+                        .header("Authorization", "Bearer " + refreshJwt))
+                .andExpect(status().isOk());
+    }
+
     private void persistirRefreshToken(boolean revoked) {
+        persistirRefreshToken("refresh-de-prueba-" + usuario.getId(), revoked);
+    }
+
+    private void persistirRefreshToken(String valor, boolean revoked) {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(usuario);
-        refreshToken.setRefreshToken("refresh-de-prueba-" + usuario.getId());
+        refreshToken.setRefreshToken(valor);
         refreshToken.setIssuedAt(LocalDateTime.now());
         refreshToken.setExpiresAt(LocalDateTime.now().plusDays(7));
         refreshToken.setRevoked(revoked);
