@@ -2,13 +2,10 @@ package com.EDJ.ArCash.Security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,15 +21,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
-import java.security.Key;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final Key secretKey;
     private final UserDetailsService userDetailsService;
     private final JwtUtils jwtUtils;
 
@@ -61,11 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    public JwtAuthenticationFilter(@Value("${spring.jwt.secret}") String signedJwt,
-                                   UserDetailsService userDetailsService,
-                                   JwtUtils jwtUtils) {
-        byte[] keyBytes = Base64.getDecoder().decode(signedJwt);
-        secretKey = Keys.hmacShaKeyFor(keyBytes);
+    public JwtAuthenticationFilter(UserDetailsService userDetailsService, JwtUtils jwtUtils) {
         this.userDetailsService = userDetailsService;
         this.jwtUtils = jwtUtils;
     }
@@ -95,12 +85,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
 
         try {
-            // 3. Validar el token y extraer el username (subject)
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(jwt)
-                    .getBody();
+            // 3. Validar firma/expiracion con la misma clave que firma JwtUtils
+            Claims claims = jwtUtils.getClaimJWT(jwt);
 
             username = claims.getSubject();
 
