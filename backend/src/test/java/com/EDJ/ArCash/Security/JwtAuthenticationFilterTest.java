@@ -127,18 +127,14 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("AGUJERO: un token de sesion revocada sigue entrando (hoy)")
-    void tokenDeSesionRevocadaHoyDevuelve200() throws Exception {
-        // El filtro solo valida firma y expiracion. Despues de un logout (refresh
-        // tokens marcados como revocados) el access token sigue abriendo la API
-        // hasta que venza por tiempo. Este test congela ese comportamiento; el
-        // commit siguiente lo cierra y cambia la expectativa a 401.
+    @DisplayName("Un token de sesion revocada se rechaza con 401")
+    void tokenDeSesionRevocadaDevuelve401() throws Exception {
         persistirRefreshToken(true);
         String accessToken = jwtUtils.generateToken(String.valueOf(usuario.getId()), "USER");
 
         mockMvc.perform(get("/api/accounts/user-accounts")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized());
     }
 
     private void persistirRefreshToken(boolean revoked) {

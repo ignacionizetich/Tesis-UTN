@@ -29,14 +29,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final Key secretKey;
     private final UserDetailsService userDetailsService;
+    private final JwtUtils jwtUtils;
 
-    // Agregamos el Logger que estabas usando en el catch
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    public JwtAuthenticationFilter(@Value("${spring.jwt.secret}") String signedJwt, UserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(@Value("${spring.jwt.secret}") String signedJwt,
+                                   UserDetailsService userDetailsService,
+                                   JwtUtils jwtUtils) {
         byte[] keyBytes = Base64.getDecoder().decode(signedJwt);
         secretKey = Keys.hmacShaKeyFor(keyBytes);
         this.userDetailsService = userDetailsService;
+        this.jwtUtils = jwtUtils;
     }
 
     @Override
@@ -72,6 +75,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
+                // Firma y expiracion ya pasaron; falta comprobar que la sesion
+                // no haya sido cerrada (logout / revocacion del refresh token).
+                Long userId = ((CustomUserDetails) userDetails).getUser().getId();
+                if (!jwtUtils.tieneSesionActiva(userId)) {
+                    logger.warn("Sesion finalizada para usuario {}", userId);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\": \"Sesión finalizada\"}");
+                    return;
+                }
+
                 // Reconstruimos la autenticación con los roles/authorities
                 String role = claims.get("role", String.class);
                 String springRole = "ROLE_" + role;
@@ -89,10 +103,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (JwtException e) {
             // 5. Si el token es inválido (expirado, malformado, etc.), responde con un error 401
-            logger.error("Error validando el token JWT: {}", e.getMessage()); // Corregido para loguear el error
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 Unauthorized
+            logger.error("Error validando el token JWT: {}", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{\"error\": \"Token JWT inválido o expirado\"}");
-            return; // Detenemos la cadena de filtros
+            return;
         }
 
         // 6. Continúa con el siguiente filtro en la cadena
