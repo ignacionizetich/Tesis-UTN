@@ -69,27 +69,23 @@ public class UserService {
         // emailService.sendVerificationEmail(user, user.getValidationToken().getToken());
     }
     
-    private void validateUserConflicts(User user) throws RuntimeException {
-        java.util.List<String> errors = new java.util.ArrayList<>();
-        
-        // Verificar si el email ya existe
+    private void validateUserConflicts(User user) {
+        java.util.List<RegistrationConflictCode> errors = new java.util.ArrayList<>();
+
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            errors.add("EMAIL_ALREADY_EXISTS");
+            errors.add(RegistrationConflictCode.EMAIL_ALREADY_EXISTS);
         }
-        
-        // Verificar si el alias ya existe
+
         if (findByAlias(user.getAlias()) != null) {
-            errors.add("ALIAS_ALREADY_EXISTS");
+            errors.add(RegistrationConflictCode.ALIAS_ALREADY_EXISTS);
         }
-        
-        // Verificar si el DNI ya existe
+
         if (findByDni(user.getDni()) != null) {
-            errors.add("DNI_ALREADY_EXISTS");
+            errors.add(RegistrationConflictCode.DNI_ALREADY_EXISTS);
         }
-        
-        // Si hay errores, lanzar excepción con todos los conflictos
+
         if (!errors.isEmpty()) {
-            throw new RuntimeException(String.join(",", errors));
+            throw new RegistrationConflictException(errors);
         }
     }
     

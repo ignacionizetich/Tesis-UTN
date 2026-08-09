@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -76,10 +77,10 @@ class UserServiceTest {
     void conflictoSoloEmail() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(new User()));
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        RegistrationConflictException ex = assertThrows(RegistrationConflictException.class,
                 () -> userService.insertarUsuario(usuarioNuevo(), PASSWORD));
 
-        assertEquals("EMAIL_ALREADY_EXISTS", ex.getMessage());
+        assertEquals(List.of(RegistrationConflictCode.EMAIL_ALREADY_EXISTS), ex.getCodes());
         verify(userRepository, never()).save(any());
         verify(eventPublisher, never()).publish(any());
     }
@@ -89,10 +90,10 @@ class UserServiceTest {
     void conflictoSoloAlias() {
         when(userRepository.findByAlias(ALIAS)).thenReturn(Optional.of(new User()));
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        RegistrationConflictException ex = assertThrows(RegistrationConflictException.class,
                 () -> userService.insertarUsuario(usuarioNuevo(), PASSWORD));
 
-        assertEquals("ALIAS_ALREADY_EXISTS", ex.getMessage());
+        assertEquals(List.of(RegistrationConflictCode.ALIAS_ALREADY_EXISTS), ex.getCodes());
         verify(userRepository, never()).save(any());
     }
 
@@ -101,24 +102,28 @@ class UserServiceTest {
     void conflictoSoloDni() {
         when(userRepository.findByDni(DNI)).thenReturn(Optional.of(new User()));
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        RegistrationConflictException ex = assertThrows(RegistrationConflictException.class,
                 () -> userService.insertarUsuario(usuarioNuevo(), PASSWORD));
 
-        assertEquals("DNI_ALREADY_EXISTS", ex.getMessage());
+        assertEquals(List.of(RegistrationConflictCode.DNI_ALREADY_EXISTS), ex.getCodes());
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Varios conflictos se unen con coma en orden email, alias, dni")
+    @DisplayName("Varios conflictos se reportan en orden email, alias, dni")
     void conflictosCombinados() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(new User()));
         when(userRepository.findByAlias(ALIAS)).thenReturn(Optional.of(new User()));
         when(userRepository.findByDni(DNI)).thenReturn(Optional.of(new User()));
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        RegistrationConflictException ex = assertThrows(RegistrationConflictException.class,
                 () -> userService.insertarUsuario(usuarioNuevo(), PASSWORD));
 
-        assertEquals("EMAIL_ALREADY_EXISTS,ALIAS_ALREADY_EXISTS,DNI_ALREADY_EXISTS", ex.getMessage());
+        assertEquals(List.of(
+                RegistrationConflictCode.EMAIL_ALREADY_EXISTS,
+                RegistrationConflictCode.ALIAS_ALREADY_EXISTS,
+                RegistrationConflictCode.DNI_ALREADY_EXISTS
+        ), ex.getCodes());
         verify(userRepository, never()).save(any());
     }
 

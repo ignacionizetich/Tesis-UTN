@@ -1,7 +1,11 @@
 package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.Models.User;
+import com.EDJ.ArCash.Service.RegistrationConflictCode;
+import com.EDJ.ArCash.Service.RegistrationConflictException;
 import com.EDJ.ArCash.Service.UserService;
+
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +59,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Conflicto de email: mensaje ES singular")
     void conflictoEmail() throws Exception {
-        doThrow(new RuntimeException("EMAIL_ALREADY_EXISTS"))
+        doThrow(new RegistrationConflictException(List.of(RegistrationConflictCode.EMAIL_ALREADY_EXISTS)))
                 .when(userService).insertarUsuario(any(User.class), anyString());
 
         mockMvc.perform(post("/api/user/create")
@@ -69,7 +73,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Conflicto de alias: mensaje ES singular")
     void conflictoAlias() throws Exception {
-        doThrow(new RuntimeException("ALIAS_ALREADY_EXISTS"))
+        doThrow(new RegistrationConflictException(List.of(RegistrationConflictCode.ALIAS_ALREADY_EXISTS)))
                 .when(userService).insertarUsuario(any(User.class), anyString());
 
         mockMvc.perform(post("/api/user/create")
@@ -82,7 +86,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Conflicto de DNI: mensaje ES singular")
     void conflictoDni() throws Exception {
-        doThrow(new RuntimeException("DNI_ALREADY_EXISTS"))
+        doThrow(new RegistrationConflictException(List.of(RegistrationConflictCode.DNI_ALREADY_EXISTS)))
                 .when(userService).insertarUsuario(any(User.class), anyString());
 
         mockMvc.perform(post("/api/user/create")
@@ -95,7 +99,9 @@ class UserControllerTest {
     @Test
     @DisplayName("Dos conflictos: mensaje con 'y'")
     void dosConflictos() throws Exception {
-        doThrow(new RuntimeException("EMAIL_ALREADY_EXISTS,ALIAS_ALREADY_EXISTS"))
+        doThrow(new RegistrationConflictException(List.of(
+                        RegistrationConflictCode.EMAIL_ALREADY_EXISTS,
+                        RegistrationConflictCode.ALIAS_ALREADY_EXISTS)))
                 .when(userService).insertarUsuario(any(User.class), anyString());
 
         mockMvc.perform(post("/api/user/create")
@@ -109,7 +115,10 @@ class UserControllerTest {
     @Test
     @DisplayName("Tres conflictos: mensaje con comas y 'y'")
     void tresConflictos() throws Exception {
-        doThrow(new RuntimeException("EMAIL_ALREADY_EXISTS,ALIAS_ALREADY_EXISTS,DNI_ALREADY_EXISTS"))
+        doThrow(new RegistrationConflictException(List.of(
+                        RegistrationConflictCode.EMAIL_ALREADY_EXISTS,
+                        RegistrationConflictCode.ALIAS_ALREADY_EXISTS,
+                        RegistrationConflictCode.DNI_ALREADY_EXISTS)))
                 .when(userService).insertarUsuario(any(User.class), anyString());
 
         mockMvc.perform(post("/api/user/create")
