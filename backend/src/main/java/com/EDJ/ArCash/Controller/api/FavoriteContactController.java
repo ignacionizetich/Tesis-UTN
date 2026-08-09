@@ -45,37 +45,31 @@ public class FavoriteContactController {
             @Valid @RequestBody AddFavoriteContactRequest request,
             HttpServletRequest httpRequest
     ) {
-        try {
-            Optional<Long> userIdOpt = extractUserIdFromRequest(httpRequest);
-            if (userIdOpt.isEmpty()) {
-                return createUnauthorizedResponse("Token no proporcionado o inválido");
-            }
-
-            Long userId = userIdOpt.get();
-            boolean result = favoriteContactService.addFavoriteContact(
-                    userId,
-                    request.accountId(),
-                    request.contactAlias().trim(),
-                    request.description()
-            );
-
-            if (result) {
-                return ResponseEntity.ok(Map.of(
-                        "status", "SUCCESS",
-                        "message", "Contacto agregado a favoritos correctamente"
-                ));
-            } else {
-                return ResponseEntity.badRequest()
-                        .body(Map.of(
-                                "status", "ERROR",
-                                "message", "No se pudo agregar el contacto a favoritos"
-                        ));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return createErrorResponse("Error interno del servidor");
+        Optional<Long> userIdOpt = extractUserIdFromRequest(httpRequest);
+        if (userIdOpt.isEmpty()) {
+            return createUnauthorizedResponse("Token no proporcionado o inválido");
         }
+
+        Long userId = userIdOpt.get();
+        boolean result = favoriteContactService.addFavoriteContact(
+                userId,
+                request.accountId(),
+                request.contactAlias().trim(),
+                request.description()
+        );
+
+        if (result) {
+            return ResponseEntity.ok(Map.of(
+                    "status", "SUCCESS",
+                    "message", "Contacto agregado a favoritos correctamente"
+            ));
+        }
+
+        return ResponseEntity.badRequest()
+                .body(Map.of(
+                        "status", "ERROR",
+                        "message", "No se pudo agregar el contacto a favoritos"
+                ));
     }
 
     @GetMapping("/list")
@@ -85,24 +79,18 @@ public class FavoriteContactController {
             @ApiResponse(responseCode = "401", description = "Token no proporcionado o inválido")
     })
     public ResponseEntity<?> getFavoriteContacts(HttpServletRequest request) {
-        try {
-            Optional<Long> userIdOpt = extractUserIdFromRequest(request);
-            if (userIdOpt.isEmpty()) {
-                return createUnauthorizedResponse("Token no proporcionado o inválido");
-            }
-
-            Long userId = userIdOpt.get();
-            List<FavoriteContact> favorites = favoriteContactService.getFavoriteContactsByUser(userId);
-
-            return ResponseEntity.ok(Map.of(
-                    "status", "SUCCESS",
-                    "favorites", toResponse(favorites)
-            ));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return createErrorResponse("Error interno del servidor");
+        Optional<Long> userIdOpt = extractUserIdFromRequest(request);
+        if (userIdOpt.isEmpty()) {
+            return createUnauthorizedResponse("Token no proporcionado o inválido");
         }
+
+        Long userId = userIdOpt.get();
+        List<FavoriteContact> favorites = favoriteContactService.getFavoriteContactsByUser(userId);
+
+        return ResponseEntity.ok(Map.of(
+                "status", "SUCCESS",
+                "favorites", toResponse(favorites)
+        ));
     }
 
     @GetMapping("/list/recent")
@@ -112,24 +100,18 @@ public class FavoriteContactController {
             @ApiResponse(responseCode = "401", description = "Token no proporcionado o inválido")
     })
     public ResponseEntity<?> getFavoriteContactsOrderedByUsage(HttpServletRequest request) {
-        try {
-            Optional<Long> userIdOpt = extractUserIdFromRequest(request);
-            if (userIdOpt.isEmpty()) {
-                return createUnauthorizedResponse("Token no proporcionado o inválido");
-            }
-
-            Long userId = userIdOpt.get();
-            List<FavoriteContact> favorites = favoriteContactService.getFavoriteContactsByUserOrderedByUsage(userId);
-
-            return ResponseEntity.ok(Map.of(
-                    "status", "SUCCESS",
-                    "favorites", toResponse(favorites)
-            ));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return createErrorResponse("Error interno del servidor");
+        Optional<Long> userIdOpt = extractUserIdFromRequest(request);
+        if (userIdOpt.isEmpty()) {
+            return createUnauthorizedResponse("Token no proporcionado o inválido");
         }
+
+        Long userId = userIdOpt.get();
+        List<FavoriteContact> favorites = favoriteContactService.getFavoriteContactsByUserOrderedByUsage(userId);
+
+        return ResponseEntity.ok(Map.of(
+                "status", "SUCCESS",
+                "favorites", toResponse(favorites)
+        ));
     }
 
     @DeleteMapping("/{favoriteId}")
@@ -143,32 +125,26 @@ public class FavoriteContactController {
             @PathVariable Long favoriteId,
             HttpServletRequest request
     ) {
-        try {
-            Optional<Long> userIdOpt = extractUserIdFromRequest(request);
-            if (userIdOpt.isEmpty()) {
-                return createUnauthorizedResponse("Token no proporcionado o inválido");
-            }
-
-            Long userId = userIdOpt.get();
-            boolean result = favoriteContactService.removeFavoriteContact(userId, favoriteId);
-
-            if (result) {
-                return ResponseEntity.ok(Map.of(
-                        "status", "SUCCESS",
-                        "message", "Contacto eliminado de favoritos correctamente"
-                ));
-            } else {
-                return ResponseEntity.badRequest()
-                        .body(Map.of(
-                                "status", "ERROR",
-                                "message", "No se pudo eliminar el contacto favorito"
-                        ));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return createErrorResponse("Error interno del servidor");
+        Optional<Long> userIdOpt = extractUserIdFromRequest(request);
+        if (userIdOpt.isEmpty()) {
+            return createUnauthorizedResponse("Token no proporcionado o inválido");
         }
+
+        Long userId = userIdOpt.get();
+        boolean result = favoriteContactService.removeFavoriteContact(userId, favoriteId);
+
+        if (result) {
+            return ResponseEntity.ok(Map.of(
+                    "status", "SUCCESS",
+                    "message", "Contacto eliminado de favoritos correctamente"
+            ));
+        }
+
+        return ResponseEntity.badRequest()
+                .body(Map.of(
+                        "status", "ERROR",
+                        "message", "No se pudo eliminar el contacto favorito"
+                ));
     }
 
     @PutMapping("/update/{contactId}")
@@ -208,12 +184,12 @@ public class FavoriteContactController {
                     "status", "SUCCESS",
                     "message", "Contacto favorito actualizado correctamente"
             ));
-        } else {
-            return ResponseEntity.status(404).body(Map.of(
-                    "status", "ERROR",
-                    "message", "No se pudo actualizar el contacto. Verifique que existe y le pertenece."
-            ));
         }
+
+        return ResponseEntity.status(404).body(Map.of(
+                "status", "ERROR",
+                "message", "No se pudo actualizar el contacto. Verifique que existe y le pertenece."
+        ));
     }
 
     private List<FavoriteContactResponse> toResponse(List<FavoriteContact> favorites) {
@@ -243,14 +219,6 @@ public class FavoriteContactController {
 
     private ResponseEntity<?> createUnauthorizedResponse(String message) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of(
-                        "status", "ERROR",
-                        "message", message
-                ));
-    }
-
-    private ResponseEntity<?> createErrorResponse(String message) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
                         "status", "ERROR",
                         "message", message

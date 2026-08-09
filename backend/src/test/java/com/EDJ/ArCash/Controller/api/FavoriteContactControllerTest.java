@@ -108,17 +108,24 @@ class FavoriteContactControllerTest {
     }
 
     @Test
-    @DisplayName("Sin contactAlias revienta con NPE y sale como 500 con el cuerpo del controller")
-    void addSinAliasDevuelveErrorInternoDelControlador() throws Exception {
+    @DisplayName("Sin contactAlias revienta con NPE y sale como 500 por el handler global")
+    void addSinAliasDevuelveErrorInternoDelHandlerGlobal() throws Exception {
         // AddFavoriteContactRequest no tiene ninguna constraint pese al @Valid,
         // asi que el alias null llega hasta el .trim() y lanza NullPointerException.
+        // Al sacar el try/catch del controller el cuerpo dejo de ser
+        // {"status":"ERROR","message":...} y paso al formato de ErrorResponse.
+        // El codigo HTTP y el texto de message, que es lo que lee el frontend,
+        // siguen siendo los mismos.
         mockMvc.perform(post("/api/favorites/add")
                         .header("Authorization", BEARER)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"accountId\":10}"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.status").value("ERROR"))
-                .andExpect(jsonPath("$.message").value("Error interno del servidor"));
+                .andExpect(jsonPath("$.message").value("Error interno del servidor"))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error").value("INTERNAL_SERVER_ERROR"))
+                .andExpect(jsonPath("$.path").value("/api/favorites/add"))
+                .andExpect(jsonPath("$.status").doesNotExist());
     }
 
     // --- GET /list y /list/recent ---
