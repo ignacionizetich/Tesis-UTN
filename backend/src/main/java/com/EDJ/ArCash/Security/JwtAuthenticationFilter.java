@@ -1,5 +1,6 @@
 package com.EDJ.ArCash.Security;
 
+import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Service.SessionService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -102,7 +103,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-                Long userId = ((CustomUserDetails) userDetails).getUser().getId();
+                User user = ((CustomUserDetails) userDetails).getUser();
+                Long userId = user.getId();
+
+                if (!user.isActive()) {
+                    logger.warn("Cuenta deshabilitada para usuario {}", userId);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\": \"Cuenta deshabilitada\"}");
+                    return;
+                }
+
                 if (!sessionService.tieneSesionActiva(userId)) {
                     logger.warn("Sesion finalizada para usuario {}", userId);
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

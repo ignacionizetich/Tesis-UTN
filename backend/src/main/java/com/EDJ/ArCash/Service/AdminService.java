@@ -23,13 +23,14 @@ public class AdminService {
      @Autowired
      private UserRepository userRepository;
 
-
-
      @Autowired
      private AccountService accountService;
 
      @Autowired
      private JwtService jwtService;
+
+     @Autowired
+     private SessionService sessionService;
 
 
 
@@ -58,7 +59,7 @@ public class AdminService {
     }
 
 
-    // metodo para hacer un soft delete a un usuario autenticado
+    // Soft-disable: marca inactive y corta la sesion de inmediato (revoca refresh).
     @Transactional
     public void disableUser(Long userId) {
         Optional<User> userOpt = userRepository.findById(userId);
@@ -68,6 +69,7 @@ public class AdminService {
         User user = userOpt.get();
         user.setActive(false);
         userRepository.save(user);
+        sessionService.revokeAllUserTokens(userId);
     }
 
     @Transactional

@@ -22,13 +22,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Documenta el agujero actual: disableUser pone active=false pero no revoca la
- * sesion ni el filtro la chequea, asi que el access token vigente sigue abriendo
- * endpoints protegidos. El commit siguiente cierra esto.
+ * disableUser corta la sesion de inmediato: revoca refresh y el filtro rechaza
+ * active=false con "Cuenta deshabilitada".
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -78,8 +79,8 @@ class DisabledUserSessionFilterTest {
     }
 
     @Test
-    @DisplayName("Usuario deshabilitado sigue operando con su access token vigente")
-    void usuarioDeshabilitadoSigueOperandoConSesionVigente() throws Exception {
+    @DisplayName("Usuario deshabilitado: se revoca el refresh y el access vigente recibe 401 Cuenta deshabilitada")
+    void usuarioDeshabilitadoQuedaFueraDeInmediato() throws Exception {
         RefreshToken refresh = persistirRefreshActivo();
         String accessToken = jwtService.generateToken(String.valueOf(usuario.getId()), "USER");
 
@@ -89,14 +90,15 @@ class DisabledUserSessionFilterTest {
 
         adminService.disableUser(usuario.getId());
         userRepository.flush();
+        refreshTokenRepository.flush();
 
         assertFalse(userRepository.findById(usuario.getId()).orElseThrow().isActive());
-        assertFalse(refreshTokenRepository.findById(refresh.getId()).orElseThrow().isRevoked());
+        assertTrue(refreshTokenRepository.findById(refresh.getId()).orElseThrow().isRevoked());
 
-        // Agujero: active=false y refresh intacto; el filtro no corta la sesion.
         mockMvc.perform(get("/api/accounts/user-accounts")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("Cuenta deshabilitada"));
     }
 
     private RefreshToken persistirRefreshActivo() {
