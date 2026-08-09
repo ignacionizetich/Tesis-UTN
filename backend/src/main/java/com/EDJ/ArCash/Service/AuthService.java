@@ -4,9 +4,11 @@ import com.EDJ.ArCash.DTO.AuthDTO.LoginRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.LoginResponse;
 import com.EDJ.ArCash.Models.*;
 import com.EDJ.ArCash.Repository.*;
+import com.EDJ.ArCash.Service.strategy.AuthenticationResult;
 import com.EDJ.ArCash.Service.strategy.AuthenticationStrategy;
 import com.EDJ.ArCash.Service.strategy.PasswordRecoveryStrategy;
 import com.EDJ.ArCash.Service.strategy.TokenManagementStrategy;
+import com.EDJ.ArCash.factory.LoginResponseFactory;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
@@ -21,12 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 /**
- * Servicio de autenticación refactorizado aplicando el Patrón Strategy y el Principio SRP
- * Este servicio ahora actúa como fachada, delegando las responsabilidades específicas
- * a servicios especializados:
- * - AuthenticationStrategy: Autenticación de usuarios
- * - TokenManagementStrategy: Gestión de tokens JWT
- * - PasswordRecoveryStrategy: Recuperación de contraseñas
+ * Fachada de autenticacion:
+ * - AuthenticationStrategy: valida credenciales
+ * - TokenManagementStrategy: emite / revoca tokens y consulta sesion
+ * - PasswordRecoveryStrategy: recuperacion de contraseñas
  */
 @Service
 public class AuthService {
@@ -46,6 +46,9 @@ public class AuthService {
     private PasswordRecoveryStrategy passwordRecoveryStrategy;
 
     @Autowired
+    private LoginResponseFactory loginResponseFactory;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -58,14 +61,50 @@ public class AuthService {
     private EventPublisher eventPublisher;
 
     /**
-     * Autentica un usuario utilizando la estrategia de autenticación configurada
-     * 
-     * @param loginRequest Solicitud de login
-     * @return LoginResponse con el resultado
+     * Valida credenciales, emite tokens y recien despues resuelve la cuenta ARS.
+     * El orden (tokens antes del chequeo de cuenta) preserva el comportamiento historico
+     * de UserAuthenticationService: sin cuenta ARS igual se generan/guardan tokens
+     * y la respuesta es error "Cuenta no encontrada".
      */
+    @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
         logger.info("Procesando login para usuario: {}", loginRequest.getUsername());
-        return authenticationStrategy.authenticate(loginRequest);
+
+        AuthenticationResult resultado = authenticationStrategy.authenticate(loginRequest);
+        if (!resultado.isSuccess()) {
+            return loginResponseFactory.createErrorResponse(resultado.getErrorMessage());
+        }
+
+        User user = resultado.getUser();
+
+        // Obtener o generar refresh token (antes del chequeo de cuenta: comportamiento actual)
+        String refreshToken = tokenManagementStrategy.getActiveRefreshToken(user);
+        if (refreshToken == null) {
+            refreshToken = tokenManagementStrategy.generateRefreshToken(
+                    String.valueOf(user.getId()),
+                    user.getPermissions().name()
+            );
+            tokenManagementStrategy.saveRefreshToken(user, refreshToken);
+        }
+
+        String accessToken = tokenManagementStrategy.generateAccessToken(
+                String.valueOf(user.getId()),
+                user.getPermissions().name()
+        );
+
+        Optional<Account> optionalAccount = accountRepository.findByUser_Id(user.getId());
+        if (optionalAccount.isEmpty()) {
+            logger.error("Cuenta no encontrada para usuario: {}", user.getId());
+            return loginResponseFactory.createErrorResponse("Cuenta no encontrada");
+        }
+
+        logger.info("Usuario autenticado exitosamente: {}", loginRequest.getUsername());
+        return loginResponseFactory.createSuccessResponse(
+                accessToken,
+                refreshToken,
+                optionalAccount.get().getIdAccount(),
+                user.getPermissions().name()
+        );
     }
 
     /**
@@ -86,7 +125,7 @@ public class AuthService {
      * @return true si la sesión es válida, false en caso contrario
      */
     public boolean isValidSession(String token) {
-        return authenticationStrategy.isValidSession(token);
+        return tokenManagementStrategy.isValidSession(token);
     }
 
     /**

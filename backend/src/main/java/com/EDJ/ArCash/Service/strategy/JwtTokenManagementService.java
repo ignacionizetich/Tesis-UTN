@@ -131,6 +131,21 @@ public class JwtTokenManagementService implements TokenManagementStrategy {
         }
     }
 
+    @Override
+    public boolean isValidSession(String accessToken) {
+        try {
+            String userId = extractUserId(accessToken);
+            if (userId == null) {
+                logger.debug("No se pudo extraer userId del token");
+                return false;
+            }
+            return sessionService.tieneSesionActiva(Long.parseLong(userId));
+        } catch (Exception e) {
+            logger.error("Error al validar sesión: ", e);
+            return false;
+        }
+    }
+
     /**
      * Verifica si existe un token activo para el usuario
      * 

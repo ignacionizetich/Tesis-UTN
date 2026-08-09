@@ -58,4 +58,10 @@ public interface TokenManagementStrategy {
      * @return ID del usuario
      */
     String extractUserId(String token);
+
+    /**
+     * Indica si el access token corresponde a una sesion vigente
+     * (refresh token activo para ese usuario).
+     */
+    boolean isValidSession(String accessToken);
 }
