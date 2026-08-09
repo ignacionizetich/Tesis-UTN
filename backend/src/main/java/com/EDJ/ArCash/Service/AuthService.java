@@ -61,10 +61,9 @@ public class AuthService {
     private EventPublisher eventPublisher;
 
     /**
-     * Valida credenciales, emite tokens y recien despues resuelve la cuenta ARS.
-     * El orden (tokens antes del chequeo de cuenta) preserva el comportamiento historico
-     * de UserAuthenticationService: sin cuenta ARS igual se generan/guardan tokens
-     * y la respuesta es error "Cuenta no encontrada".
+     * Valida credenciales, exige cuenta ARS y recien entonces emite tokens.
+     * Sin cuenta ARS la respuesta sigue siendo error "Cuenta no encontrada",
+     * pero no se genera ni persiste ningun refresh/access token.
      */
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
@@ -77,7 +76,12 @@ public class AuthService {
 
         User user = resultado.getUser();
 
-        // Obtener o generar refresh token (antes del chequeo de cuenta: comportamiento actual)
+        Optional<Account> optionalAccount = accountRepository.findByUser_Id(user.getId());
+        if (optionalAccount.isEmpty()) {
+            logger.error("Cuenta no encontrada para usuario: {}", user.getId());
+            return loginResponseFactory.createErrorResponse("Cuenta no encontrada");
+        }
+
         String refreshToken = tokenManagementStrategy.getActiveRefreshToken(user);
         if (refreshToken == null) {
             refreshToken = tokenManagementStrategy.generateRefreshToken(
@@ -91,12 +95,6 @@ public class AuthService {
                 String.valueOf(user.getId()),
                 user.getPermissions().name()
         );
-
-        Optional<Account> optionalAccount = accountRepository.findByUser_Id(user.getId());
-        if (optionalAccount.isEmpty()) {
-            logger.error("Cuenta no encontrada para usuario: {}", user.getId());
-            return loginResponseFactory.createErrorResponse("Cuenta no encontrada");
-        }
 
         logger.info("Usuario autenticado exitosamente: {}", loginRequest.getUsername());
         return loginResponseFactory.createSuccessResponse(

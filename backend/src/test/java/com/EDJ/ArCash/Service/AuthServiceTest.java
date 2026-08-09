@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -30,8 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Caracterizacion del login orquestado por AuthService.
- * Incluye el quirk historico: sin cuenta ARS igual se emiten tokens antes del error.
+ * Login orquestado por AuthService: cuenta ARS antes de emitir/persistir tokens.
  */
 class AuthServiceTest {
 
@@ -71,17 +71,38 @@ class AuthServiceTest {
         assertFalse(response.isSuccess());
         assertEquals("Usuario no encontrado", response.getMessage());
         verify(tokenManagementStrategy, never()).generateAccessToken(anyString(), anyString());
+        verify(tokenManagementStrategy, never()).saveRefreshToken(any(), anyString());
     }
 
     @Test
-    @DisplayName("Login exitoso reusa refresh activo y emite access token")
+    @DisplayName("Sin cuenta ARS: mismo mensaje de error y no se persiste ningun refresh token")
+    void sinCuentaNoPersisteRefreshToken() {
+        LoginRequest request = pedido();
+        User user = usuario();
+        when(authenticationStrategy.authenticate(request)).thenReturn(AuthenticationResult.success(user));
+        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.empty());
+
+        LoginResponse response = authService.login(request);
+
+        assertFalse(response.isSuccess());
+        assertEquals("Cuenta no encontrada", response.getMessage());
+        assertNull(response.getAccessToken());
+        assertNull(response.getRefreshToken());
+        verify(tokenManagementStrategy, never()).getActiveRefreshToken(any());
+        verify(tokenManagementStrategy, never()).generateRefreshToken(anyString(), anyString());
+        verify(tokenManagementStrategy, never()).saveRefreshToken(any(), anyString());
+        verify(tokenManagementStrategy, never()).generateAccessToken(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Login con cuenta ARS: reusa refresh activo y emite access token")
     void loginExitosoReusaRefresh() {
         LoginRequest request = pedido();
         User user = usuario();
         when(authenticationStrategy.authenticate(request)).thenReturn(AuthenticationResult.success(user));
+        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.of(cuenta(user)));
         when(tokenManagementStrategy.getActiveRefreshToken(user)).thenReturn("refresh-existente");
         when(tokenManagementStrategy.generateAccessToken("5", "USER")).thenReturn("access-nuevo");
-        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.of(cuenta(user)));
 
         LoginResponse response = authService.login(request);
 
@@ -96,41 +117,23 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Login exitoso sin refresh activo genera y guarda uno nuevo")
-    void loginExitosoGeneraRefreshNuevo() {
+    @DisplayName("Login con cuenta ARS sin refresh activo: genera y persiste refresh, emite access")
+    void loginExitosoGeneraYPersisteRefreshNuevo() {
         LoginRequest request = pedido();
         User user = usuario();
         when(authenticationStrategy.authenticate(request)).thenReturn(AuthenticationResult.success(user));
+        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.of(cuenta(user)));
         when(tokenManagementStrategy.getActiveRefreshToken(user)).thenReturn(null);
         when(tokenManagementStrategy.generateRefreshToken("5", "USER")).thenReturn("refresh-nuevo");
         when(tokenManagementStrategy.generateAccessToken("5", "USER")).thenReturn("access-nuevo");
-        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.of(cuenta(user)));
 
         LoginResponse response = authService.login(request);
 
         assertTrue(response.isSuccess());
         assertEquals("refresh-nuevo", response.getRefreshToken());
+        assertEquals("access-nuevo", response.getAccessToken());
+        assertEquals(ID_CUENTA, response.getAccountId());
         verify(tokenManagementStrategy).saveRefreshToken(user, "refresh-nuevo");
-    }
-
-    @Test
-    @DisplayName("Sin cuenta ARS: error, pero los tokens ya se generaron antes del chequeo")
-    void sinCuentaIgualGeneraTokensAntesDelError() {
-        // Comportamiento actual: emite/guarda tokens y recien despues busca la cuenta.
-        LoginRequest request = pedido();
-        User user = usuario();
-        when(authenticationStrategy.authenticate(request)).thenReturn(AuthenticationResult.success(user));
-        when(tokenManagementStrategy.getActiveRefreshToken(user)).thenReturn(null);
-        when(tokenManagementStrategy.generateRefreshToken("5", "USER")).thenReturn("refresh-nuevo");
-        when(tokenManagementStrategy.generateAccessToken("5", "USER")).thenReturn("access-nuevo");
-        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.empty());
-
-        LoginResponse response = authService.login(request);
-
-        assertFalse(response.isSuccess());
-        assertEquals("Cuenta no encontrada", response.getMessage());
-        verify(tokenManagementStrategy).saveRefreshToken(user, "refresh-nuevo");
-        verify(tokenManagementStrategy).generateAccessToken("5", "USER");
     }
 
     @Test
