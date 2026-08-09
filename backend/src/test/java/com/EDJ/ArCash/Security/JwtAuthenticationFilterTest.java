@@ -26,7 +26,11 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Date;
 
+import jakarta.servlet.http.Cookie;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -138,17 +142,26 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("AGUJERO: un refresh token valido mandado como Bearer entra (hoy)")
-    void refreshTokenComoBearerHoyDevuelve200() throws Exception {
-        // El filtro no distingue access de refresh: solo mira firma, expiracion
-        // y sesion activa. Un refresh token JWT (7 dias) sirve como access token.
-        // El commit siguiente agrega el claim type y cambia esta expectativa a 401.
+    @DisplayName("Un refresh token mandado como Bearer se rechaza con 401")
+    void refreshTokenComoBearerDevuelve401() throws Exception {
         String refreshJwt = jwtUtils.generateRefreshToken(String.valueOf(usuario.getId()), "USER");
         persistirRefreshToken(refreshJwt, false);
 
         mockMvc.perform(get("/api/accounts/user-accounts")
                         .header("Authorization", "Bearer " + refreshJwt))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/refresh sigue emitiendo access token con la cookie")
+    void refreshConCookieSigueFuncionando() throws Exception {
+        String refreshJwt = jwtUtils.generateRefreshToken(String.valueOf(usuario.getId()), "USER");
+        persistirRefreshToken(refreshJwt, false);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new Cookie("refreshToken", refreshJwt)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty());
     }
 
     private void persistirRefreshToken(boolean revoked) {
@@ -170,6 +183,7 @@ class JwtAuthenticationFilterTest {
                 .setSubject(String.valueOf(usuario.getId()))
                 .claim("userID", String.valueOf(usuario.getId()))
                 .claim("role", "USER")
+                .claim(JwtUtils.CLAIM_TYPE, JwtUtils.TYPE_ACCESS)
                 .setIssuedAt(new Date(System.currentTimeMillis() - 7200000))
                 .setExpiration(new Date(System.currentTimeMillis() - 3600000))
                 .signWith(secretKey)

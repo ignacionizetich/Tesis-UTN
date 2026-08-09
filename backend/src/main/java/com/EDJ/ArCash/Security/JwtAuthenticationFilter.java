@@ -71,6 +71,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             username = claims.getSubject();
 
+            // Solo los access tokens pueden autenticar rutas protegidas.
+            // Sin claim type (tokens viejos) o con type=refresh se rechazan.
+            String tokenType = claims.get(JwtUtils.CLAIM_TYPE, String.class);
+            if (!JwtUtils.TYPE_ACCESS.equals(tokenType)) {
+                logger.warn("Token rechazado: type esperado '{}', recibido '{}'", JwtUtils.TYPE_ACCESS, tokenType);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\": \"Token de acceso inválido\"}");
+                return;
+            }
+
             // 4. Si tenemos username y no hay una autenticación ya establecida en el contexto...
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);

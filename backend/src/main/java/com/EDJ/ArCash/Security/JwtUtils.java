@@ -39,11 +39,16 @@ public class JwtUtils {
 
 
 
+    public static final String CLAIM_TYPE = "type";
+    public static final String TYPE_ACCESS = "access";
+    public static final String TYPE_REFRESH = "refresh";
+
     public  String generateToken(String idUser, String role) {
         return Jwts.builder()
                 .setSubject(idUser)
                 .claim("userID",idUser)
                 .claim("role",role)
+                .claim(CLAIM_TYPE, TYPE_ACCESS)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 3600000)) ///  expiracion en 1 hora
                 .signWith(secretKey)
@@ -54,6 +59,7 @@ public class JwtUtils {
         return Jwts.builder()
                 .setSubject(idUser)
                 .claim("role", role)
+                .claim(CLAIM_TYPE, TYPE_REFRESH)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 7 * 24 * 3600000)) // Expira en 7 días
                 .signWith(secretKey)
