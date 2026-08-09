@@ -87,7 +87,7 @@ export class AccountService {
   buyUsd(accountArsId: string, accountUsdId: string, amountArs: number): Observable<BuyUsdResponse> {
     const request: BuyUsdRequest = { amountArs };
     return this.http.post<BuyUsdResponse>(
-      `${this.baseUrl}/accounts/${accountArsId}/buy-usd/${accountUsdId}`,
+      `${this.baseUrl}/transactions/${accountArsId}/buy-usd/${accountUsdId}`,
       request
     );
   }
