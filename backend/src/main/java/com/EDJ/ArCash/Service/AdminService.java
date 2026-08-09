@@ -1,17 +1,20 @@
 package com.EDJ.ArCash.Service;
 
+import com.EDJ.ArCash.DTO.AuthDTO.AdminRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.UserResponse;
+import com.EDJ.ArCash.Models.Credentials;
+import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.Security.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
 
 import java.util.List;
 import java.util.Optional;
@@ -19,22 +22,21 @@ import java.util.Optional;
 @Service
 public class AdminService {
 
+    @Autowired
+    private UserRepository userRepository;
 
-     @Autowired
-     private UserRepository userRepository;
+    @Autowired
+    private AccountService accountService;
 
-     @Autowired
-     private AccountService accountService;
+    @Autowired
+    private JwtService jwtService;
 
-     @Autowired
-     private JwtService jwtService;
+    @Autowired
+    private SessionService sessionService;
 
-     @Autowired
-     private SessionService sessionService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-
-
-    // metodo para traer una lista de usuarios autenticados
     public List<UserResponse> getAuthUsers() {
         List<User> users = userRepository.findByEnabledTrue();
         return users.stream()
@@ -57,7 +59,6 @@ public class AdminService {
                 })
                 .toList();
     }
-
 
     // Soft-disable: marca inactive y corta la sesion de inmediato (revoca refresh).
     @Transactional
@@ -83,7 +84,6 @@ public class AdminService {
         userRepository.save(user);
     }
 
-
     public void validarAdmin(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -96,26 +96,73 @@ public class AdminService {
         }
     }
 
-    public void cargarAdmin(User user){
+    /**
+     * Crea un administrador: valida unicidad, arma entidad/credenciales y persiste cuenta.
+     * Ante DataIntegrityViolationException no expone el mensaje de la DB; re-chequea
+     * exists* o devuelve un conflicto generico sin detalle.
+     */
+    @Transactional
+    public AdminCreateResult createAdmin(AdminRequest adminRequest) {
+        if (existsByUsername(adminRequest.getUsername())) {
+            return AdminCreateResult.conflict("username", "nombre de usuario no está disponible");
+        }
+        if (existsByEmail(adminRequest.getEmail())) {
+            return AdminCreateResult.conflict("email", "email ya se encuentra en uso");
+        }
+        if (existsByDni(adminRequest.getDni())) {
+            return AdminCreateResult.conflict("dni", "DNI ya está registrado");
+        }
+
+        User user = new User();
+        user.setName(capitalizePersonName(adminRequest.getName()));
+        user.setLastName(capitalizePersonName(adminRequest.getLastName()));
+        user.setPermissions(Permissions.ADMIN);
+        user.setDni(adminRequest.getDni());
+        user.setEmail(adminRequest.getEmail());
+        user.setAlias(adminRequest.getUsername());
+        user.setEnabled(true);
+        user.setActive(true);
+        user.setCredentials(new Credentials(
+                user,
+                user.getAlias(),
+                passwordEncoder.encode(adminRequest.getPassword())
+        ));
+
+        try {
+            cargarAdmin(user);
+            return AdminCreateResult.success();
+        } catch (DataIntegrityViolationException e) {
+            if (existsByUsername(adminRequest.getUsername())) {
+                return AdminCreateResult.conflict("username", "nombre de usuario no está disponible");
+            }
+            if (existsByEmail(adminRequest.getEmail())) {
+                return AdminCreateResult.conflict("email", "email ya se encuentra en uso");
+            }
+            if (existsByDni(adminRequest.getDni())) {
+                return AdminCreateResult.conflict("dni", "DNI ya está registrado");
+            }
+            return AdminCreateResult.conflictGeneric();
+        }
+    }
+
+    public void cargarAdmin(User user) {
         userRepository.save(user);
         accountService.createAccount(user);
     }
 
-    public boolean existsByUsername(String username){
+    public boolean existsByUsername(String username) {
         return userRepository.existsByAlias(username);
     }
 
-    public boolean existsByEmail(String email){
+    public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
-    public boolean existsByDni(String dni){
+
+    public boolean existsByDni(String dni) {
         return userRepository.existsByDni(dni);
     }
 
-
-
-
-
-
-
+    private static String capitalizePersonName(String value) {
+        return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
+    }
 }

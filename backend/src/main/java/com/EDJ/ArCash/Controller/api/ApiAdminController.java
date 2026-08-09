@@ -3,11 +3,7 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.AuthDTO.AdminRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.UserResponse;
-import com.EDJ.ArCash.Models.Credentials;
-import com.EDJ.ArCash.Models.Imp.Permissions;
-import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Models.ValidationToken;
-import com.EDJ.ArCash.Repository.UserRepository;
+import com.EDJ.ArCash.Service.AdminCreateResult;
 import com.EDJ.ArCash.Service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,11 +13,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,9 +28,6 @@ public class ApiAdminController {
 
     @Autowired
     private AdminService adminService;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
 
 
@@ -137,74 +129,21 @@ public class ApiAdminController {
     public ResponseEntity<?> createAdminUser(@RequestBody AdminRequest adminRequest, HttpServletRequest request) {
         try {
             adminService.validarAdmin(request);
+            AdminCreateResult resultado = adminService.createAdmin(adminRequest);
 
-            // Verificar si el username ya existe ANTES de intentar crear
-            if (adminService.existsByUsername(adminRequest.getUsername())) {
-                return ResponseEntity.status(409).body(Map.of(
-                        "mensaje", "nombre de usuario no está disponible",
-                        "campo", "username"
-                ));
+            if (resultado.isSuccess()) {
+                return ResponseEntity.ok("Usuario administrador creado correctamente");
             }
 
-            // Verificar si el email ya existe
-            if (adminService.existsByEmail(adminRequest.getEmail())) {
-                return ResponseEntity.status(409).body(Map.of(
-                        "mensaje", "email ya se encuentra en uso",
-                        "campo", "email"
-                ));
+            Map<String, String> body = new HashMap<>();
+            body.put("mensaje", resultado.getMensaje());
+            if (resultado.getCampo() != null) {
+                body.put("campo", resultado.getCampo());
             }
-
-            // Verificar si el DNI ya existe
-            if (adminService.existsByDni(adminRequest.getDni())) {
-                return ResponseEntity.status(409).body(Map.of(
-                        "mensaje", "DNI ya está registrado",
-                        "campo", "dni"
-                ));
-            }
-
-            User user = new User();
-            user.setName(adminRequest.getName().substring(0,1).toUpperCase() + adminRequest.getName().substring(1).toLowerCase());
-            user.setLastName(adminRequest.getLastName().substring(0,1).toUpperCase() + adminRequest.getLastName().substring(1).toLowerCase());
-            user.setPermissions(Permissions.ADMIN);
-            user.setDni(adminRequest.getDni());
-            user.setEmail(adminRequest.getEmail());
-            user.setAlias(adminRequest.getUsername());
-            user.setEnabled(true);
-            user.setActive(true);
-            user.setCredentials(new Credentials(user, user.getAlias(), passwordEncoder.encode(adminRequest.getPassword())));
-
-            adminService.cargarAdmin(user);
-            return ResponseEntity.ok("Usuario administrador creado correctamente");
-
-        } catch (DataIntegrityViolationException e) {
-            // Capturar errores de constraint de la base de datos
-            String errorMessage = e.getMostSpecificCause().getMessage();
-
-            if (errorMessage.contains("users.UK22orgon25a45jt87hvbmknks2") || errorMessage.contains("alias")) {
-                return ResponseEntity.status(409).body(Map.of(
-                        "mensaje", "nombre de usuario no está disponible",
-                        "campo", "username"
-                ));
-            } else if (errorMessage.contains("email")) {
-                return ResponseEntity.status(409).body(Map.of(
-                        "mensaje", "email ya se encuentra en uso",
-                        "campo", "email"
-                ));
-            } else if (errorMessage.contains("dni")) {
-                return ResponseEntity.status(409).body(Map.of(
-                        "mensaje", "DNI ya está registrado",
-                        "campo", "dni"
-                ));
-            }
-
-            return ResponseEntity.status(409).body(Map.of(
-                    "mensaje", "Error de duplicación en la base de datos",
-                    "detalle", errorMessage
-            ));
+            return ResponseEntity.status(409).body(body);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of(
-                    "mensaje", "Error interno del servidor",
-                    "detalle", e.getMessage()
+                    "mensaje", "Error interno del servidor"
             ));
         }
     }
