@@ -92,6 +92,17 @@ public class JwtUtils {
 
 
 
+    /**
+     * Indica si el usuario tiene una sesion vigente, es decir, algun refresh token
+     * sin revocar. Es la unica verificacion de isAccessTokenValid que la cadena de
+     * filtros no hace ya: firma y expiracion se validan antes de llegar al controller.
+     */
+    public boolean tieneSesionActiva(Long userId) {
+        return userRepository.findById(userId)
+                .flatMap(refreshTokenRepository::findByUserAndRevokedFalse)
+                .isPresent();
+    }
+
     public  String extractUserId(String token) {
         Claims claims = getClaimJWT(token);
         return claims.get("userID", String.class);

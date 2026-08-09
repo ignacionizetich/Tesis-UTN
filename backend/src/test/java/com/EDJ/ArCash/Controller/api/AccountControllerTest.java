@@ -2,12 +2,12 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.AuthDTO.AliasResponse;
 import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
+import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AccountService;
-import com.EDJ.ArCash.Service.UserService;
-import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,10 +17,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,11 +29,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -43,17 +42,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Tests de caracterizacion del contrato HTTP de /api/accounts.
  *
- * Igual que en favoritos, se corre con addFilters = false porque varios metodos
- * parsean el JWT por su cuenta y sus ramas de 401 quedarian inalcanzables detras
- * de la cadena de filtros real.
+ * Desde que la identidad sale del SecurityContext, estos tests corren con la
+ * cadena de filtros real y publican el principal con un post-processor, igual
+ * que haria el filtro JWT en produccion. El rechazo de las peticiones anonimas
+ * lo cubre AccountControllerSecurityTest.
  */
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 class AccountControllerTest {
 
-    private static final String TOKEN = "token-de-prueba";
-    private static final String BEARER = "Bearer " + TOKEN;
     private static final Long ID_USUARIO = 1L;
     private static final long ID_CUENTA_ARS = 10L;
     private static final long ID_CUENTA_USD = 20L;
@@ -66,28 +64,20 @@ class AccountControllerTest {
     private AccountService accountService;
 
     @MockitoBean
-    private UserService userService;
-
-    @MockitoBean
     private JwtUtils jwtUtils;
 
     @BeforeEach
     void setUp() {
-        // Camino feliz de autenticacion, que cada test sobreescribe si necesita otra cosa.
-        Claims claims = mock(Claims.class);
-        when(claims.get("userID", String.class)).thenReturn(String.valueOf(ID_USUARIO));
-        when(jwtUtils.getClaimJWT(TOKEN)).thenReturn(claims);
-        // validateAccessToken devuelve ResponseEntity<?>, cuyo comodin impide usar thenReturn.
-        doReturn(ResponseEntity.ok(ID_USUARIO)).when(jwtUtils).validateAccessToken(any());
+        when(jwtUtils.tieneSesionActiva(ID_USUARIO)).thenReturn(true);
     }
 
     // --- PUT /{id}/balance ---
 
     @Test
-    @DisplayName("Ingresar un monto negativo devuelve 400 antes de mirar el token")
+    @DisplayName("Ingresar un monto negativo devuelve 400 antes de mirar la sesion")
     void balanceConMontoNegativoDevuelve400() throws Exception {
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"balance\":-1}"))
                 .andExpect(status().isBadRequest())
@@ -95,16 +85,16 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.message").value("El monto a ingresar no puede ser negativo."))
                 .andExpect(jsonPath("$.newBalance").value(-1.0));
 
-        verify(jwtUtils, never()).validateAccessToken(any());
+        verify(jwtUtils, never()).tieneSesionActiva(anyLong());
     }
 
     @Test
-    @DisplayName("Con token invalido devuelve 498")
-    void balanceConTokenInvalidoDevuelve498() throws Exception {
-        doReturn(ResponseEntity.status(498).build()).when(jwtUtils).validateAccessToken(any());
+    @DisplayName("Con la sesion revocada devuelve 498")
+    void balanceConSesionRevocadaDevuelve498() throws Exception {
+        when(jwtUtils.tieneSesionActiva(ID_USUARIO)).thenReturn(false);
 
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"balance\":100}"))
                 .andExpect(status().is(498))
@@ -118,7 +108,7 @@ class AccountControllerTest {
         when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.empty());
 
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"balance\":100}"))
                 .andExpect(status().isNotFound())
@@ -131,7 +121,7 @@ class AccountControllerTest {
         when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(99L))));
 
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"balance\":100}"))
                 .andExpect(status().is(498))
@@ -147,7 +137,7 @@ class AccountControllerTest {
         when(accountService.updateBalance(100.0, ID_CUENTA_ARS)).thenReturn(false);
 
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"balance\":100}"))
                 .andExpect(status().isNotFound())
@@ -167,7 +157,7 @@ class AccountControllerTest {
         // devuelve el balance del objeto que ya tenia en memoria. Si la instancia no
         // es la misma que toca el service, el saldo informado se queda viejo.
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"balance\":100}"))
                 .andExpect(status().isOk())
@@ -179,14 +169,6 @@ class AccountControllerTest {
     // --- GET /{id}/showBalance ---
 
     @Test
-    @DisplayName("Sin header Authorization devuelve 401")
-    void showBalanceSinTokenDevuelve401() throws Exception {
-        mockMvc.perform(get("/api/accounts/{id}/showBalance", ID_CUENTA_ARS))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Token no proporcionado o inválido"));
-    }
-
-    @Test
     @DisplayName("Devuelve balance, alias y CVU de la cuenta propia")
     void showBalanceDevuelveLosDatosDeLaCuenta() throws Exception {
         Account cuenta = cuentaArs(usuario(ID_USUARIO));
@@ -194,7 +176,7 @@ class AccountControllerTest {
         when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuenta));
 
         mockMvc.perform(get("/api/accounts/{id}/showBalance", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER))
+                        .with(comoUsuarioAutenticado()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.balance").value(1500.75))
                 .andExpect(jsonPath("$.alias").value("MI.CUENTA.AA"))
@@ -207,26 +189,26 @@ class AccountControllerTest {
         when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(99L))));
 
         mockMvc.perform(get("/api/accounts/{id}/showBalance", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER))
+                        .with(comoUsuarioAutenticado()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error").value("El usuario no es propietario de la cuenta"));
 
         when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/accounts/{id}/showBalance", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER))
+                        .with(comoUsuarioAutenticado()))
                 .andExpect(status().isForbidden());
     }
 
     // --- PUT /{id}/changeAlias ---
 
     @Test
-    @DisplayName("Cambiar alias con token invalido devuelve 498 sin llamar al service")
-    void changeAliasConTokenInvalidoDevuelve498() throws Exception {
-        doReturn(ResponseEntity.status(498).build()).when(jwtUtils).validateAccessToken(any());
+    @DisplayName("Cambiar alias con la sesion revocada devuelve 498 sin llamar al service")
+    void changeAliasConSesionRevocadaDevuelve498() throws Exception {
+        when(jwtUtils.tieneSesionActiva(ID_USUARIO)).thenReturn(false);
 
         mockMvc.perform(put("/api/accounts/{id}/changeAlias", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"newAlias\":\"mi.alias.nuevo\"}"))
                 .andExpect(status().is(498))
@@ -238,12 +220,12 @@ class AccountControllerTest {
     @Test
     @DisplayName("Cambiar alias delega en el service y devuelve su respuesta tal cual")
     void changeAliasDelegaEnElService() throws Exception {
-        when(accountService.changeAlias(eq("mi.alias.nuevo"), eq(ID_CUENTA_ARS), any()))
+        when(accountService.changeAlias(eq("mi.alias.nuevo"), eq(ID_CUENTA_ARS), eq(ID_USUARIO)))
                 .thenReturn(ResponseEntity.ok(
                         AliasResponse.builder().success(true).message("Alias actualizado exitosamente.").build()));
 
         mockMvc.perform(put("/api/accounts/{id}/changeAlias", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"newAlias\":\"mi.alias.nuevo\"}"))
                 .andExpect(status().isOk())
@@ -256,11 +238,10 @@ class AccountControllerTest {
     @Test
     @DisplayName("Los datos del QR incluyen el email, que no figura en la documentacion")
     void qrDataDevuelveLosDatosDelReceptor() throws Exception {
-        User user = usuario(ID_USUARIO);
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(user)));
+        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(ID_USUARIO))));
 
         mockMvc.perform(get("/api/accounts/{id}/qr-data", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER))
+                        .with(comoUsuarioAutenticado()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.walletApp").value("ArCashV1"))
                 .andExpect(jsonPath("$.accountId").value(ID_CUENTA_ARS))
@@ -272,27 +253,19 @@ class AccountControllerTest {
     }
 
     @Test
-    @DisplayName("QR sin token devuelve 401")
-    void qrDataSinTokenDevuelve401() throws Exception {
-        mockMvc.perform(get("/api/accounts/{id}/qr-data", ID_CUENTA_ARS))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Token no proporcionado o inválido"));
-    }
-
-    @Test
     @DisplayName("QR de una cuenta inexistente devuelve 404 y de una ajena 403")
     void qrDataDistingueCuentaInexistenteDeAjena() throws Exception {
         when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/accounts/{id}/qr-data", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER))
+                        .with(comoUsuarioAutenticado()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Cuenta no encontrada"));
 
         when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(99L))));
 
         mockMvc.perform(get("/api/accounts/{id}/qr-data", ID_CUENTA_ARS)
-                        .header("Authorization", BEARER))
+                        .with(comoUsuarioAutenticado()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error").value("El usuario no es propietario de la cuenta"));
     }
@@ -300,13 +273,12 @@ class AccountControllerTest {
     // --- POST /usd ---
 
     @Test
-    @DisplayName("Abrir cuenta en dolares busca al usuario por el nombre del principal")
+    @DisplayName("Abrir cuenta en dolares usa el usuario del principal")
     void abrirCuentaUsdDevuelveLosDatosDeLaCuentaNueva() throws Exception {
-        User user = usuario(ID_USUARIO);
-        when(userService.findUserByAlias(ALIAS_USUARIO)).thenReturn(Optional.of(user));
-        when(accountService.openUsdAccount(user)).thenReturn(cuentaUsd(user));
+        when(accountService.openUsdAccount(any(User.class)))
+                .thenAnswer(invocacion -> cuentaUsd(invocacion.getArgument(0)));
 
-        mockMvc.perform(post("/api/accounts/usd").principal(principalAutenticado()))
+        mockMvc.perform(post("/api/accounts/usd").with(comoUsuarioAutenticado()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Cuenta en dólares creada exitosamente"))
@@ -316,27 +288,14 @@ class AccountControllerTest {
     }
 
     @Test
-    @DisplayName("Si no encuentra al usuario autenticado devuelve 404")
-    void abrirCuentaUsdSinUsuarioDevuelve404() throws Exception {
-        when(userService.findUserByAlias(ALIAS_USUARIO)).thenReturn(Optional.empty());
-
-        mockMvc.perform(post("/api/accounts/usd").principal(principalAutenticado()))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("No se encontró el usuario autenticado"));
-    }
-
-    @Test
     @DisplayName("Tener ya una cuenta en dolares termina en 500 por el catch generico del controller")
     void abrirSegundaCuentaUsdDevuelve500() throws Exception {
-        User user = usuario(ID_USUARIO);
-        when(userService.findUserByAlias(ALIAS_USUARIO)).thenReturn(Optional.of(user));
-        when(accountService.openUsdAccount(user))
+        when(accountService.openUsdAccount(any(User.class)))
                 .thenThrow(new IllegalStateException("El usuario ya cuenta con una cuenta en dolares"));
 
         // El try/catch local se traga la IllegalStateException y la degrada a 500,
         // cuando semanticamente es un conflicto (409). Anotado en el backlog.
-        mockMvc.perform(post("/api/accounts/usd").principal(principalAutenticado()))
+        mockMvc.perform(post("/api/accounts/usd").with(comoUsuarioAutenticado()))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message")
@@ -346,12 +305,12 @@ class AccountControllerTest {
     // --- helpers ---
 
     /**
-     * El endpoint recibe un Authentication como parametro, que Spring MVC resuelve
-     * desde request.getUserPrincipal(). Ese principal lo publica un filtro de Spring
-     * Security, asi que con addFilters = false hay que ponerlo a mano.
+     * Publica en el SecurityContext el mismo principal que arma el filtro JWT en
+     * produccion: un CustomUserDetails con la entidad User ya cargada.
      */
-    private Authentication principalAutenticado() {
-        return new UsernamePasswordAuthenticationToken(ALIAS_USUARIO, "n/a", List.of());
+    private RequestPostProcessor comoUsuarioAutenticado() {
+        CustomUserDetails principal = new CustomUserDetails(usuario(ID_USUARIO));
+        return authentication(new UsernamePasswordAuthenticationToken(principal, null, List.of()));
     }
 
     private User usuario(long id) {
@@ -362,6 +321,8 @@ class AccountControllerTest {
         user.setDni("12345678");
         user.setEmail("ana@test.com");
         user.setAlias(ALIAS_USUARIO);
+        // CustomUserDetails saca el username y la password de las credenciales.
+        user.setCredentials(new Credentials(user, ALIAS_USUARIO, "irrelevante"));
         return user;
     }
 

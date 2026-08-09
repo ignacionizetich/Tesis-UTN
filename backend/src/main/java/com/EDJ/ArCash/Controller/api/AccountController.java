@@ -3,23 +3,19 @@ package com.EDJ.ArCash.Controller.api;
 import com.EDJ.ArCash.DTO.AuthDTO.*;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.User;
+import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AccountService;
-import com.EDJ.ArCash.Service.UserService;
-import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.attribute.UserPrincipalNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -29,14 +25,13 @@ import java.util.Optional;
 @Tag(name = "Cuentas", description = "Operaciones sobre cuentas del usuario")
 public class AccountController {
 
-    @Autowired
-    private AccountService accountService;
+    private final AccountService accountService;
+    private final JwtUtils jwtUtils;
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JwtUtils jwtUtils;
+    public AccountController(AccountService accountService, JwtUtils jwtUtils) {
+        this.accountService = accountService;
+        this.jwtUtils = jwtUtils;
+    }
 
     @Operation(
             summary = "Actualizar balance de la cuenta",
@@ -68,16 +63,16 @@ public class AccountController {
     public ResponseEntity<AccountResponse> updateBalance(
             @PathVariable Long id,
             @RequestBody AccountRequest accountRequest,
-            HttpServletRequest request) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
 
         if (accountRequest.getBalance() < 0) {
             return ResponseEntity.badRequest()
                     .body(new AccountResponse(false, "El monto a ingresar no puede ser negativo.", accountRequest.getBalance()));
         }
 
-        Object responseEntity = jwtUtils.validateAccessToken(request).getBody();
+        Long userId = principal.getUser().getId();
 
-        if(responseEntity == null){
+        if (!jwtUtils.tieneSesionActiva(userId)) {
             return ResponseEntity.status(498).body(new AccountResponse(false ,"Usuario invalido",0));
         }
 
@@ -88,7 +83,7 @@ public class AccountController {
         } else {
             Account account = optionalAccount.get();
 
-            if (account.getUser().getId().equals(responseEntity)) {
+            if (account.getUser().getId().equals(userId)) {
                 boolean success = accountService.updateBalance(accountRequest.getBalance(), id);
                 if (!success) {
                     return ResponseEntity.status(404)
@@ -119,13 +114,7 @@ public class AccountController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Token no proporcionado o inválido",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(
-                                    example = "{\"error\": \"Token no proporcionado o inválido\"}"
-                            )
-                    )
+                    description = "Token no proporcionado o inválido"
             ),
             @ApiResponse(
                     responseCode = "403",
@@ -139,17 +128,8 @@ public class AccountController {
             )
     })
     @GetMapping("/{id}/showBalance")
-    public ResponseEntity<?> getAccount(@PathVariable Long id, HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("error", "Token no proporcionado o inválido"));
-        }
-
-        String token = authHeader.substring(7);
-        Claims claims = jwtUtils.getClaimJWT(token);
-        String userIdStr = claims.get("userID", String.class);
-        Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
+    public ResponseEntity<?> getAccount(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails principal) {
+        Long userId = principal.getUser().getId();
 
         Optional<Account> optionalAccount = accountService.findAccountByID(id);
         if (optionalAccount.isPresent() && optionalAccount.get().getUser().getId().equals(userId)) {
@@ -192,14 +172,14 @@ public class AccountController {
     public ResponseEntity<AliasResponse> changeAlias(
             @PathVariable Long id,
             @RequestBody AliasRequest aliasRequest,
-            HttpServletRequest request){
-        Object responseEntity = jwtUtils.validateAccessToken(request).getBody();
+            @AuthenticationPrincipal CustomUserDetails principal){
+        Long userId = principal.getUser().getId();
 
-        if(responseEntity == null){
+        if(!jwtUtils.tieneSesionActiva(userId)){
             return ResponseEntity.status(498).body(new AliasResponse(false, "Usuario invalido."));
         }
 
-        return accountService.changeAlias(aliasRequest.getNewAlias(), id, responseEntity);
+        return accountService.changeAlias(aliasRequest.getNewAlias(), id, userId);
     }
 
     @Operation(
@@ -231,20 +211,8 @@ public class AccountController {
             )
     })
     @GetMapping("/{id}/qr-data")
-    public ResponseEntity<Map<String, Object>> getQrData(@PathVariable Long id, HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("error", "Token no proporcionado o inválido"));
-        }
-
-
-        String token = authHeader.substring(7);
-        Claims claims = jwtUtils.getClaimJWT(token);
-        String userIdStr = claims.get("userID", String.class);
-        Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
-
-
+    public ResponseEntity<Map<String, Object>> getQrData(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails principal) {
+        Long userId = principal.getUser().getId();
 
         Optional<Account> optionalAccount = accountService.findAccountByID(id);
 
@@ -279,25 +247,13 @@ public class AccountController {
 
 
     @PostMapping("/usd")
-    public ResponseEntity<?> openUsdAccount(Authentication authentication){
-
-        // authentication.getName() devuelve el userID del JWT, no el email
-        String alias = authentication.getName();
-
+    public ResponseEntity<?> openUsdAccount(@AuthenticationPrincipal CustomUserDetails principal){
 
         try{
-
-            Optional<User> userOptional = userService.findUserByAlias(alias);
-
-            if(userOptional.isEmpty()){
-                return ResponseEntity.status(404)
-                        .body(Map.of("success", false, "message", "No se encontró el usuario autenticado"));
-            }
-
-            User authUser = userOptional.get();
+            User authUser = principal.getUser();
 
             Account usdAccount = accountService.openUsdAccount(authUser);
-            
+
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Cuenta en dólares creada exitosamente",
