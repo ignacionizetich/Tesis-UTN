@@ -6,7 +6,6 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.FavoriteContactRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,14 +16,17 @@ import java.util.Optional;
 @Transactional
 public class FavoriteContactService {
 
-    @Autowired
-    private FavoriteContactRepository favoriteContactRepository;
+    private final FavoriteContactRepository favoriteContactRepository;
+    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private AccountRepository accountRepository;
+    public FavoriteContactService(FavoriteContactRepository favoriteContactRepository,
+                                  UserRepository userRepository,
+                                  AccountRepository accountRepository) {
+        this.favoriteContactRepository = favoriteContactRepository;
+        this.userRepository = userRepository;
+        this.accountRepository = accountRepository;
+    }
 
     public boolean addFavoriteContact(Long userId, Long accountId, String contactAlias, String description) {
         try {
