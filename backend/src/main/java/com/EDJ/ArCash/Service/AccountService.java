@@ -5,31 +5,29 @@ import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 
 import com.EDJ.ArCash.Repository.AccountRepository;
-import com.EDJ.ArCash.Repository.ValidationTokenRepository;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-import java.util.Random;
 
 @Service
 public class AccountService {
-    @Autowired
-    private final ValidationTokenRepository validationTokenRepository;
 
-    @Autowired
     private final AccountRepository accountRepository;
-
-    @Autowired
     private final EventPublisher eventPublisher;
+    private final AccountIdentifierGenerator identifierGenerator;
+    private final AliasFormatValidator aliasFormatValidator;
 
-    public AccountService(AccountRepository accountRepository, ValidationTokenRepository validationTokenRepository, EventPublisher eventPublisher) {
+    public AccountService(AccountRepository accountRepository,
+                          EventPublisher eventPublisher,
+                          AccountIdentifierGenerator identifierGenerator,
+                          AliasFormatValidator aliasFormatValidator) {
         this.accountRepository = accountRepository;
-        this.validationTokenRepository = validationTokenRepository;
         this.eventPublisher = eventPublisher;
+        this.identifierGenerator = identifierGenerator;
+        this.aliasFormatValidator = aliasFormatValidator;
     }
 
 
@@ -38,8 +36,8 @@ public class AccountService {
         account.setUser(user);
         account.setAccountType(Currency.ARS); ///se crea la cuenta como ARS por defecto
         account.setBalance(0.0);
-        account.setAccountNickname(generateUniqueNickname());
-        account.setAccountCvu(generateUniqueCvu());
+        account.setAccountNickname(identifierGenerator.generateUniqueNickname());
+        account.setAccountCvu(identifierGenerator.generateUniqueCvu());
         accountRepository.save(account);
         
         // Publicar evento de cuenta creada
@@ -56,8 +54,8 @@ public class AccountService {
         account.setUser(user);
         account.setAccountType(Currency.USD);
         account.setBalance(0.0);
-        account.setAccountNickname(generateUniqueNickname());
-        account.setAccountCvu(generateUniqueCvu());
+        account.setAccountNickname(identifierGenerator.generateUniqueNickname());
+        account.setAccountCvu(identifierGenerator.generateUniqueCvu());
 
         accountRepository.save(account);
 
@@ -108,9 +106,7 @@ public class AccountService {
     }
 
     public AliasChangeResult changeAlias(String newAlias, Long id, Long userId) {
-        // Regex mejorado: exige al menos una letra
-        String regex = "^(?=.*[A-Za-z])(?=^[A-Za-z0-9]+(\\.[A-Za-z0-9]+)+$)(?!.*\\.\\.)[A-Za-z0-9.]{4,25}$";
-        if (!newAlias.matches(regex)) {
+        if (!aliasFormatValidator.esValido(newAlias)) {
             return AliasChangeResult.FORMATO_INVALIDO;
         }
 
@@ -141,75 +137,6 @@ public class AccountService {
         eventPublisher.publish(event);
 
         return AliasChangeResult.OK;
-    }
-
-
-
-
-
-    /// -----------------------METODOS PRIVATE PARA GENERAR UN ALIAS ALEATORIO Y EL CVU DE LA CUENTA -----------------------
-
-    private String generateUniqueNickname() {
-        String account_nickname;
-        do {
-            account_nickname = generateRandomNickname();
-        } while (accountRepository.existsByAccountNickname(account_nickname));
-        return account_nickname;
-    }
-
-    private String generateRandomNickname() {
-        String[] options = {"happy", "brave", "fast", "calm", "smart", "silly", "cool", "kind", "wild", "bold",
-                "tiger", "lion", "panda", "eagle", "fox", "whale", "zebra", "wolf", "rabbit", "koala",
-                "red", "green", "blue", "yellow", "black", "white", "pink", "orange", "purple", "brown",
-                "apple", "orange", "banana", "grapes", "peach", "pear", "strawberry", "cherry", "mango", "melon"
-        };
-        Random rand = new Random();
-
-        String first = options[rand.nextInt(options.length)];
-        String second = options[rand.nextInt(options.length)];
-
-
-        char sufijo1 = (char) ('A' + rand.nextInt(26));
-        char sufijo2 = (char) ('A' + rand.nextInt(26));
-
-
-        String alias = (first + "." + second + "." + sufijo1 + sufijo2);
-        return alias.length() > 25 ? alias.substring(0, 25).toUpperCase() : alias.toUpperCase();
-    }
-
-    private String generateUniqueCvu() {
-        String account_cvu;
-        do {
-            account_cvu = generateCvu();
-        } while (accountRepository.existsByAccountCvu(account_cvu));
-        return account_cvu;
-    }
-
-    private String generateCvu() {
-        String entidad = "00002001";
-        String cuenta = generateRandomDigits(13);
-        String base = entidad + cuenta;
-        int verificador = calculateValidatorDigit(base);
-        return base + verificador;
-    }
-
-    private String generateRandomDigits(int length) {
-        Random rand = new Random();
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            sb.append(rand.nextInt(10));
-        }
-        return sb.toString();
-    }
-
-    private int calculateValidatorDigit(String base) {
-        int[] pesos = {3, 1};
-        int suma = 0;
-        for (int i = 0; i < base.length(); i++) {
-            suma += Character.getNumericValue(base.charAt(i)) * pesos[i % 2];
-        }
-        int resto = suma % 10;
-        return resto == 0 ? 0 : 10 - resto;
     }
 }
 

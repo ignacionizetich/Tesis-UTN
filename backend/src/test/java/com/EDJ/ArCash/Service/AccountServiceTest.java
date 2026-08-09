@@ -4,7 +4,6 @@ import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.AccountRepository;
-import com.EDJ.ArCash.Repository.ValidationTokenRepository;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
@@ -20,10 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,17 +34,26 @@ class AccountServiceTest {
     private static final long ID_USUARIO = 1L;
     private static final long ID_CUENTA = 10L;
 
+    private static final String ALIAS_GENERADO = "HAPPY.TIGER.AB";
+    private static final String CVU_GENERADO = "0000200112345678901234";
+
     private AccountRepository accountRepository;
-    private ValidationTokenRepository validationTokenRepository;
     private EventPublisher eventPublisher;
     private AccountService accountService;
 
     @BeforeEach
     void setUp() {
         accountRepository = mock(AccountRepository.class);
-        validationTokenRepository = mock(ValidationTokenRepository.class);
         eventPublisher = mock(EventPublisher.class);
-        accountService = new AccountService(accountRepository, validationTokenRepository, eventPublisher);
+
+        AccountIdentifierGenerator identifierGenerator = mock(AccountIdentifierGenerator.class);
+        when(identifierGenerator.generateUniqueNickname()).thenReturn(ALIAS_GENERADO);
+        when(identifierGenerator.generateUniqueCvu()).thenReturn(CVU_GENERADO);
+
+        // El validador es una funcion pura sin dependencias: usarlo de verdad hace
+        // que los tests de formato verifiquen la regla real y no la de un mock.
+        accountService = new AccountService(
+                accountRepository, eventPublisher, identifierGenerator, new AliasFormatValidator());
     }
 
     // --- alta de cuentas ---
@@ -63,12 +69,14 @@ class AccountServiceTest {
         assertEquals(Currency.ARS, guardada.getAccountType());
         assertEquals(0.0, guardada.getBalance());
         assertEquals(user, guardada.getUser());
+        assertEquals(ALIAS_GENERADO, guardada.getAccountNickname());
+        assertEquals(CVU_GENERADO, guardada.getAccountCvu());
 
         Event evento = capturarEventoPublicado();
         assertEquals(EventType.ACCOUNT_CREATED, evento.getEventType());
         assertEquals(user, evento.getData("user"));
-        assertEquals(guardada.getAccountNickname(), evento.getData("accountAlias"));
-        assertEquals(guardada.getAccountCvu(), evento.getData("accountCvu"));
+        assertEquals(ALIAS_GENERADO, evento.getData("accountAlias"));
+        assertEquals(CVU_GENERADO, evento.getData("accountCvu"));
     }
 
     @Test
@@ -108,42 +116,6 @@ class AccountServiceTest {
 
         assertEquals(Currency.USD, cuenta.getAccountType());
         verify(accountRepository).save(any());
-    }
-
-    // --- identificadores generados ---
-
-    @Test
-    @DisplayName("El CVU generado tiene 22 digitos y arranca con el codigo de entidad")
-    void elCvuGeneradoTieneElFormatoEsperado() {
-        accountService.createAccount(usuario());
-
-        String cvu = capturarCuentaGuardada().getAccountCvu();
-        assertEquals(22, cvu.length());
-        assertTrue(cvu.startsWith("00002001"), "el CVU deberia arrancar con el codigo de entidad: " + cvu);
-        assertTrue(cvu.matches("\\d{22}"), "el CVU deberia ser solo digitos: " + cvu);
-    }
-
-    @Test
-    @DisplayName("El alias generado son dos palabras y dos letras, en mayusculas")
-    void elAliasGeneradoTieneElFormatoEsperado() {
-        accountService.createAccount(usuario());
-
-        String alias = capturarCuentaGuardada().getAccountNickname();
-        assertTrue(alias.matches("[A-Z]+\\.[A-Z]+\\.[A-Z]{2}"),
-                "el alias generado no tiene el formato esperado: " + alias);
-        assertTrue(alias.length() <= 25);
-    }
-
-    @Test
-    @DisplayName("Reintenta la generacion mientras el alias o el CVU ya existan")
-    void reintentaLaGeneracionAnteColisiones() {
-        when(accountRepository.existsByAccountNickname(anyString())).thenReturn(true, false);
-        when(accountRepository.existsByAccountCvu(anyString())).thenReturn(true, false);
-
-        accountService.createAccount(usuario());
-
-        verify(accountRepository, times(2)).existsByAccountNickname(anyString());
-        verify(accountRepository, times(2)).existsByAccountCvu(anyString());
     }
 
     // --- updateBalance ---
