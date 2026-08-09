@@ -63,6 +63,13 @@ class AccountControllerSecurityTest {
     }
 
     @Test
+    @DisplayName("Listar las cuentas sin token devuelve 401")
+    void listarCuentasSinTokenDevuelve401() throws Exception {
+        mockMvc.perform(get("/api/accounts/user-accounts"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     @DisplayName("Abrir una cuenta en dolares sin token devuelve 401")
     void abrirCuentaUsdSinTokenDevuelve401() throws Exception {
         mockMvc.perform(post("/api/accounts/usd"))

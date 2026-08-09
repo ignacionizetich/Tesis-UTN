@@ -296,6 +296,43 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.error").value("El usuario no es propietario de la cuenta"));
     }
 
+    // --- GET /user-accounts ---
+
+    @Test
+    @DisplayName("Lista las cuentas del usuario con el id como texto")
+    void listaLasCuentasDelUsuario() throws Exception {
+        User user = usuario(ID_USUARIO);
+        Account enPesos = cuentaArs(user);
+        enPesos.setBalance(1500.75);
+        Account enDolares = cuentaUsd(user);
+        enDolares.setBalance(20.5);
+        when(accountService.findAccountsByUser(ID_USUARIO)).thenReturn(List.of(enPesos, enDolares));
+
+        mockMvc.perform(get("/api/accounts/user-accounts").with(comoUsuarioAutenticado()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.accounts.length()").value(2))
+                .andExpect(jsonPath("$.accounts[0].id").value(String.valueOf(ID_CUENTA_ARS)))
+                .andExpect(jsonPath("$.accounts[0].balance").value(1500.75))
+                .andExpect(jsonPath("$.accounts[0].alias").value("MI.CUENTA.AA"))
+                .andExpect(jsonPath("$.accounts[0].cvu").value("0000200112345678901234"))
+                .andExpect(jsonPath("$.accounts[0].currency").value("ARS"))
+                .andExpect(jsonPath("$.accounts[1].id").value(String.valueOf(ID_CUENTA_USD)))
+                .andExpect(jsonPath("$.accounts[1].balance").value(20.5))
+                .andExpect(jsonPath("$.accounts[1].currency").value("USD"));
+    }
+
+    @Test
+    @DisplayName("Un usuario sin cuentas recibe una lista vacia, no un error")
+    void listaVaciaSiElUsuarioNoTieneCuentas() throws Exception {
+        when(accountService.findAccountsByUser(ID_USUARIO)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/accounts/user-accounts").with(comoUsuarioAutenticado()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.accounts.length()").value(0));
+    }
+
     // --- POST /usd ---
 
     @Test

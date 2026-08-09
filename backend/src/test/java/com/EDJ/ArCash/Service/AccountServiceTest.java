@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -116,6 +117,16 @@ class AccountServiceTest {
 
         assertEquals(Currency.USD, cuenta.getAccountType());
         verify(accountRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Lista todas las cuentas de un usuario")
+    void findAccountsByUserDevuelveLasCuentasDelUsuario() {
+        User propietario = usuario();
+        Account cuenta = cuenta(propietario);
+        when(accountRepository.findAllByUser_Id(ID_USUARIO)).thenReturn(List.of(cuenta));
+
+        assertEquals(List.of(cuenta), accountService.findAccountsByUser(ID_USUARIO));
     }
 
     // --- updateBalance ---

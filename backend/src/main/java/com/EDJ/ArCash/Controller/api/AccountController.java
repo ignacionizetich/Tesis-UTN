@@ -19,6 +19,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -260,6 +261,29 @@ public class AccountController {
 
 
         return ResponseEntity.ok(qrData);
+    }
+
+
+    @Operation(
+            summary = "Listar las cuentas del usuario",
+            description = "Devuelve todas las cuentas del usuario autenticado, en cualquiera de sus monedas."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Cuentas obtenidas correctamente",
+                    content = @Content(schema = @Schema(implementation = UserAccountsResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Usuario no autenticado"
+            )
+    })
+    @GetMapping("/user-accounts")
+    public ResponseEntity<UserAccountsResponse> getUserAccounts(@AuthenticationPrincipal CustomUserDetails principal) {
+        List<Account> cuentas = accountService.findAccountsByUser(principal.getUser().getId());
+
+        return ResponseEntity.ok(UserAccountsResponse.from(cuentas));
     }
 
 

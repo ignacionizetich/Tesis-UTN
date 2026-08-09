@@ -10,6 +10,7 @@ import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -95,6 +96,10 @@ public class AccountService {
 
    public Optional<Account> findAccountByID(long id){
         return accountRepository.findByIdAccount(id);
+    }
+
+    public List<Account> findAccountsByUser(Long userId){
+        return accountRepository.findAllByUser_Id(userId);
     }
 
     public Optional<Account> encontrarCuentaPorAlias(String alias){
