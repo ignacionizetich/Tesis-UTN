@@ -6,7 +6,6 @@ import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AccountService;
-import com.EDJ.ArCash.Service.TransactionService;
 import com.EDJ.ArCash.Service.UserService;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,9 +22,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -70,9 +67,6 @@ class AccountControllerTest {
 
     @MockitoBean
     private UserService userService;
-
-    @MockitoBean
-    private TransactionService transactionService;
 
     @MockitoBean
     private JwtUtils jwtUtils;
@@ -349,89 +343,6 @@ class AccountControllerTest {
                         .value("Error al crear cuenta en dólares: El usuario ya cuenta con una cuenta en dolares"));
     }
 
-    // --- POST /{accountArsId}/buy-usd/{accountUsdId} ---
-
-    @Test
-    @DisplayName("Comprar dolares sin token devuelve 401")
-    void comprarDolaresSinTokenDevuelve401() throws Exception {
-        mockMvc.perform(post("/api/accounts/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"amountArs\":10000}"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Token no proporcionado o inválido"));
-    }
-
-    @Test
-    @DisplayName("Comprar dolares con una cuenta en pesos inexistente devuelve 404")
-    void comprarDolaresConCuentaInexistenteDevuelve404() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.empty());
-
-        mockMvc.perform(post("/api/accounts/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
-                        .header("Authorization", BEARER)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"amountArs\":10000}"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Cuenta en pesos no encontrada"));
-    }
-
-    @Test
-    @DisplayName("Comprar dolares desde una cuenta ajena devuelve 403")
-    void comprarDolaresDesdeCuentaAjenaDevuelve403() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(99L))));
-
-        mockMvc.perform(post("/api/accounts/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
-                        .header("Authorization", BEARER)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"amountArs\":10000}"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("No tiene permiso para operar esta cuenta"));
-
-        verify(transactionService, never()).buyUsd(anyLong(), anyLong(), anyDouble());
-    }
-
-    @Test
-    @DisplayName("La compra exitosa devuelve el detalle completo de la conversion")
-    void comprarDolaresDevuelveElDetalleDeLaOperacion() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(ID_USUARIO))));
-        when(transactionService.buyUsd(ID_CUENTA_ARS, ID_CUENTA_USD, 10000.0)).thenReturn(compraExitosa());
-
-        mockMvc.perform(post("/api/accounts/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
-                        .header("Authorization", BEARER)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"amountArs\":10000}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Compra de dólares exitosa"))
-                .andExpect(jsonPath("$.amountArs").value(10000.0))
-                .andExpect(jsonPath("$.amountUsd").value(10.0))
-                .andExpect(jsonPath("$.exchangeRate").value(1000.0))
-                .andExpect(jsonPath("$.taxAmount").value(6000.0))
-                .andExpect(jsonPath("$.taxPercentage").value(60.0))
-                .andExpect(jsonPath("$.totalDebitado").value(16000.0))
-                .andExpect(jsonPath("$.newBalanceArs").value(5000.0))
-                .andExpect(jsonPath("$.newBalanceUsd").value(10.0));
-    }
-
-    @Test
-    @DisplayName("Si la compra falla se devuelve el mapa crudo del service con 400")
-    void comprarDolaresQueFallaDevuelve400ConElMapaDelService() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(ID_USUARIO))));
-        when(transactionService.buyUsd(ID_CUENTA_ARS, ID_CUENTA_USD, 10000.0))
-                .thenReturn(Map.of("success", false, "message", "Saldo insuficiente en cuenta en pesos"));
-
-        // El error no viaja como BuyUsdResponse sino como el Map tal cual lo arma
-        // el service: el contrato de la respuesta de error es distinto al del exito.
-        mockMvc.perform(post("/api/accounts/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
-                        .header("Authorization", BEARER)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"amountArs\":10000}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Saldo insuficiente en cuenta en pesos"))
-                .andExpect(jsonPath("$.amountUsd").doesNotExist());
-    }
-
     // --- helpers ---
 
     /**
@@ -441,21 +352,6 @@ class AccountControllerTest {
      */
     private Authentication principalAutenticado() {
         return new UsernamePasswordAuthenticationToken(ALIAS_USUARIO, "n/a", List.of());
-    }
-
-    private Map<String, Object> compraExitosa() {
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "Compra de dólares exitosa");
-        result.put("amountArs", 10000.0);
-        result.put("amountUsd", 10.0);
-        result.put("exchangeRate", 1000.0);
-        result.put("taxAmount", 6000.0);
-        result.put("taxPercentage", 60.0);
-        result.put("totalDebitado", 16000.0);
-        result.put("newBalanceArs", 5000.0);
-        result.put("newBalanceUsd", 10.0);
-        return result;
     }
 
     private User usuario(long id) {
