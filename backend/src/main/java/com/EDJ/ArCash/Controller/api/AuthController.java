@@ -8,7 +8,7 @@ import com.EDJ.ArCash.Models.Imp.LogoutStatus;
 import com.EDJ.ArCash.Models.RefreshToken;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.RefreshTokenRepository;
-import com.EDJ.ArCash.Security.JwtUtils;
+import com.EDJ.ArCash.Security.JwtService;
 import com.EDJ.ArCash.Service.AuthService;
 import com.EDJ.ArCash.Service.RefreshTokenCleanupService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,7 +44,7 @@ public class AuthController {
     private RefreshTokenCleanupService refreshTokenService;
 
     @Autowired
-    private JwtUtils jwtUtils;
+    private JwtService jwtService;
 
     @Operation(
             summary = "Iniciar sesión",
@@ -283,7 +283,7 @@ public class AuthController {
         }
         String token = authHeader.substring(7);
 
-        String userIdStr = jwtUtils.extractUserId(token);
+        String userIdStr = jwtService.extractUserId(token);
         if (userIdStr == null) {
             return ResponseEntity.status(401).body(new UsernameResponse(false, "Token invalido"));
         }
@@ -346,7 +346,7 @@ public class AuthController {
             return ResponseEntity.status(401).body(Map.of("error", "Refresh token inválido o expirado"));
         }
         User user = tokenOpt.get().getUser();
-        String newAccessToken = jwtUtils.generateToken(String.valueOf(user.getId()), user.getPermissions().name());
+        String newAccessToken = jwtService.generateToken(String.valueOf(user.getId()), user.getPermissions().name());
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
     }
 

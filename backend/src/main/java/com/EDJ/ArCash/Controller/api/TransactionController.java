@@ -7,7 +7,7 @@ import com.EDJ.ArCash.DTO.AuthDTO.TransactionResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TranscationRequest;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.FavoriteContact;
-import com.EDJ.ArCash.Security.JwtUtils;
+import com.EDJ.ArCash.Security.JwtService;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.FavoriteContactService;
 import com.EDJ.ArCash.Service.TransactionService;
@@ -42,7 +42,7 @@ public class TransactionController {
     @Autowired
     private FavoriteContactService favoriteContactService;
     @Autowired
-    private JwtUtils jwtUtils;
+    private JwtService jwtService;
 
     @PostMapping("/{id1}/transfer/{id2}")
     @Transactional
@@ -70,7 +70,7 @@ public class TransactionController {
             }
 
             String token = authHeader.substring(7);
-            Claims claims = jwtUtils.getClaimJWT(token);
+            Claims claims = jwtService.getClaimJWT(token);
             String userIdStr = claims.get("userID", String.class);
             Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
 
@@ -198,7 +198,7 @@ public class TransactionController {
         }
 
         String token = authHeader.substring(7);
-        Claims claims = jwtUtils.getClaimJWT(token);
+        Claims claims = jwtService.getClaimJWT(token);
         String userIdStr = claims.get("userID", String.class);
         Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
 

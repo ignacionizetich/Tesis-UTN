@@ -4,7 +4,7 @@ import com.EDJ.ArCash.DTO.AuthDTO.AddFavoriteContactRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.FavoriteContactResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.UpdateFavoriteContactRequest;
 import com.EDJ.ArCash.Models.FavoriteContact;
-import com.EDJ.ArCash.Security.JwtUtils;
+import com.EDJ.ArCash.Security.JwtService;
 import com.EDJ.ArCash.Service.FavoriteContactService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,11 +27,11 @@ import java.util.Optional;
 public class FavoriteContactController {
 
     private final FavoriteContactService favoriteContactService;
-    private final JwtUtils jwtUtils;
+    private final JwtService jwtService;
 
-    public FavoriteContactController(FavoriteContactService favoriteContactService, JwtUtils jwtUtils) {
+    public FavoriteContactController(FavoriteContactService favoriteContactService, JwtService jwtService) {
         this.favoriteContactService = favoriteContactService;
-        this.jwtUtils = jwtUtils;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/add")
@@ -205,7 +205,7 @@ public class FavoriteContactController {
         }
 
         String token = authHeader.substring(7);
-        String userIdStr = jwtUtils.extractUserId(token);
+        String userIdStr = jwtService.extractUserId(token);
         if (userIdStr == null) {
             return Optional.empty();
         }

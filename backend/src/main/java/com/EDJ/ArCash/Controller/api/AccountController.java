@@ -4,9 +4,9 @@ import com.EDJ.ArCash.DTO.AuthDTO.*;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Security.JwtUtils;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.AliasChangeResult;
+import com.EDJ.ArCash.Service.SessionService;
 import com.EDJ.ArCash.factory.AliasResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,12 +29,12 @@ import java.util.Optional;
 public class AccountController {
 
     private final AccountService accountService;
-    private final JwtUtils jwtUtils;
+    private final SessionService sessionService;
     private final AliasResponseFactory aliasResponseFactory;
 
-    public AccountController(AccountService accountService, JwtUtils jwtUtils, AliasResponseFactory aliasResponseFactory) {
+    public AccountController(AccountService accountService, SessionService sessionService, AliasResponseFactory aliasResponseFactory) {
         this.accountService = accountService;
-        this.jwtUtils = jwtUtils;
+        this.sessionService = sessionService;
         this.aliasResponseFactory = aliasResponseFactory;
     }
 
@@ -77,7 +77,7 @@ public class AccountController {
 
         Long userId = principal.getUser().getId();
 
-        if (!jwtUtils.tieneSesionActiva(userId)) {
+        if (!sessionService.tieneSesionActiva(userId)) {
             return ResponseEntity.status(498).body(new AccountResponse(false ,"Usuario invalido",0));
         }
 
@@ -180,7 +180,7 @@ public class AccountController {
             @AuthenticationPrincipal CustomUserDetails principal){
         Long userId = principal.getUser().getId();
 
-        if(!jwtUtils.tieneSesionActiva(userId)){
+        if(!sessionService.tieneSesionActiva(userId)){
             return ResponseEntity.status(498).body(new AliasResponse(false, "Usuario invalido."));
         }
 

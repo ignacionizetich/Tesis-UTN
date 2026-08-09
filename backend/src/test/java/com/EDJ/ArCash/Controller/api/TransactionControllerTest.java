@@ -3,7 +3,7 @@ package com.EDJ.ArCash.Controller.api;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Security.JwtUtils;
+import com.EDJ.ArCash.Security.JwtService;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.TransactionService;
 import io.jsonwebtoken.Claims;
@@ -60,13 +60,13 @@ class TransactionControllerTest {
     private TransactionService transactionService;
 
     @MockitoBean
-    private JwtUtils jwtUtils;
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {
         Claims claims = mock(Claims.class);
         when(claims.get("userID", String.class)).thenReturn(String.valueOf(ID_USUARIO));
-        when(jwtUtils.getClaimJWT(TOKEN)).thenReturn(claims);
+        when(jwtService.getClaimJWT(TOKEN)).thenReturn(claims);
     }
 
     @Test

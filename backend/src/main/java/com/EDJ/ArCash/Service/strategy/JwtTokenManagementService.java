@@ -5,7 +5,8 @@ import com.EDJ.ArCash.Models.RefreshToken;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
-import com.EDJ.ArCash.Security.JwtUtils;
+import com.EDJ.ArCash.Security.JwtService;
+import com.EDJ.ArCash.Service.SessionService;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,10 @@ public class JwtTokenManagementService implements TokenManagementStrategy {
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenManagementService.class);
 
     @Autowired
-    private JwtUtils jwtUtils;
+    private JwtService jwtService;
+
+    @Autowired
+    private SessionService sessionService;
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
@@ -38,13 +42,13 @@ public class JwtTokenManagementService implements TokenManagementStrategy {
     @Override
     public String generateAccessToken(String userId, String role) {
         logger.debug("Generando access token para usuario: {}", userId);
-        return jwtUtils.generateToken(userId, role);
+        return jwtService.generateToken(userId, role);
     }
 
     @Override
     public String generateRefreshToken(String userId, String role) {
         logger.debug("Generando refresh token para usuario: {}", userId);
-        return jwtUtils.generateRefreshToken(userId, role);
+        return jwtService.generateRefreshToken(userId, role);
     }
 
     @Override
@@ -67,7 +71,7 @@ public class JwtTokenManagementService implements TokenManagementStrategy {
     @Transactional
     public LogoutStatus revokeUserTokens(String accessToken) {
         try {
-            Claims claims = jwtUtils.getClaimJWT(accessToken);
+            Claims claims = jwtService.getClaimJWT(accessToken);
             String userId = claims.get("userID", String.class);
 
             if (userId == null) {
@@ -88,7 +92,7 @@ public class JwtTokenManagementService implements TokenManagementStrategy {
                     return LogoutStatus.ALREADY_REVOKED;
                 }
 
-                jwtUtils.revokeAllUserTokens(userIdLong);
+                sessionService.revokeAllUserTokens(userIdLong);
                 logger.info("Tokens revocados exitosamente para usuario: {}", userIdLong);
                 return LogoutStatus.SUCCESS;
             }
@@ -120,7 +124,7 @@ public class JwtTokenManagementService implements TokenManagementStrategy {
     @Override
     public String extractUserId(String token) {
         try {
-            return jwtUtils.extractUserId(token);
+            return jwtService.extractUserId(token);
         } catch (Exception e) {
             logger.error("Error al extraer userId del token: ", e);
             return null;

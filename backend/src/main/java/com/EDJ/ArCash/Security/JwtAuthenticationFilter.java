@@ -1,5 +1,6 @@
 package com.EDJ.ArCash.Security;
 
+import com.EDJ.ArCash.Service.SessionService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -28,7 +29,8 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
-    private final JwtUtils jwtUtils;
+    private final JwtService jwtService;
+    private final SessionService sessionService;
 
     /**
      * Debe coincidir con el permitAll de SecurityConfig. En estas rutas el
@@ -55,9 +57,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    public JwtAuthenticationFilter(UserDetailsService userDetailsService, JwtUtils jwtUtils) {
+    public JwtAuthenticationFilter(UserDetailsService userDetailsService,
+                                   JwtService jwtService,
+                                   SessionService sessionService) {
         this.userDetailsService = userDetailsService;
-        this.jwtUtils = jwtUtils;
+        this.jwtService = jwtService;
+        this.sessionService = sessionService;
     }
 
     @Override
@@ -73,42 +78,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String username;
 
-        // 1. Si no hay header o no empieza con "Bearer ", simplemente continúa.
-        // Spring Security (SecurityConfig.java) se encargará de denegar el acceso
-        // si la ruta no está en la lista de .permitAll()
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 2. Extraer el token
         jwt = authHeader.substring(7);
 
         try {
-            // 3. Validar firma/expiracion con la misma clave que firma JwtUtils
-            Claims claims = jwtUtils.getClaimJWT(jwt);
+            Claims claims = jwtService.getClaimJWT(jwt);
 
             username = claims.getSubject();
 
-            // Solo los access tokens pueden autenticar rutas protegidas.
-            // Sin claim type (tokens viejos) o con type=refresh se rechazan.
-            String tokenType = claims.get(JwtUtils.CLAIM_TYPE, String.class);
-            if (!JwtUtils.TYPE_ACCESS.equals(tokenType)) {
-                logger.warn("Token rechazado: type esperado '{}', recibido '{}'", JwtUtils.TYPE_ACCESS, tokenType);
+            String tokenType = claims.get(JwtService.CLAIM_TYPE, String.class);
+            if (!JwtService.TYPE_ACCESS.equals(tokenType)) {
+                logger.warn("Token rechazado: type esperado '{}', recibido '{}'", JwtService.TYPE_ACCESS, tokenType);
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\": \"Token de acceso inválido\"}");
                 return;
             }
 
-            // 4. Si tenemos username y no hay una autenticación ya establecida en el contexto...
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-                // Firma y expiracion ya pasaron; falta comprobar que la sesion
-                // no haya sido cerrada (logout / revocacion del refresh token).
                 Long userId = ((CustomUserDetails) userDetails).getUser().getId();
-                if (!jwtUtils.tieneSesionActiva(userId)) {
+                if (!sessionService.tieneSesionActiva(userId)) {
                     logger.warn("Sesion finalizada para usuario {}", userId);
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType("application/json");
@@ -116,7 +111,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                // Reconstruimos la autenticación con los roles/authorities
                 String role = claims.get("role", String.class);
                 String springRole = "ROLE_" + role;
 
@@ -127,19 +121,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // Establecemos la autenticación en el contexto de seguridad
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         } catch (JwtException e) {
-            // 5. Si el token es inválido (expirado, malformado, etc.), responde con un error 401
             logger.error("Error validando el token JWT: {}", e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{\"error\": \"Token JWT inválido o expirado\"}");
             return;
         }
 
-        // 6. Continúa con el siguiente filtro en la cadena
         filterChain.doFilter(request, response);
     }
 

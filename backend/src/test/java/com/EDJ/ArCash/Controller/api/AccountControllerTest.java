@@ -5,7 +5,7 @@ import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Security.JwtUtils;
+import com.EDJ.ArCash.Service.SessionService;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.AliasChangeResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,11 +64,11 @@ class AccountControllerTest {
     private AccountService accountService;
 
     @MockitoBean
-    private JwtUtils jwtUtils;
+    private SessionService sessionService;
 
     @BeforeEach
     void setUp() {
-        when(jwtUtils.tieneSesionActiva(ID_USUARIO)).thenReturn(true);
+        when(sessionService.tieneSesionActiva(ID_USUARIO)).thenReturn(true);
     }
 
     // --- PUT /{id}/balance ---
@@ -85,13 +85,13 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.message").value("El monto a ingresar no puede ser negativo."))
                 .andExpect(jsonPath("$.newBalance").value(-1.0));
 
-        verify(jwtUtils, never()).tieneSesionActiva(anyLong());
+        verify(sessionService, never()).tieneSesionActiva(anyLong());
     }
 
     @Test
     @DisplayName("Con la sesion revocada devuelve 498")
     void balanceConSesionRevocadaDevuelve498() throws Exception {
-        when(jwtUtils.tieneSesionActiva(ID_USUARIO)).thenReturn(false);
+        when(sessionService.tieneSesionActiva(ID_USUARIO)).thenReturn(false);
 
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
@@ -205,7 +205,7 @@ class AccountControllerTest {
     @Test
     @DisplayName("Cambiar alias con la sesion revocada devuelve 498 sin llamar al service")
     void changeAliasConSesionRevocadaDevuelve498() throws Exception {
-        when(jwtUtils.tieneSesionActiva(ID_USUARIO)).thenReturn(false);
+        when(sessionService.tieneSesionActiva(ID_USUARIO)).thenReturn(false);
 
         mockMvc.perform(put("/api/accounts/{id}/changeAlias", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())

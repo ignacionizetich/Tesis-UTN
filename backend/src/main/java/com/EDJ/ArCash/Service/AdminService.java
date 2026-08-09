@@ -3,7 +3,7 @@ package com.EDJ.ArCash.Service;
 import com.EDJ.ArCash.DTO.AuthDTO.UserResponse;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.UserRepository;
-import com.EDJ.ArCash.Security.JwtUtils;
+import com.EDJ.ArCash.Security.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,7 +29,7 @@ public class AdminService {
      private AccountService accountService;
 
      @Autowired
-     private JwtUtils jwtUtils;
+     private JwtService jwtService;
 
 
 
@@ -88,7 +88,7 @@ public class AdminService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token no proporcionado");
         }
         String token = authHeader.substring(7);
-        String role = jwtUtils.getClaimJWT(token).get("role", String.class);
+        String role = jwtService.getClaimJWT(token).get("role", String.class);
         if (!"ADMIN".equals(role)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos de administrador");
         }

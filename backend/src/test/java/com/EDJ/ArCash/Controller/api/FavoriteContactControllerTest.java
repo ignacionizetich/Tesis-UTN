@@ -4,7 +4,7 @@ import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.FavoriteContact;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Security.JwtUtils;
+import com.EDJ.ArCash.Security.JwtService;
 import com.EDJ.ArCash.Service.FavoriteContactService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,11 +56,11 @@ class FavoriteContactControllerTest {
     private FavoriteContactService favoriteContactService;
 
     @MockitoBean
-    private JwtUtils jwtUtils;
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {
-        when(jwtUtils.extractUserId(TOKEN)).thenReturn(String.valueOf(ID_USUARIO));
+        when(jwtService.extractUserId(TOKEN)).thenReturn(String.valueOf(ID_USUARIO));
     }
 
     // --- POST /add ---

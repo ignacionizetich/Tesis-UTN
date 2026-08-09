@@ -1,4 +1,4 @@
-package com.EDJ.ArCash.Security;
+package com.EDJ.ArCash.Service;
 
 import com.EDJ.ArCash.Models.RefreshToken;
 import com.EDJ.ArCash.Models.User;
@@ -7,7 +7,6 @@ import com.EDJ.ArCash.Repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,27 +20,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Caracterizacion de los metodos de sesion de JwtUtils antes de extraerlos
- * a SessionService.
+ * Caracterizacion de SessionService (antes metodos de sesion en JwtUtils).
  */
-class JwtUtilsSessionTest {
+class SessionServiceTest {
 
     private static final long ID_USUARIO = 7L;
-    private static final String SECRET =
-            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     private UserRepository userRepository;
     private RefreshTokenRepository refreshTokenRepository;
-    private JwtUtils jwtUtils;
+    private SessionService sessionService;
     private User usuario;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         refreshTokenRepository = mock(RefreshTokenRepository.class);
-        jwtUtils = new JwtUtils(SECRET);
-        ReflectionTestUtils.setField(jwtUtils, "userRepository", userRepository);
-        ReflectionTestUtils.setField(jwtUtils, "refreshTokenRepository", refreshTokenRepository);
+        sessionService = new SessionService(userRepository, refreshTokenRepository);
 
         usuario = new User();
         usuario.setId(ID_USUARIO);
@@ -54,7 +48,7 @@ class JwtUtilsSessionTest {
         when(refreshTokenRepository.findByUserAndRevokedFalse(usuario))
                 .thenReturn(Optional.of(new RefreshToken()));
 
-        assertTrue(jwtUtils.tieneSesionActiva(ID_USUARIO));
+        assertTrue(sessionService.tieneSesionActiva(ID_USUARIO));
     }
 
     @Test
@@ -62,7 +56,7 @@ class JwtUtilsSessionTest {
     void sesionInactivaSiElUsuarioNoExiste() {
         when(userRepository.findById(ID_USUARIO)).thenReturn(Optional.empty());
 
-        assertFalse(jwtUtils.tieneSesionActiva(ID_USUARIO));
+        assertFalse(sessionService.tieneSesionActiva(ID_USUARIO));
         verify(refreshTokenRepository, never()).findByUserAndRevokedFalse(any());
     }
 
@@ -72,7 +66,7 @@ class JwtUtilsSessionTest {
         when(userRepository.findById(ID_USUARIO)).thenReturn(Optional.of(usuario));
         when(refreshTokenRepository.findByUserAndRevokedFalse(usuario)).thenReturn(Optional.empty());
 
-        assertFalse(jwtUtils.tieneSesionActiva(ID_USUARIO));
+        assertFalse(sessionService.tieneSesionActiva(ID_USUARIO));
     }
 
     @Test
@@ -85,7 +79,7 @@ class JwtUtilsSessionTest {
         when(userRepository.findById(ID_USUARIO)).thenReturn(Optional.of(usuario));
         when(refreshTokenRepository.findAllByUserAndRevokedFalse(usuario)).thenReturn(List.of(uno, dos));
 
-        jwtUtils.revokeAllUserTokens(ID_USUARIO);
+        sessionService.revokeAllUserTokens(ID_USUARIO);
 
         assertTrue(uno.isRevoked());
         assertTrue(dos.isRevoked());
@@ -98,7 +92,7 @@ class JwtUtilsSessionTest {
     void revocarUsuarioInexistenteNoTocaLaBase() {
         when(userRepository.findById(ID_USUARIO)).thenReturn(Optional.empty());
 
-        jwtUtils.revokeAllUserTokens(ID_USUARIO);
+        sessionService.revokeAllUserTokens(ID_USUARIO);
 
         verify(refreshTokenRepository, never()).findAllByUserAndRevokedFalse(any());
         verify(refreshTokenRepository, never()).save(any());
@@ -110,7 +104,7 @@ class JwtUtilsSessionTest {
         when(userRepository.findById(ID_USUARIO)).thenReturn(Optional.of(usuario));
         when(refreshTokenRepository.findAllByUserAndRevokedFalse(usuario)).thenReturn(List.of());
 
-        jwtUtils.revokeAllUserTokens(ID_USUARIO);
+        sessionService.revokeAllUserTokens(ID_USUARIO);
 
         verify(refreshTokenRepository, never()).save(any());
     }

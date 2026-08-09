@@ -49,7 +49,7 @@ class JwtAuthenticationFilterTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private JwtUtils jwtUtils;
+    private JwtService jwtService;
 
     @Autowired
     private UserRepository userRepository;
@@ -100,7 +100,7 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Un access token valido con sesion activa entra")
     void tokenValidoConSesionActivaDevuelve200() throws Exception {
         persistirRefreshToken(false);
-        String accessToken = jwtUtils.generateToken(String.valueOf(usuario.getId()), "USER");
+        String accessToken = jwtService.generateToken(String.valueOf(usuario.getId()), "USER");
 
         mockMvc.perform(get("/api/accounts/user-accounts")
                         .header("Authorization", "Bearer " + accessToken))
@@ -122,7 +122,7 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Un token con la firma alterada se rechaza con 401")
     void tokenConFirmaAlteradaDevuelve401() throws Exception {
         persistirRefreshToken(false);
-        String valido = jwtUtils.generateToken(String.valueOf(usuario.getId()), "USER");
+        String valido = jwtService.generateToken(String.valueOf(usuario.getId()), "USER");
         String alterado = alterarFirma(valido);
 
         mockMvc.perform(get("/api/accounts/user-accounts")
@@ -134,7 +134,7 @@ class JwtAuthenticationFilterTest {
     @DisplayName("Un token de sesion revocada se rechaza con 401")
     void tokenDeSesionRevocadaDevuelve401() throws Exception {
         persistirRefreshToken(true);
-        String accessToken = jwtUtils.generateToken(String.valueOf(usuario.getId()), "USER");
+        String accessToken = jwtService.generateToken(String.valueOf(usuario.getId()), "USER");
 
         mockMvc.perform(get("/api/accounts/user-accounts")
                         .header("Authorization", "Bearer " + accessToken))
@@ -144,7 +144,7 @@ class JwtAuthenticationFilterTest {
     @Test
     @DisplayName("Un refresh token mandado como Bearer se rechaza con 401")
     void refreshTokenComoBearerDevuelve401() throws Exception {
-        String refreshJwt = jwtUtils.generateRefreshToken(String.valueOf(usuario.getId()), "USER");
+        String refreshJwt = jwtService.generateRefreshToken(String.valueOf(usuario.getId()), "USER");
         persistirRefreshToken(refreshJwt, false);
 
         mockMvc.perform(get("/api/accounts/user-accounts")
@@ -155,7 +155,7 @@ class JwtAuthenticationFilterTest {
     @Test
     @DisplayName("POST /api/auth/refresh sigue emitiendo access token con la cookie")
     void refreshConCookieSigueFuncionando() throws Exception {
-        String refreshJwt = jwtUtils.generateRefreshToken(String.valueOf(usuario.getId()), "USER");
+        String refreshJwt = jwtService.generateRefreshToken(String.valueOf(usuario.getId()), "USER");
         persistirRefreshToken(refreshJwt, false);
 
         mockMvc.perform(post("/api/auth/refresh")
@@ -170,7 +170,7 @@ class JwtAuthenticationFilterTest {
         // El interceptor de Angular manda el access token vencido en Authorization
         // tambien a /refresh. Antes el filtro cortaba con 401 y el endpoint nunca
         // se ejecutaba; ahora las rutas publicas ignoran el header.
-        String refreshJwt = jwtUtils.generateRefreshToken(String.valueOf(usuario.getId()), "USER");
+        String refreshJwt = jwtService.generateRefreshToken(String.valueOf(usuario.getId()), "USER");
         persistirRefreshToken(refreshJwt, false);
 
         mockMvc.perform(post("/api/auth/refresh")
@@ -199,7 +199,7 @@ class JwtAuthenticationFilterTest {
                 .setSubject(String.valueOf(usuario.getId()))
                 .claim("userID", String.valueOf(usuario.getId()))
                 .claim("role", "USER")
-                .claim(JwtUtils.CLAIM_TYPE, JwtUtils.TYPE_ACCESS)
+                .claim(JwtService.CLAIM_TYPE, JwtService.TYPE_ACCESS)
                 .setIssuedAt(new Date(System.currentTimeMillis() - 7200000))
                 .setExpiration(new Date(System.currentTimeMillis() - 3600000))
                 .signWith(secretKey)
