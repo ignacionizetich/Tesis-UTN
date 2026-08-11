@@ -226,8 +226,8 @@ class TransactionServiceTest {
     }
 
     @Test
-    @DisplayName("buyUsd ok: misma formula 3%+venta, result rico, NO publica evento")
-    void buyUsdExitosoSinEvento() {
+    @DisplayName("buyUsd ok: misma formula 3%+venta, result rico, publica evento como conversion")
+    void buyUsdExitosoPublicaEvento() {
         Account ars = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 20_000.0);
         Account usd = cuenta(ID_USD, Currency.USD, ID_USUARIO, 5.0);
         when(accountRepository.findByIdAccount(ID_ARS)).thenReturn(Optional.of(ars));
@@ -248,7 +248,20 @@ class TransactionServiceTest {
         assertEquals(USD_ESPERADOS, result.getAmountUsd(), DELTA);
         assertTrue(USD_ESPERADOS < TOTAL_DEBITO / TASA_VENTA);
 
-        verify(eventPublisher, never()).publish(any());
+        ArgumentCaptor<Event> eventoCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventPublisher).publish(eventoCaptor.capture());
+        Event evento = eventoCaptor.getValue();
+        assertEquals(EventType.TRANSACTION_COMPLETED, evento.getEventType());
+        assertEquals(true, evento.getData("converted"));
+        assertEquals(MONTO_ARS, (Double) evento.getData("amount"), DELTA);
+        assertEquals(USD_ESPERADOS, (Double) evento.getData("amountUsd"), DELTA);
+        assertEquals(TASA_VENTA, (Double) evento.getData("exchangeRate"), DELTA);
+        assertEquals(COMISION, (Double) evento.getData("taxAmount"), DELTA);
+        assertEquals(3.0, (Double) evento.getData("taxPercentage"), DELTA);
+        assertEquals(TOTAL_DEBITO, (Double) evento.getData("totalDebitado"), DELTA);
+        assertEquals("ALIAS." + ID_USD, evento.getData("destinationAlias"));
+        assertEquals("USD", evento.getData("currency"));
+        assertEquals(ars.getUser(), evento.getData("user"));
     }
 
     @Test

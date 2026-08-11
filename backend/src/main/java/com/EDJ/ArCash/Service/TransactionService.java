@@ -252,6 +252,24 @@ public class TransactionService {
         accountRepository.save(cuentaUsd);
         transactionRepository.save(transaction);
 
+        Event event = new Event(EventType.TRANSACTION_COMPLETED);
+        event.addData("user", cuentaArs.getUser());
+        event.addData("amount", conversion.amountArs());
+        event.addData("amountUsd", conversion.amountUsd());
+        event.addData("exchangeRate", conversion.exchangeRate());
+        event.addData("taxAmount", conversion.taxAmount());
+        event.addData("taxPercentage", conversion.taxPercentage());
+        event.addData("totalDebitado", conversion.totalDebitado());
+        event.addData("destinationAlias", cuentaUsd.getAccountNickname());
+        event.addData("currency", "USD");
+        event.addData("converted", true);
+        // Fase 8: email-transaction.html habla de "transferencia" / "Destinatario"
+        // con destinationAlias. Eso ya era confuso en conversion ARS→USD a la
+        // propia cuenta USD (mismo alias = cuenta propia); buyUsd solo lo hace
+        // visible porque antes no publicaba evento. Alcance: copy de mail para
+        // conversion propia y buyUsd, no un bug exclusivo de buyUsd.
+        eventPublisher.publish(event);
+
         return BuyUsdResult.ok(
                 "Compra de dólares exitosa",
                 conversion.amountArs(),
