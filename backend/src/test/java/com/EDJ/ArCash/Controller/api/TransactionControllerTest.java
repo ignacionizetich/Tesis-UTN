@@ -5,6 +5,7 @@ import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.JwtService;
 import com.EDJ.ArCash.Service.AccountService;
+import com.EDJ.ArCash.Service.BuyUsdResult;
 import com.EDJ.ArCash.Service.TransactionService;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,8 +19,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.anyDouble;
@@ -136,10 +135,9 @@ class TransactionControllerTest {
     void comprarDolaresQueFallaDevuelve400ConElMapaDelService() throws Exception {
         when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(ID_USUARIO))));
         when(transactionService.buyUsd(ID_CUENTA_ARS, ID_CUENTA_USD, 10000.0))
-                .thenReturn(Map.of("success", false, "message", "Saldo insuficiente en cuenta en pesos"));
+                .thenReturn(BuyUsdResult.fail("Saldo insuficiente en cuenta en pesos"));
 
-        // El error no viaja como BuyUsdResponse sino como el Map tal cual lo arma
-        // el service: el contrato de la respuesta de error es distinto al del exito.
+        // El error viaja como map minimo {success, message}, no como BuyUsdResponse completo.
         mockMvc.perform(post("/api/transactions/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
                         .header("Authorization", BEARER)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -152,19 +150,18 @@ class TransactionControllerTest {
 
     // --- helpers ---
 
-    private Map<String, Object> compraExitosa() {
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "Compra de dólares exitosa");
-        result.put("amountArs", 10000.0);
-        result.put("amountUsd", 10.0);
-        result.put("exchangeRate", 1000.0);
-        result.put("taxAmount", 6000.0);
-        result.put("taxPercentage", 60.0);
-        result.put("totalDebitado", 16000.0);
-        result.put("newBalanceArs", 5000.0);
-        result.put("newBalanceUsd", 10.0);
-        return result;
+    private BuyUsdResult compraExitosa() {
+        return BuyUsdResult.ok(
+                "Compra de dólares exitosa",
+                10000.0,
+                10.0,
+                1000.0,
+                6000.0,
+                60.0,
+                16000.0,
+                5000.0,
+                10.0
+        );
     }
 
     private User usuario(long id) {

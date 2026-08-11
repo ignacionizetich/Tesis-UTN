@@ -9,8 +9,10 @@ import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.FavoriteContact;
 import com.EDJ.ArCash.Security.JwtService;
 import com.EDJ.ArCash.Service.AccountService;
+import com.EDJ.ArCash.Service.BuyUsdResult;
 import com.EDJ.ArCash.Service.FavoriteContactService;
 import com.EDJ.ArCash.Service.TransactionService;
+import com.EDJ.ArCash.Service.TransferOperationResult;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -84,16 +86,15 @@ public class TransactionController {
                 return ResponseEntity.status(403).body(new TransactionResponse(false, "No tiene permiso para operar esta cuenta"));
             }
 
-            Map<String, Object> result = transactionService.transactionWithDetails(id1, id2, transcationRequest.getBalance());
-            boolean success = (boolean) result.get("success");
+            TransferOperationResult result = transactionService.transactionWithDetails(id1, id2, transcationRequest.getBalance());
 
-            if(success){
+            if (result.isSuccess()) {
                 // Actualizar lastUsed si se transfiere a un contacto favorito
                 updateLastUsedForFavoriteContact(userId, id2);
                 return ResponseEntity.ok(new TransactionResponse(true, "Transferencia realizada correctamente"));
-            }else{
-                String errorMessage = result.containsKey("message") ? 
-                        (String) result.get("message") : "Not enough cash, stranger.";
+            } else {
+                String errorMessage = result.getMessage() != null ?
+                        result.getMessage() : "Not enough cash, stranger.";
                 return ResponseEntity.status(400).body(new TransactionResponse(false, errorMessage));
             }
         }
@@ -221,23 +222,23 @@ public class TransactionController {
         }
 
         // Realizar la compra
-        Map<String, Object> result = transactionService.buyUsd(accountArsId, accountUsdId, request.getAmountArs());
+        BuyUsdResult result = transactionService.buyUsd(accountArsId, accountUsdId, request.getAmountArs());
 
-        if ((boolean) result.get("success")) {
+        if (result.isSuccess()) {
             return ResponseEntity.ok(new BuyUsdResponse(
                     true,
-                    (String) result.get("message"),
-                    (double) result.get("amountArs"),
-                    (double) result.get("amountUsd"),
-                    (double) result.get("exchangeRate"),
-                    (double) result.get("taxAmount"),
-                    (double) result.get("taxPercentage"),
-                    (double) result.get("totalDebitado"),
-                    (double) result.get("newBalanceArs"),
-                    (double) result.get("newBalanceUsd")
+                    result.getMessage(),
+                    result.getAmountArs(),
+                    result.getAmountUsd(),
+                    result.getExchangeRate(),
+                    result.getTaxAmount(),
+                    result.getTaxPercentage(),
+                    result.getTotalDebitado(),
+                    result.getNewBalanceArs(),
+                    result.getNewBalanceUsd()
             ));
         } else {
-            return ResponseEntity.status(400).body(result);
+            return ResponseEntity.status(400).body(result.toErrorMap());
         }
     }
 }

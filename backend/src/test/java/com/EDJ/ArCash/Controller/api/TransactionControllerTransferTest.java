@@ -7,6 +7,7 @@ import com.EDJ.ArCash.Security.JwtService;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.FavoriteContactService;
 import com.EDJ.ArCash.Service.TransactionService;
+import com.EDJ.ArCash.Service.TransferOperationResult;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,9 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.eq;
@@ -75,10 +74,8 @@ class TransactionControllerTransferTest {
     void selfTransferConSuccessTrueDevuelve200() throws Exception {
         when(accountService.findAccountByID(ID_ORIGEN)).thenReturn(Optional.of(cuenta(ID_ORIGEN)));
         // Mismo id en path origen y destino: el service (B3) devolveria success=true.
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
         when(transactionService.transactionWithDetails(eq(ID_ORIGEN), eq(ID_ORIGEN), eq(100.0)))
-                .thenReturn(result);
+                .thenReturn(TransferOperationResult.ok());
 
         mockMvc.perform(post("/api/transactions/{id1}/transfer/{id2}", ID_ORIGEN, ID_ORIGEN)
                         .header("Authorization", BEARER)
@@ -98,7 +95,7 @@ class TransactionControllerTransferTest {
         when(accountService.findAccountByID(ID_DESTINO)).thenReturn(Optional.of(cuenta(ID_DESTINO)));
 
         when(transactionService.transactionWithDetails(ID_ORIGEN, ID_DESTINO, 50.0))
-                .thenReturn(Map.of("success", true));
+                .thenReturn(TransferOperationResult.ok());
 
         mockMvc.perform(post("/api/transactions/{id1}/transfer/{id2}", ID_ORIGEN, ID_DESTINO)
                         .header("Authorization", BEARER)
@@ -109,7 +106,7 @@ class TransactionControllerTransferTest {
                 .andExpect(jsonPath("$.message").value("Transferencia realizada correctamente"));
 
         when(transactionService.transactionWithDetails(ID_ORIGEN, ID_DESTINO, 999.0))
-                .thenReturn(Map.of("success", false, "message", "Saldo insuficiente o error en la transacción"));
+                .thenReturn(TransferOperationResult.fail("Saldo insuficiente o error en la transacción"));
 
         mockMvc.perform(post("/api/transactions/{id1}/transfer/{id2}", ID_ORIGEN, ID_DESTINO)
                         .header("Authorization", BEARER)
