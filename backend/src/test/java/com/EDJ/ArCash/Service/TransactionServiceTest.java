@@ -114,13 +114,13 @@ class TransactionServiceTest {
     }
 
     @Test
-    @DisplayName("Self-transfer: guarda FAILED, no mueve saldo, pero return true (bug documentado)")
-    void selfTransferMarcaFailedPeroDevuelveTrue() {
+    @DisplayName("Self-transfer: guarda FAILED, no mueve saldo, return false")
+    void selfTransferMarcaFailedYDevuelveFalse() {
         Account misma = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 500.0);
 
         boolean ok = transactionService.transactionSameCurrency(misma, misma, 100.0);
 
-        assertTrue(ok);
+        assertFalse(ok);
         assertEquals(500.0, misma.getBalance(), DELTA);
 
         ArgumentCaptor<Transaction> txnCaptor = ArgumentCaptor.forClass(Transaction.class);

@@ -79,7 +79,7 @@ public class TransactionService {
             transaction.setState("FAILED");
             transaction.setCurrency(cuentaOrigen.getAccountType());
             transactionRepository.save(transaction);
-            return true; // Se completa, pero como fallida
+            return false;
         }
 
         if (cuentaOrigen.getBalance() < monto) {
