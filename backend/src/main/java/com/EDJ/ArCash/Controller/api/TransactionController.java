@@ -7,13 +7,12 @@ import com.EDJ.ArCash.DTO.AuthDTO.TransactionResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TranscationRequest;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.FavoriteContact;
-import com.EDJ.ArCash.Security.JwtService;
+import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.BuyUsdResult;
 import com.EDJ.ArCash.Service.FavoriteContactService;
 import com.EDJ.ArCash.Service.TransactionService;
 import com.EDJ.ArCash.Service.TransferOperationResult;
-import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,10 +20,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -43,8 +42,6 @@ public class TransactionController {
     private TransactionService transactionService;
     @Autowired
     private FavoriteContactService favoriteContactService;
-    @Autowired
-    private JwtService jwtService;
 
     @PostMapping("/{id1}/transfer/{id2}")
     @Transactional
@@ -57,53 +54,42 @@ public class TransactionController {
                     content = @Content(schema = @Schema(implementation = TranscationRequest.class))
             )
             @RequestBody TranscationRequest transcationRequest,
-            HttpServletRequest request) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
 
         Optional<Account> optionalOrigen = accountService.findAccountByID(id1);
         Optional<Account> optionalDestination = accountService.findAccountByID(id2);
 
         if (optionalOrigen.isEmpty() || optionalDestination.isEmpty()) {
             return ResponseEntity.status(404).body(new TransactionResponse(false, "No se pudo encontrar la cuenta de orig."));
+        }
+
+        // Inalcanzable en produccion: SecurityConfig.anyRequest().authenticated().
+        // Se preserva para tests con addFilters=false (mismo criterio Fase 4).
+        if (principal == null) {
+            return ResponseEntity.status(498).body(new TransactionResponse(false, "Token no valido"));
+        }
+
+        Long userId = principal.getUser().getId();
+        Account account = optionalOrigen.get();
+
+        if (!account.getUser().getId().equals(userId)) {
+            return ResponseEntity.status(403).body(new TransactionResponse(false, "No tiene permiso para operar esta cuenta"));
+        }
+
+        TransferOperationResult result = transactionService.transactionWithDetails(id1, id2, transcationRequest.getBalance());
+
+        if (result.isSuccess()) {
+            updateLastUsedForFavoriteContact(userId, id2);
+            return ResponseEntity.ok(new TransactionResponse(true, "Transferencia realizada correctamente"));
         } else {
-            String authHeader = request.getHeader("Authorization");
-
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(498).body(new TransactionResponse(false, "Token no valido"));
-            }
-
-            String token = authHeader.substring(7);
-            Claims claims = jwtService.getClaimJWT(token);
-            String userIdStr = claims.get("userID", String.class);
-            Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
-
-            if (userId == null) {
-                return ResponseEntity.status(498).body(new TransactionResponse(false, "Token inválido o nulo"));
-            }
-
-            Account account = optionalOrigen.get();
-
-            if (!account.getUser().getId().equals(userId)) {
-                return ResponseEntity.status(403).body(new TransactionResponse(false, "No tiene permiso para operar esta cuenta"));
-            }
-
-            TransferOperationResult result = transactionService.transactionWithDetails(id1, id2, transcationRequest.getBalance());
-
-            if (result.isSuccess()) {
-                // Actualizar lastUsed si se transfiere a un contacto favorito
-                updateLastUsedForFavoriteContact(userId, id2);
-                return ResponseEntity.ok(new TransactionResponse(true, "Transferencia realizada correctamente"));
-            } else {
-                String errorMessage = result.getMessage() != null ?
-                        result.getMessage() : "Not enough cash, stranger.";
-                return ResponseEntity.status(400).body(new TransactionResponse(false, errorMessage));
-            }
+            String errorMessage = result.getMessage() != null ?
+                    result.getMessage() : "Not enough cash, stranger.";
+            return ResponseEntity.status(400).body(new TransactionResponse(false, errorMessage));
         }
     }
 
-    // NUEVO: Método privado para actualizar lastUsed
     private void updateLastUsedForFavoriteContact(Long userId, Long destinationAccountId) {
         try {
-            // Buscar si la cuenta de destino es un contacto favorito del usuario
             List<FavoriteContact> userFavorites = favoriteContactService.getFavoriteContactsByUser(userId);
 
             Optional<FavoriteContact> matchingFavorite = userFavorites.stream()
@@ -114,7 +100,6 @@ public class TransactionController {
                 favoriteContactService.updateLastUsedForContact(matchingFavorite.get().getId());
             }
         } catch (Exception e) {
-            // Log del error pero no fallar la transferencia
             System.out.println("Error actualizando lastUsed para contacto favorito: " + e.getMessage());
         }
     }
@@ -189,26 +174,17 @@ public class TransactionController {
                     content = @Content(schema = @Schema(implementation = BuyUsdRequest.class))
             )
             @RequestBody BuyUsdRequest request,
-            HttpServletRequest httpRequest) {
+            @AuthenticationPrincipal CustomUserDetails principal) {
 
-        // Validar token
-        String authHeader = httpRequest.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // Inalcanzable en produccion: SecurityConfig.anyRequest().authenticated().
+        // Se preserva para tests con addFilters=false (mismo criterio Fase 4).
+        if (principal == null) {
             return ResponseEntity.status(401)
                     .body(Map.of("success", false, "message", "Token no proporcionado o inválido"));
         }
 
-        String token = authHeader.substring(7);
-        Claims claims = jwtService.getClaimJWT(token);
-        String userIdStr = claims.get("userID", String.class);
-        Long userId = userIdStr != null ? Long.parseLong(userIdStr) : null;
+        Long userId = principal.getUser().getId();
 
-        if (userId == null) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("success", false, "message", "Token inválido"));
-        }
-
-        // Validar que la cuenta ARS pertenece al usuario
         Optional<Account> accountArsOpt = accountService.findAccountByID(accountArsId);
         if (accountArsOpt.isEmpty()) {
             return ResponseEntity.status(404)
@@ -221,7 +197,6 @@ public class TransactionController {
                     .body(Map.of("success", false, "message", "No tiene permiso para operar esta cuenta"));
         }
 
-        // Realizar la compra
         BuyUsdResult result = transactionService.buyUsd(accountArsId, accountUsdId, request.getAmountArs());
 
         if (result.isSuccess()) {

@@ -1,14 +1,16 @@
 package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Currency;
+import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Security.JwtService;
+import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.FavoriteContactService;
 import com.EDJ.ArCash.Service.TransactionService;
 import com.EDJ.ArCash.Service.TransferOperationResult;
-import io.jsonwebtoken.Claims;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,15 +18,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -32,16 +37,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Caracterizacion HTTP de POST /api/transactions/{id1}/transfer/{id2}.
- * Documenta el cableado actual (JWT parseado a mano) y el bug self-transfer→200.
+ * Caracterizacion HTTP de transfer. addFilters=false + AuthenticationPrincipal
+ * (misma identidad que publicaria el filtro JWT).
  */
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class TransactionControllerTransferTest {
 
-    private static final String TOKEN = "token-de-prueba";
-    private static final String BEARER = "Bearer " + TOKEN;
     private static final Long ID_USUARIO = 1L;
     private static final long ID_ORIGEN = 10L;
     private static final long ID_DESTINO = 20L;
@@ -58,27 +61,26 @@ class TransactionControllerTransferTest {
     @MockitoBean
     private FavoriteContactService favoriteContactService;
 
-    @MockitoBean
-    private JwtService jwtService;
-
     @BeforeEach
     void setUp() {
-        Claims claims = mock(Claims.class);
-        when(claims.get("userID", String.class)).thenReturn(String.valueOf(ID_USUARIO));
-        when(jwtService.getClaimJWT(TOKEN)).thenReturn(claims);
         when(favoriteContactService.getFavoriteContactsByUser(ID_USUARIO)).thenReturn(List.of());
+    }
+
+    @AfterEach
+    void limpiarSecurityContext() {
+        TestSecurityContextHolder.clearContext();
+        SecurityContextHolder.clearContext();
     }
 
     @Test
     @DisplayName("C1 Self-transfer: si el service devuelve success=true (aunque sea FAILED), HTTP 200")
     void selfTransferConSuccessTrueDevuelve200() throws Exception {
         when(accountService.findAccountByID(ID_ORIGEN)).thenReturn(Optional.of(cuenta(ID_ORIGEN)));
-        // Mismo id en path origen y destino: el service (B3) devolveria success=true.
         when(transactionService.transactionWithDetails(eq(ID_ORIGEN), eq(ID_ORIGEN), eq(100.0)))
                 .thenReturn(TransferOperationResult.ok());
 
         mockMvc.perform(post("/api/transactions/{id1}/transfer/{id2}", ID_ORIGEN, ID_ORIGEN)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"balance\":100}"))
                 .andExpect(status().isOk())
@@ -89,7 +91,7 @@ class TransactionControllerTransferTest {
     }
 
     @Test
-    @DisplayName("C2 Transfer: success=true → 200; success=false → 400 con message del map")
+    @DisplayName("C2 Transfer: success=true → 200; success=false → 400 con message del result")
     void transferOkYFailContratoTipado() throws Exception {
         when(accountService.findAccountByID(ID_ORIGEN)).thenReturn(Optional.of(cuenta(ID_ORIGEN)));
         when(accountService.findAccountByID(ID_DESTINO)).thenReturn(Optional.of(cuenta(ID_DESTINO)));
@@ -98,7 +100,7 @@ class TransactionControllerTransferTest {
                 .thenReturn(TransferOperationResult.ok());
 
         mockMvc.perform(post("/api/transactions/{id1}/transfer/{id2}", ID_ORIGEN, ID_DESTINO)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"balance\":50}"))
                 .andExpect(status().isOk())
@@ -109,7 +111,7 @@ class TransactionControllerTransferTest {
                 .thenReturn(TransferOperationResult.fail("Saldo insuficiente o error en la transacción"));
 
         mockMvc.perform(post("/api/transactions/{id1}/transfer/{id2}", ID_ORIGEN, ID_DESTINO)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"balance\":999}"))
                 .andExpect(status().isBadRequest())
@@ -117,12 +119,29 @@ class TransactionControllerTransferTest {
                 .andExpect(jsonPath("$.message").value("Saldo insuficiente o error en la transacción"));
     }
 
-    private Account cuenta(long id) {
+    private RequestPostProcessor comoUsuarioAutenticado() {
+        CustomUserDetails principal = new CustomUserDetails(usuario());
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal, null, principal.getAuthorities());
+        return request -> {
+            TestSecurityContextHolder.setAuthentication(auth);
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            return request;
+        };
+    }
+
+    private User usuario() {
         User user = new User();
         user.setId(ID_USUARIO);
+        user.setPermissions(Permissions.USER);
+        user.setCredentials(new Credentials(user, "ana.gomez", "irrelevante"));
+        return user;
+    }
+
+    private Account cuenta(long id) {
         Account account = new Account();
         account.setIdAccount(id);
-        account.setUser(user);
+        account.setUser(usuario());
         account.setAccountType(Currency.ARS);
         return account;
     }

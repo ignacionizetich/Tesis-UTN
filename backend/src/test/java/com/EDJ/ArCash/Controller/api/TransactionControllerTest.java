@@ -1,29 +1,34 @@
 package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Currency;
+import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Security.JwtService;
+import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.BuyUsdResult;
 import com.EDJ.ArCash.Service.TransactionService;
-import io.jsonwebtoken.Claims;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,19 +37,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Tests de caracterizacion del contrato HTTP de /api/transactions.
- *
- * Por ahora cubre la compra de dolares, que se mudo desde /api/accounts.
- * Se corre con addFilters = false porque el controller parsea el JWT por su
- * cuenta y sus ramas de 401 quedarian inalcanzables detras de la cadena real.
+ * Contrato HTTP de buy-usd. addFilters=false permite ejercer la rama
+ * principal==null (inalcanzable en produccion tras anyRequest().authenticated()).
  */
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class TransactionControllerTest {
 
-    private static final String TOKEN = "token-de-prueba";
-    private static final String BEARER = "Bearer " + TOKEN;
     private static final Long ID_USUARIO = 1L;
     private static final long ID_CUENTA_ARS = 10L;
     private static final long ID_CUENTA_USD = 20L;
@@ -58,19 +58,18 @@ class TransactionControllerTest {
     @MockitoBean
     private TransactionService transactionService;
 
-    @MockitoBean
-    private JwtService jwtService;
-
-    @BeforeEach
-    void setUp() {
-        Claims claims = mock(Claims.class);
-        when(claims.get("userID", String.class)).thenReturn(String.valueOf(ID_USUARIO));
-        when(jwtService.getClaimJWT(TOKEN)).thenReturn(claims);
+    @AfterEach
+    void limpiarSecurityContext() {
+        TestSecurityContextHolder.clearContext();
+        SecurityContextHolder.clearContext();
     }
 
     @Test
-    @DisplayName("Comprar dolares sin token devuelve 401")
+    @DisplayName("Comprar dolares sin principal devuelve 401 (rama preservada / filters off)")
     void comprarDolaresSinTokenDevuelve401() throws Exception {
+        TestSecurityContextHolder.clearContext();
+        SecurityContextHolder.clearContext();
+
         mockMvc.perform(post("/api/transactions/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"amountArs\":10000}"))
@@ -85,7 +84,7 @@ class TransactionControllerTest {
         when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/transactions/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"amountArs\":10000}"))
                 .andExpect(status().isNotFound())
@@ -98,7 +97,7 @@ class TransactionControllerTest {
         when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(99L))));
 
         mockMvc.perform(post("/api/transactions/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"amountArs\":10000}"))
                 .andExpect(status().isForbidden())
@@ -114,7 +113,7 @@ class TransactionControllerTest {
         when(transactionService.buyUsd(ID_CUENTA_ARS, ID_CUENTA_USD, 10000.0)).thenReturn(compraExitosa());
 
         mockMvc.perform(post("/api/transactions/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"amountArs\":10000}"))
                 .andExpect(status().isOk())
@@ -131,15 +130,14 @@ class TransactionControllerTest {
     }
 
     @Test
-    @DisplayName("Si la compra falla se devuelve el mapa crudo del service con 400")
+    @DisplayName("Si la compra falla se devuelve el mapa minimo del service con 400")
     void comprarDolaresQueFallaDevuelve400ConElMapaDelService() throws Exception {
         when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(ID_USUARIO))));
         when(transactionService.buyUsd(ID_CUENTA_ARS, ID_CUENTA_USD, 10000.0))
                 .thenReturn(BuyUsdResult.fail("Saldo insuficiente en cuenta en pesos"));
 
-        // El error viaja como map minimo {success, message}, no como BuyUsdResponse completo.
         mockMvc.perform(post("/api/transactions/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"amountArs\":10000}"))
                 .andExpect(status().isBadRequest())
@@ -148,7 +146,20 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.amountUsd").doesNotExist());
     }
 
-    // --- helpers ---
+    /**
+     * Con addFilters=false hay que publicar el principal en SecurityContextHolder
+     * a mano: el filtro de test de Spring Security no corre.
+     */
+    private RequestPostProcessor comoUsuarioAutenticado() {
+        CustomUserDetails principal = new CustomUserDetails(usuario(ID_USUARIO));
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal, null, principal.getAuthorities());
+        return request -> {
+            TestSecurityContextHolder.setAuthentication(auth);
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            return request;
+        };
+    }
 
     private BuyUsdResult compraExitosa() {
         return BuyUsdResult.ok(
@@ -169,6 +180,8 @@ class TransactionControllerTest {
         user.setId(id);
         user.setName("Ana");
         user.setLastName("Gomez");
+        user.setPermissions(Permissions.USER);
+        user.setCredentials(new Credentials(user, "ana.gomez", "irrelevante"));
         return user;
     }
 
