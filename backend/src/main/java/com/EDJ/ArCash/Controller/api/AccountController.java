@@ -88,7 +88,13 @@ public class AccountController {
                             .body(new AccountResponse(false, "No se pudo actualizar el balance. Verifique el ID ingresado.",0));
                 }
 
-                return ResponseEntity.ok(new AccountResponse(true, "Ingreso de dinero realizado correctamente.", account.getBalance()));
+                Optional<Account> actualizada = accountService.findAccountByID(id);
+                if (actualizada.isEmpty()) {
+                    return ResponseEntity.status(404)
+                            .body(new AccountResponse(false, "No se pudo actualizar el balance. Verifique el ID ingresado.",0));
+                }
+
+                return ResponseEntity.ok(new AccountResponse(true, "Ingreso de dinero realizado correctamente.", actualizada.get().getBalance()));
             } else {
                 return ResponseEntity.status(498).body(new AccountResponse(false, "El usuario no es propietario legitimo de la cuenta", 0));
             }

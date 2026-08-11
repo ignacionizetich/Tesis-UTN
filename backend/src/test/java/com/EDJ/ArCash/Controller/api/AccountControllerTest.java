@@ -120,16 +120,17 @@ class AccountControllerTest {
     }
 
     @Test
-    @DisplayName("El ingreso exitoso informa el saldo de la instancia leida antes de actualizar")
-    void balanceExitosoDevuelveElSaldoPrevioAlIngreso() throws Exception {
-        Account cuenta = cuentaArs(usuario(ID_USUARIO));
-        cuenta.setBalance(500.0);
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuenta));
+    @DisplayName("El ingreso exitoso informa el saldo actualizado tras el update")
+    void balanceExitosoDevuelveElSaldoActualizado() throws Exception {
+        Account cuentaAntes = cuentaArs(usuario(ID_USUARIO));
+        cuentaAntes.setBalance(500.0);
+        Account cuentaDespues = cuentaArs(usuario(ID_USUARIO));
+        cuentaDespues.setBalance(600.0);
+        when(accountService.findAccountByID(ID_CUENTA_ARS))
+                .thenReturn(Optional.of(cuentaAntes))
+                .thenReturn(Optional.of(cuentaDespues));
         when(accountService.updateBalance(100.0, ID_CUENTA_ARS)).thenReturn(true);
 
-        // El controller nunca vuelve a consultar la cuenta despues de actualizarla:
-        // devuelve el balance del objeto que ya tenia en memoria. Si la instancia no
-        // es la misma que toca el service, el saldo informado se queda viejo.
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -137,7 +138,7 @@ class AccountControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Ingreso de dinero realizado correctamente."))
-                .andExpect(jsonPath("$.newBalance").value(500.0));
+                .andExpect(jsonPath("$.newBalance").value(600.0));
     }
 
     // --- GET /{id}/showBalance ---
