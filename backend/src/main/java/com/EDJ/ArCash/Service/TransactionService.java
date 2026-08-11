@@ -21,17 +21,16 @@ public class TransactionService {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final EventPublisher eventPublisher;
-    private final CotizationUsdService cotizationUsdService;
-    private final TaxService taxService;
+    private final ArsToUsdConversionService arsToUsdConversionService;
 
-    public TransactionService(AccountRepository accountRepository, TransactionRepository transactionRepository, 
-                             EventPublisher eventPublisher, CotizationUsdService cotizationUsdService,
-                             TaxService taxService) {
+    public TransactionService(AccountRepository accountRepository,
+                              TransactionRepository transactionRepository,
+                              EventPublisher eventPublisher,
+                              ArsToUsdConversionService arsToUsdConversionService) {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
         this.eventPublisher = eventPublisher;
-        this.cotizationUsdService = cotizationUsdService;
-        this.taxService = taxService;
+        this.arsToUsdConversionService = arsToUsdConversionService;
     }
 
     @Transactional
@@ -142,15 +141,11 @@ public class TransactionService {
             result.put("message", "Solo se permite conversión de ARS a USD");
             return result;
         }
-        
-        // Calcular impuestos sobre la conversión
-        java.util.Map<String, Double> impuestos = taxService.calcularImpuestosConversion(monto);
-        double totalImpuestos = impuestos.get("totalImpuestos");
-        double porcentajeImpuesto = impuestos.get("porcentajeTotal");
-        double montoTotalConImpuestos = impuestos.get("montoConImpuestos");
-        
-        // Verificar saldo suficiente (monto + impuestos)
-        if (cuentaOrigen.getBalance() < montoTotalConImpuestos) {
+
+        DebitPreview preview = arsToUsdConversionService.previewDebit(monto);
+
+        // Verificar saldo suficiente (monto + comision) ANTES de consultar cotizacion
+        if (cuentaOrigen.getBalance() < preview.totalDebitado()) {
             transaction.setIdOrigin(cuentaOrigen);
             transaction.setIdDestination(cuentaDestino);
             transaction.setBalance(monto);
@@ -159,48 +154,45 @@ public class TransactionService {
             transaction.setOriginalAmount(monto);
             transaction.setOriginalCurrency(Currency.ARS);
             transactionRepository.save(transaction);
-            
+
             result.put("success", false);
-            result.put("message", String.format("Saldo insuficiente. Para enviar $%.2f ARS necesitas $%.2f ARS (incluye $%.2f de comisión). Tu saldo actual es $%.2f ARS", 
-                    monto, montoTotalConImpuestos, totalImpuestos, cuentaOrigen.getBalance()));
-            result.put("montoRequerido", montoTotalConImpuestos);
+            result.put("message", String.format("Saldo insuficiente. Para enviar $%.2f ARS necesitas $%.2f ARS (incluye $%.2f de comisión). Tu saldo actual es $%.2f ARS",
+                    monto, preview.totalDebitado(), preview.taxAmount(), cuentaOrigen.getBalance()));
+            result.put("montoRequerido", preview.totalDebitado());
             result.put("saldoActual", cuentaOrigen.getBalance());
-            result.put("impuestos", totalImpuestos);
+            result.put("impuestos", preview.taxAmount());
             return result;
         }
-        
-        // Obtener cotización y realizar conversión (solo el monto base, sin impuestos)
-        double exchangeRate = cotizationUsdService.obtenerCotizacionVenta();
-        double montoUsd = monto / exchangeRate;
-        
-        // Realizar la transferencia (debitar monto + impuestos)
-        cuentaOrigen.setBalance(cuentaOrigen.getBalance() - montoTotalConImpuestos);
-        cuentaDestino.setBalance(cuentaDestino.getBalance() + montoUsd);
+
+        ArsToUsdConversion conversion = arsToUsdConversionService.calculate(monto);
+
+        // Debitar monto + comision; acreditar solo amountUsd (comision no convertida)
+        cuentaOrigen.setBalance(cuentaOrigen.getBalance() - conversion.totalDebitado());
+        cuentaDestino.setBalance(cuentaDestino.getBalance() + conversion.amountUsd());
         
         transaction.setIdOrigin(cuentaOrigen);
         transaction.setIdDestination(cuentaDestino);
-        transaction.setBalance(montoUsd); // Monto final en USD
-        transaction.setOriginalAmount(monto); // Monto original en ARS
+        transaction.setBalance(conversion.amountUsd());
+        transaction.setOriginalAmount(conversion.amountArs());
         transaction.setOriginalCurrency(Currency.ARS);
         transaction.setCurrency(Currency.USD);
-        transaction.setExchangeRate(exchangeRate);
-        transaction.setTaxAmount(totalImpuestos);
-        transaction.setTaxPercentage(porcentajeImpuesto);
+        transaction.setExchangeRate(conversion.exchangeRate());
+        transaction.setTaxAmount(conversion.taxAmount());
+        transaction.setTaxPercentage(conversion.taxPercentage());
         transaction.setState("COMPLETED");
         
         accountRepository.save(cuentaOrigen);
         accountRepository.save(cuentaDestino);
         transactionRepository.save(transaction);
         
-        // Publicar evento de transacción completada con conversión
         Event event = new Event(EventType.TRANSACTION_COMPLETED);
         event.addData("user", cuentaOrigen.getUser());
-        event.addData("amount", monto);
-        event.addData("amountUsd", montoUsd);
-        event.addData("exchangeRate", exchangeRate);
-        event.addData("taxAmount", totalImpuestos);
-        event.addData("taxPercentage", porcentajeImpuesto);
-        event.addData("totalDebitado", montoTotalConImpuestos);
+        event.addData("amount", conversion.amountArs());
+        event.addData("amountUsd", conversion.amountUsd());
+        event.addData("exchangeRate", conversion.exchangeRate());
+        event.addData("taxAmount", conversion.taxAmount());
+        event.addData("taxPercentage", conversion.taxPercentage());
+        event.addData("totalDebitado", conversion.totalDebitado());
         event.addData("destinationAlias", cuentaDestino.getAccountNickname());
         event.addData("currency", "USD");
         event.addData("converted", true);
@@ -245,40 +237,31 @@ public class TransactionService {
             result.put("message", "Debe comprar desde una cuenta en pesos a una cuenta en dólares");
             return result;
         }
-        
-        // Calcular impuestos sobre la conversión
-        java.util.Map<String, Double> impuestos = taxService.calcularImpuestosConversion(amountArs);
-        double totalImpuestos = impuestos.get("totalImpuestos");
-        double porcentajeImpuesto = impuestos.get("porcentajeTotal");
-        double montoTotalConImpuestos = impuestos.get("montoConImpuestos");
-        
-        // Validar saldo suficiente (incluye comisión)
-        if (cuentaArs.getBalance() < montoTotalConImpuestos) {
+
+        DebitPreview preview = arsToUsdConversionService.previewDebit(amountArs);
+
+        if (cuentaArs.getBalance() < preview.totalDebitado()) {
             result.put("success", false);
-            result.put("message", "Saldo insuficiente. Necesitas $" + String.format("%.2f", montoTotalConImpuestos) + 
-                                 " ARS (incluye $" + String.format("%.2f", totalImpuestos) + " de comisión)");
+            result.put("message", "Saldo insuficiente. Necesitas $" + String.format("%.2f", preview.totalDebitado()) +
+                                 " ARS (incluye $" + String.format("%.2f", preview.taxAmount()) + " de comisión)");
             return result;
         }
+
+        ArsToUsdConversion conversion = arsToUsdConversionService.calculate(amountArs);
+
+        cuentaArs.setBalance(cuentaArs.getBalance() - conversion.totalDebitado());
+        cuentaUsd.setBalance(cuentaUsd.getBalance() + conversion.amountUsd());
         
-        // Obtener cotización y realizar conversión
-        double exchangeRate = cotizationUsdService.obtenerCotizacionVenta();
-        double amountUsd = amountArs / exchangeRate;
-        
-        // Realizar la operación (debitar monto + impuestos)
-        cuentaArs.setBalance(cuentaArs.getBalance() - montoTotalConImpuestos);
-        cuentaUsd.setBalance(cuentaUsd.getBalance() + amountUsd);
-        
-        // Crear registro de transacción
         Transaction transaction = new Transaction();
         transaction.setIdOrigin(cuentaArs);
         transaction.setIdDestination(cuentaUsd);
-        transaction.setBalance(amountUsd);
-        transaction.setOriginalAmount(amountArs);
+        transaction.setBalance(conversion.amountUsd());
+        transaction.setOriginalAmount(conversion.amountArs());
         transaction.setOriginalCurrency(Currency.ARS);
         transaction.setCurrency(Currency.USD);
-        transaction.setExchangeRate(exchangeRate);
-        transaction.setTaxAmount(totalImpuestos);
-        transaction.setTaxPercentage(porcentajeImpuesto);
+        transaction.setExchangeRate(conversion.exchangeRate());
+        transaction.setTaxAmount(conversion.taxAmount());
+        transaction.setTaxPercentage(conversion.taxPercentage());
         transaction.setState("COMPLETED");
         
         accountRepository.save(cuentaArs);
@@ -287,12 +270,12 @@ public class TransactionService {
         
         result.put("success", true);
         result.put("message", "Compra de dólares exitosa");
-        result.put("amountArs", amountArs);
-        result.put("amountUsd", amountUsd);
-        result.put("exchangeRate", exchangeRate);
-        result.put("taxAmount", totalImpuestos);
-        result.put("taxPercentage", porcentajeImpuesto);
-        result.put("totalDebitado", montoTotalConImpuestos);
+        result.put("amountArs", conversion.amountArs());
+        result.put("amountUsd", conversion.amountUsd());
+        result.put("exchangeRate", conversion.exchangeRate());
+        result.put("taxAmount", conversion.taxAmount());
+        result.put("taxPercentage", conversion.taxPercentage());
+        result.put("totalDebitado", conversion.totalDebitado());
         result.put("newBalanceArs", cuentaArs.getBalance());
         result.put("newBalanceUsd", cuentaUsd.getBalance());
         

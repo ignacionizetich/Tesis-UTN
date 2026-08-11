@@ -59,13 +59,14 @@ class TransactionServiceTest {
         eventPublisher = mock(EventPublisher.class);
         cotizationUsdService = mock(CotizationUsdService.class);
         TaxService taxService = new TaxService(cotizationUsdService);
+        ArsToUsdConversionService conversionService =
+                new ArsToUsdConversionService(taxService, cotizationUsdService);
 
         transactionService = new TransactionService(
                 accountRepository,
                 transactionRepository,
                 eventPublisher,
-                cotizationUsdService,
-                taxService
+                conversionService
         );
 
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -175,7 +176,7 @@ class TransactionServiceTest {
     // --- B5 ---
 
     @Test
-    @DisplayName("Conversion saldo insuficiente: FAILED y map con montoRequerido/saldoActual/impuestos")
+    @DisplayName("Conversion saldo insuficiente: FAILED, map con montos, y NO consulta cotizacion")
     void conversionSaldoInsuficiente() {
         Account ars = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 100.0);
         Account usd = cuenta(ID_USD, Currency.USD, ID_USUARIO, 0.0);
@@ -192,6 +193,7 @@ class TransactionServiceTest {
         verify(transactionRepository).save(txnCaptor.capture());
         assertEquals("FAILED", txnCaptor.getValue().getState());
         verify(eventPublisher, never()).publish(any());
+        verify(cotizationUsdService, never()).obtenerCotizacionVenta();
     }
 
     // --- B6 ---
@@ -283,7 +285,7 @@ class TransactionServiceTest {
     // --- B10 ---
 
     @Test
-    @DisplayName("buyUsd saldo insuficiente: fail solo con map, sin fila FAILED")
+    @DisplayName("buyUsd saldo insuficiente: fail solo con map, sin fila FAILED, sin cotizacion")
     void buyUsdSaldoInsuficienteSinFilaFailed() {
         Account ars = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 100.0);
         Account usd = cuenta(ID_USD, Currency.USD, ID_USUARIO, 0.0);
@@ -296,6 +298,7 @@ class TransactionServiceTest {
         assertTrue(((String) result.get("message")).contains("Saldo insuficiente"));
         verify(transactionRepository, never()).save(any());
         verify(eventPublisher, never()).publish(any());
+        verify(cotizationUsdService, never()).obtenerCotizacionVenta();
     }
 
     private Account cuenta(long id, Currency tipo, long userId, double balance) {
