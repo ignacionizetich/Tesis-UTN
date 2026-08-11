@@ -204,19 +204,25 @@ class TransactionServiceTest {
     }
 
     @Test
-    @DisplayName("BUG ownership: conversion ARS→USD a cuenta de otro usuario hoy tiene success=true")
-    void conversionACuentaAjenaHoyEstaPermitida() {
+    @DisplayName("Conversion ARS→USD a cuenta ajena: FAILED, sin mover saldos, sin evento")
+    void conversionACuentaAjenaFallaConMismoDuenoRequerido() {
         Account arsPropia = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 20_000.0);
         Account usdAjena = cuenta(ID_USD_AJENA, Currency.USD, ID_OTRO, 1.0);
-        when(cotizationUsdService.obtenerCotizacionVenta()).thenReturn(TASA_VENTA);
 
         TransferOperationResult result =
                 transactionService.transactionWithConversionDetails(arsPropia, usdAjena, MONTO_ARS);
 
-        assertTrue(result.isSuccess());
-        assertEquals(20_000.0 - TOTAL_DEBITO, arsPropia.getBalance(), DELTA);
-        assertEquals(1.0 + USD_ESPERADOS, usdAjena.getBalance(), DELTA);
-        verify(eventPublisher).publish(any(Event.class));
+        assertFalse(result.isSuccess());
+        assertEquals("Las cuentas deben pertenecer al mismo usuario", result.getMessage());
+        assertEquals(20_000.0, arsPropia.getBalance(), DELTA);
+        assertEquals(1.0, usdAjena.getBalance(), DELTA);
+
+        ArgumentCaptor<Transaction> txnCaptor = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(txnCaptor.capture());
+        assertEquals("FAILED", txnCaptor.getValue().getState());
+        verify(accountRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
+        verify(cotizationUsdService, never()).obtenerCotizacionVenta();
     }
 
     @Test

@@ -62,6 +62,10 @@ public class TransactionService {
 
         boolean success = transactionSameCurrency(cuentaOrigen, cuentaDestino, monto);
         if (!success) {
+            // Fase 8: self-transfer también cae acá con este mensaje genérico
+            // ("Saldo insuficiente o error en la transacción"), engañoso para ese
+            // caso. Candidato a mensaje específico (p. ej. no transferir a la misma
+            // cuenta); no ahora.
             return TransferOperationResult.fail("Saldo insuficiente o error en la transacción");
         }
         return TransferOperationResult.ok();
@@ -126,6 +130,18 @@ public class TransactionService {
             transaction.setCurrency(cuentaOrigen.getAccountType());
             transactionRepository.save(transaction);
             return TransferOperationResult.fail("Solo se permite conversión de ARS a USD");
+        }
+
+        if (!cuentaOrigen.getUser().getId().equals(cuentaDestino.getUser().getId())) {
+            transaction.setIdOrigin(cuentaOrigen);
+            transaction.setIdDestination(cuentaDestino);
+            transaction.setBalance(monto);
+            transaction.setState("FAILED");
+            transaction.setCurrency(Currency.ARS);
+            transaction.setOriginalAmount(monto);
+            transaction.setOriginalCurrency(Currency.ARS);
+            transactionRepository.save(transaction);
+            return TransferOperationResult.fail("Las cuentas deben pertenecer al mismo usuario");
         }
 
         DebitPreview preview = arsToUsdConversionService.previewDebit(monto);
