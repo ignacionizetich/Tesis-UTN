@@ -129,6 +129,16 @@ public class FavoriteContactService {
     }
 
     @Transactional
+    public FavoriteUpdateResult updateFavoriteContactForOwner(
+            Long contactId, Long userId, String newAlias, String newDescription) {
+        if ((newAlias == null || newAlias.trim().isEmpty()) && newDescription == null) {
+            return FavoriteUpdateResult.badRequest();
+        }
+        boolean success = updateFavoriteContact(contactId, userId, newAlias, newDescription);
+        return success ? FavoriteUpdateResult.ok() : FavoriteUpdateResult.notFound();
+    }
+
+    @Transactional
     public boolean updateFavoriteContact(Long contactId, Long userId, String newAlias, String newDescription) {
         try {
 

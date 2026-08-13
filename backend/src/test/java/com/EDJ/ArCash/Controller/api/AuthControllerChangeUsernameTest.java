@@ -48,7 +48,8 @@ class AuthControllerChangeUsernameTest {
     @Test
     @DisplayName("changeUsername pasa a UserService el ID del principal autenticado, no otro")
     void pasaIdDelPrincipalAutenticado() throws Exception {
-        when(userService.cambiarAliasYUsername(eq(ID_AUTENTICADO), eq("nuevoalias"))).thenReturn(true);
+        when(userService.changeUsername(eq(ID_AUTENTICADO), eq("nuevoalias")))
+                .thenReturn(com.EDJ.ArCash.Service.UsernameChangeResult.ok());
 
         mockMvc.perform(put("/api/auth/changeUsername")
                         .with(comoUsuarioAutenticado(ID_AUTENTICADO))
@@ -57,7 +58,7 @@ class AuthControllerChangeUsernameTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        verify(userService).cambiarAliasYUsername(eq(ID_AUTENTICADO), eq("nuevoalias"));
+        verify(userService).changeUsername(eq(ID_AUTENTICADO), eq("nuevoalias"));
         verifyNoMoreInteractions(userService);
     }
 

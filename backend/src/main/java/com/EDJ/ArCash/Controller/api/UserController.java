@@ -2,8 +2,7 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.NonAuthDTO.RegisterResponse;
 import com.EDJ.ArCash.DTO.NonAuthDTO.RegistrerRequest;
-import com.EDJ.ArCash.Service.RegistrationConflictException;
-import com.EDJ.ArCash.Service.RegistrationConflictMessages;
+import com.EDJ.ArCash.Service.RegisterResult;
 import com.EDJ.ArCash.Service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,11 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.mail.MessagingException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.UnsupportedEncodingException;
 
 @RestController
 @RequestMapping(value = "/api/user", produces = "application/json")
@@ -60,22 +56,13 @@ public class UserController {
             )
     })
     @PostMapping("/create")
-    public ResponseEntity<RegisterResponse> register(@RequestBody RegistrerRequest dto)
-            throws MessagingException, UnsupportedEncodingException {
-
-        if (dto.getName() == null || dto.getEmail() == null || dto.getPassword() == null || dto.getAlias() == null) {
-            return ResponseEntity.badRequest().body(new RegisterResponse(false, "Todos los campos son obligatorios."));
-        }
-
-        try {
-            userService.register(dto);
-            return ResponseEntity.ok(new RegisterResponse(true,
-                    "Usuario registrado correctamente. Revisa tu email para activar tu cuenta."));
-        } catch (RegistrationConflictException e) {
-            return ResponseEntity.badRequest().body(
-                    new RegisterResponse(false, RegistrationConflictMessages.format(e.getCodes())));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(new RegisterResponse(false, "Error interno del servidor."));
-        }
+    public ResponseEntity<RegisterResponse> register(@RequestBody RegistrerRequest dto) {
+        RegisterResult result = userService.registerFromRequest(dto);
+        RegisterResponse body = result.toResponse();
+        return switch (result.getKind()) {
+            case OK -> ResponseEntity.ok(body);
+            case VALIDATION, CONFLICT -> ResponseEntity.badRequest().body(body);
+            case ERROR -> ResponseEntity.status(500).body(body);
+        };
     }
 }

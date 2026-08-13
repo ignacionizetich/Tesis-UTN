@@ -170,4 +170,53 @@ public class AuthService {
         );
         return RefreshAccessResult.ok(newAccessToken);
     }
+
+    /**
+     * Interpreta Authorization Bearer y consulta sesion vigente.
+     */
+    public SessionCheckResult checkSession(String authHeader) {
+        try {
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                if (isValidSession(token)) {
+                    return SessionCheckResult.active();
+                }
+            }
+            return SessionCheckResult.inactive();
+        } catch (Exception e) {
+            return SessionCheckResult.error();
+        }
+    }
+
+    public RecoverMailResult sendRecoverMail(String email) {
+        try {
+            boolean enviado = enviarCorreoRecuperacion(email);
+            return enviado ? RecoverMailResult.ok() : RecoverMailResult.notFound();
+        } catch (Exception e) {
+            return RecoverMailResult.error();
+        }
+    }
+
+    public RecoveryTokenValidationResult validateRecoveryToken(String token) {
+        try {
+            return tokenValido(token)
+                    ? RecoveryTokenValidationResult.valid()
+                    : RecoveryTokenValidationResult.invalid();
+        } catch (Exception e) {
+            return RecoveryTokenValidationResult.error();
+        }
+    }
+
+    public ResendEmailResult resendPasswordRecoveryEmail(String email) {
+        try {
+            if (email == null || email.trim().isEmpty()) {
+                return ResendEmailResult.emailRequired();
+            }
+            resendPasswordRecovery(email.trim());
+            return ResendEmailResult.ok(
+                    "Si el email está registrado, te enviamos un enlace de recuperación.");
+        } catch (Exception e) {
+            return ResendEmailResult.error();
+        }
+    }
 }

@@ -2,6 +2,7 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.Service.AuthService;
 import com.EDJ.ArCash.Service.CredentialsService;
+import com.EDJ.ArCash.Service.RecoveryTokenValidationResult;
 import com.EDJ.ArCash.Service.ResetPasswordResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,7 @@ class RecoverControllerTest {
     @Test
     @DisplayName("Token de recuperacion valido: 200 valid=true")
     void validateTokenValido() throws Exception {
-        when(authService.tokenValido("tok-ok")).thenReturn(true);
+        when(authService.validateRecoveryToken("tok-ok")).thenReturn(RecoveryTokenValidationResult.valid());
 
         mockMvc.perform(get("/api/auth/validate-recovery-token").param("token", "tok-ok"))
                 .andExpect(status().isOk())
@@ -50,7 +51,7 @@ class RecoverControllerTest {
     @Test
     @DisplayName("Token de recuperacion invalido: 401 valid=false")
     void validateTokenInvalido() throws Exception {
-        when(authService.tokenValido("tok-bad")).thenReturn(false);
+        when(authService.validateRecoveryToken("tok-bad")).thenReturn(RecoveryTokenValidationResult.invalid());
 
         mockMvc.perform(get("/api/auth/validate-recovery-token").param("token", "tok-bad"))
                 .andExpect(status().isUnauthorized())
@@ -62,7 +63,7 @@ class RecoverControllerTest {
     @Test
     @DisplayName("Excepcion al validar token: 500 valid=false")
     void validateTokenLanzaExcepcion() throws Exception {
-        when(authService.tokenValido("tok-err")).thenThrow(new RuntimeException("boom"));
+        when(authService.validateRecoveryToken("tok-err")).thenReturn(RecoveryTokenValidationResult.error());
 
         mockMvc.perform(get("/api/auth/validate-recovery-token").param("token", "tok-err"))
                 .andExpect(status().isInternalServerError())

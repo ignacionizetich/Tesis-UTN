@@ -7,8 +7,11 @@ import com.EDJ.ArCash.DTO.AuthDTO.UsernameResponse;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.AuthService;
+import com.EDJ.ArCash.Service.RecoverMailResult;
 import com.EDJ.ArCash.Service.RefreshAccessResult;
+import com.EDJ.ArCash.Service.SessionCheckResult;
 import com.EDJ.ArCash.Service.UserService;
+import com.EDJ.ArCash.Service.UsernameChangeResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -160,34 +163,12 @@ public class AuthController {
     public ResponseEntity<?> checkSession(
             @Parameter(description = "Token JWT de autenticación", example = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-
-                boolean isValidSession = authService.isValidSession(token);
-
-                if (isValidSession) {
-                    return ResponseEntity.ok()
-                            .body(Map.of(
-                                    "status", "ACTIVE",
-                                    "message", "Sesión activa"
-                            ));
-                }
-            }
-
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of(
-                            "status", "INACTIVE",
-                            "message", "No hay sesión activa"
-                    ));
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of(
-                            "status", "ERROR",
-                            "message", "Error al verificar la sesión"
-                    ));
-        }
+        SessionCheckResult result = authService.checkSession(authHeader);
+        return switch (result.getKind()) {
+            case ACTIVE -> ResponseEntity.ok(result.toBody());
+            case INACTIVE -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result.toBody());
+            case ERROR -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result.toBody());
+        };
     }
 
     @Operation(
@@ -218,23 +199,12 @@ public class AuthController {
     })
     @PostMapping("/send-recover-mail")
     public ResponseEntity<?> sendRecoverEmail(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        
-
-        try {
-            boolean enviado = authService.enviarCorreoRecuperacion(email);
-
-            if (enviado) {
-                return ResponseEntity.ok(Map.of("message", "Correo enviado correctamente"));
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "El correo ingresado no se asocia a una cuenta existente."));
-            }
-        } catch (Exception e) {
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Error interno al enviar el correo"));
-        }
+        RecoverMailResult result = authService.sendRecoverMail(body.get("email"));
+        return switch (result.getKind()) {
+            case OK -> ResponseEntity.ok(result.toBody());
+            case NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(result.toBody());
+            case ERROR -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result.toBody());
+        };
     }
 
     @Operation(
@@ -263,18 +233,13 @@ public class AuthController {
             @RequestBody UsernameRequest usernameRequest,
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
-        String newUsername = usernameRequest.getNewUsername();
-        if (newUsername == null || newUsername.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(new UsernameResponse(false, "El nombre de usuario no puede estar vacio"));
-        }
-
-        Long userId = principal.getUser().getId();
-        boolean result = userService.cambiarAliasYUsername(userId, newUsername.trim());
-        if (result) {
-            return ResponseEntity.ok(new UsernameResponse(true, "Nombre de usuario actualizado correctamente"));
-        } else {
-            return ResponseEntity.badRequest().body(new UsernameResponse(false ,"No se pudo actualizar el nombre de usuario. Puede que ya exista."));
-        }
+        UsernameChangeResult result = userService.changeUsername(
+                principal.getUser().getId(), usernameRequest.getNewUsername());
+        UsernameResponse body = new UsernameResponse(result.isSuccess(), result.getMessage());
+        return switch (result.getKind()) {
+            case OK -> ResponseEntity.ok(body);
+            case EMPTY, FAIL -> ResponseEntity.badRequest().body(body);
+        };
     }
 
 

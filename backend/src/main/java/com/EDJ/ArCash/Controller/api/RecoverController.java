@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.EDJ.ArCash.Service.AuthService;
 import com.EDJ.ArCash.Service.CredentialsService;
+import com.EDJ.ArCash.Service.RecoveryTokenValidationResult;
 import com.EDJ.ArCash.Service.ResetPasswordResult;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,25 +37,12 @@ public class RecoverController {
     )
     @GetMapping("/validate-recovery-token")
     public ResponseEntity<Map<String, Object>> validateRecoveryToken(@RequestParam("token") String token) {
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            boolean isValid = authService.tokenValido(token);
-
-            if (isValid) {
-                response.put("valid", true);
-                response.put("message", "Enlace de recuperación válido");
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("valid", false);
-                response.put("message", "El enlace de recuperación es inválido, ha expirado o ya fue utilizado");
-                return ResponseEntity.status(401).body(response);
-            }
-        } catch (Exception e) {
-            response.put("valid", false);
-            response.put("message", "Error al validar el enlace de recuperación");
-            return ResponseEntity.status(500).body(response);
-        }
+        RecoveryTokenValidationResult result = authService.validateRecoveryToken(token);
+        return switch (result.getKind()) {
+            case VALID -> ResponseEntity.ok(result.toBody());
+            case INVALID -> ResponseEntity.status(401).body(result.toBody());
+            case ERROR -> ResponseEntity.status(500).body(result.toBody());
+        };
     }
 
     @Operation(

@@ -34,6 +34,13 @@ public class TaxService {
         return respuesta;
     }
 
+    public TaxCalculationResult calcularPesosRequest(double montoARS) {
+        if (montoARS <= 0) {
+            return TaxCalculationResult.invalid("El monto en ARS no puede ser cero o negativo.");
+        }
+        return TaxCalculationResult.okArs(calcularPesos(montoARS));
+    }
+
     /**
      * Recibe un monto en dolares y devuelve el calculo ya convertido a pesos,
      * aunque la respuesta quede etiquetada como USD: el dashboard lee
@@ -51,6 +58,13 @@ public class TaxService {
         respuesta.setIVA(iva);
         respuesta.setTotalFinal(montoEnPesos + iva);
         return respuesta;
+    }
+
+    public TaxCalculationResult calcularUsdRequest(double montoUSD) {
+        if (montoUSD <= 0) {
+            return TaxCalculationResult.invalid("El monto en USD no puede ser cero.");
+        }
+        return TaxCalculationResult.okUsd(calcularUSD(montoUSD));
     }
 
     private double calcularIva(double montoBase) {

@@ -99,6 +99,23 @@ public class UserService {
     }
 
     /**
+     * Registro con validacion de campos obligatorios y mapeo de conflictos.
+     */
+    public RegisterResult registerFromRequest(RegistrerRequest dto) {
+        if (dto.getName() == null || dto.getEmail() == null || dto.getPassword() == null || dto.getAlias() == null) {
+            return RegisterResult.validation("Todos los campos son obligatorios.");
+        }
+        try {
+            register(dto);
+            return RegisterResult.ok();
+        } catch (RegistrationConflictException e) {
+            return RegisterResult.conflict(RegistrationConflictMessages.format(e.getCodes()));
+        } catch (Exception e) {
+            return RegisterResult.error();
+        }
+    }
+
+    /**
      * Datos de perfil del autenticado (User + cuenta ARS primaria).
      */
     public Optional<UserDataView> getUserData(User user) {
@@ -221,6 +238,19 @@ public class UserService {
         }
     }
 
+    public ResendEmailResult resendValidationEmailRequest(String email) {
+        try {
+            if (email == null || email.trim().isEmpty()) {
+                return ResendEmailResult.emailRequired();
+            }
+            resendValidationEmail(email.trim());
+            return ResendEmailResult.ok(
+                    "Si el email corresponde a una cuenta pendiente de validación, te enviamos un nuevo enlace.");
+        } catch (Exception e) {
+            return ResendEmailResult.error();
+        }
+    }
+
 
     public Optional<User> findUserByAlias(String alias){
         return userRepository.findByAlias(alias);
@@ -232,6 +262,17 @@ public class UserService {
      * @return true si el cambio fue exitoso, false en caso contrario
      */
     @Transactional
+    /**
+     * Cambio de username/alias del autenticado (incluye validacion de vacio del HTTP actual).
+     */
+    public UsernameChangeResult changeUsername(Long userId, String newUsername) {
+        if (newUsername == null || newUsername.trim().isEmpty()) {
+            return UsernameChangeResult.empty();
+        }
+        boolean ok = cambiarAliasYUsername(userId, newUsername.trim());
+        return ok ? UsernameChangeResult.ok() : UsernameChangeResult.fail();
+    }
+
     public boolean cambiarAliasYUsername(Long userId, String nuevoAlias) {
         logger.info("Cambiando alias para usuario: {}", userId);
 

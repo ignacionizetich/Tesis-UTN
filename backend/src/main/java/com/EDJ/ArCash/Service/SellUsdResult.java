@@ -3,9 +3,11 @@ package com.EDJ.ArCash.Service;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.EDJ.ArCash.DTO.AuthDTO.SellUsdResponse;
+
 /**
- * Resultado de sellUsd. El controller mapea el exito a SellUsdResponse;
- * el fail se expone como map minimo {success, message}.
+ * Resultado de sellUsd. El controller mapea Kind; el JSON de exito/error
+ * se arma desde aca para no duplicar campos en el controller.
  */
 public final class SellUsdResult {
 
@@ -91,6 +93,21 @@ public final class SellUsdResult {
 
     public Double getNewBalanceUsd() {
         return newBalanceUsd;
+    }
+
+    public SellUsdResponse toResponse() {
+        return new SellUsdResponse(
+                true,
+                message,
+                amountUsd,
+                amountArs,
+                exchangeRate,
+                taxAmount,
+                taxPercentage,
+                totalDebitado,
+                newBalanceArs,
+                newBalanceUsd
+        );
     }
 
     public Map<String, Object> toErrorMap() {

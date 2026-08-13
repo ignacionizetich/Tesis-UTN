@@ -201,7 +201,8 @@ class FavoriteContactControllerTest {
     @Test
     @DisplayName("La edicion exitosa devuelve 200 con status SUCCESS")
     void updateDevuelveSuccess() throws Exception {
-        when(favoriteContactService.updateFavoriteContact(eq(77L), eq(ID_USUARIO), any(), any())).thenReturn(true);
+        when(favoriteContactService.updateFavoriteContactForOwner(eq(77L), eq(ID_USUARIO), any(), any()))
+                .thenReturn(com.EDJ.ArCash.Service.FavoriteUpdateResult.ok());
 
         mockMvc.perform(put("/api/favorites/update/77")
                         .with(comoUsuarioAutenticado())
@@ -215,6 +216,9 @@ class FavoriteContactControllerTest {
     @Test
     @DisplayName("La edicion sin ningun campo devuelve 400")
     void updateSinCamposDevuelveBadRequest() throws Exception {
+        when(favoriteContactService.updateFavoriteContactForOwner(eq(77L), eq(ID_USUARIO), any(), any()))
+                .thenReturn(com.EDJ.ArCash.Service.FavoriteUpdateResult.badRequest());
+
         mockMvc.perform(put("/api/favorites/update/77")
                         .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -222,14 +226,13 @@ class FavoriteContactControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("ERROR"))
                 .andExpect(jsonPath("$.message").value("Debe proporcionar al menos un campo para actualizar"));
-
-        verify(favoriteContactService, never()).updateFavoriteContact(anyLong(), anyLong(), any(), any());
     }
 
     @Test
     @DisplayName("Si el servicio devuelve false la edicion sale con 404, no con 400")
     void updateDevuelveNotFoundSiElServicioRechaza() throws Exception {
-        when(favoriteContactService.updateFavoriteContact(eq(77L), eq(ID_USUARIO), any(), any())).thenReturn(false);
+        when(favoriteContactService.updateFavoriteContactForOwner(eq(77L), eq(ID_USUARIO), any(), any()))
+                .thenReturn(com.EDJ.ArCash.Service.FavoriteUpdateResult.notFound());
 
         mockMvc.perform(put("/api/favorites/update/77")
                         .with(comoUsuarioAutenticado())

@@ -9,6 +9,7 @@ import com.EDJ.ArCash.Service.AccountBalanceView;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.AliasChangeResult;
 import com.EDJ.ArCash.Service.DepositResult;
+import com.EDJ.ArCash.Service.OpenUsdResult;
 import com.EDJ.ArCash.Service.QrDataResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -299,7 +300,7 @@ class AccountControllerTest {
     @DisplayName("Abrir cuenta en dolares usa el usuario del principal")
     void abrirCuentaUsdDevuelveLosDatosDeLaCuentaNueva() throws Exception {
         when(accountService.openUsdAccount(any(User.class)))
-                .thenAnswer(invocacion -> cuentaUsd(invocacion.getArgument(0)));
+                .thenAnswer(invocacion -> OpenUsdResult.ok(cuentaUsd(invocacion.getArgument(0))));
 
         mockMvc.perform(post("/api/accounts/usd").with(comoUsuarioAutenticado()))
                 .andExpect(status().isOk())
@@ -314,7 +315,7 @@ class AccountControllerTest {
     @DisplayName("Tener ya una cuenta en dolares termina en 409 (conflicto)")
     void abrirSegundaCuentaUsdDevuelve409() throws Exception {
         when(accountService.openUsdAccount(any(User.class)))
-                .thenThrow(new IllegalStateException("El usuario ya cuenta con una cuenta en dolares"));
+                .thenReturn(OpenUsdResult.alreadyExists());
 
         mockMvc.perform(post("/api/accounts/usd").with(comoUsuarioAutenticado()))
                 .andExpect(status().isConflict())

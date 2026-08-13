@@ -2,6 +2,7 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.AuthDTO.TaxPesosResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TaxUsdResponse;
+import com.EDJ.ArCash.Service.TaxCalculationResult;
 import com.EDJ.ArCash.Service.TaxService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -10,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +18,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(value = "/api/impuestos", produces = "application/json")
 @Tag(name = "Impuestos", description = "Operaciones para el cálculo de impuestos en ARS y USD")
 public class TaxController {
-    @Autowired
-    private TaxService taxService;
+
+    private final TaxService taxService;
+
+    public TaxController(TaxService taxService) {
+        this.taxService = taxService;
+    }
 
     @Operation(
             summary = "Calcular impuestos en ARS",
@@ -46,14 +50,12 @@ public class TaxController {
     public ResponseEntity<?> calcularARS(
             @Parameter(description = "Monto en ARS", required = true, example = "10000")
             @RequestParam double montoARS) {
-
-        if (montoARS <= 0) {
-            return ResponseEntity.badRequest().body(
-                    java.util.Map.of("error", "El monto en ARS no puede ser cero o negativo.")
-            );
-        }
-        TaxPesosResponse resultado = taxService.calcularPesos(montoARS);
-        return ResponseEntity.ok(resultado);
+        TaxCalculationResult result = taxService.calcularPesosRequest(montoARS);
+        return switch (result.getKind()) {
+            case OK_ARS -> ResponseEntity.ok(result.getArs());
+            case INVALID -> ResponseEntity.badRequest().body(result.toErrorBody());
+            case OK_USD -> throw new IllegalStateException("resultado inesperado");
+        };
     }
 
     @Operation(
@@ -81,13 +83,11 @@ public class TaxController {
     public ResponseEntity<?> calcularUSD(
             @Parameter(description = "Monto en USD", required = true, example = "100")
             @RequestParam double montoUSD) {
-        if (montoUSD <= 0) {
-            return ResponseEntity.badRequest().body(
-                    java.util.Map.of("error", "El monto en USD no puede ser cero.")
-            );
-        }
-
-        TaxUsdResponse taxUsdResponse = taxService.calcularUSD(montoUSD);
-        return ResponseEntity.ok(taxUsdResponse);
+        TaxCalculationResult result = taxService.calcularUsdRequest(montoUSD);
+        return switch (result.getKind()) {
+            case OK_USD -> ResponseEntity.ok(result.getUsd());
+            case INVALID -> ResponseEntity.badRequest().body(result.toErrorBody());
+            case OK_ARS -> throw new IllegalStateException("resultado inesperado");
+        };
     }
 }

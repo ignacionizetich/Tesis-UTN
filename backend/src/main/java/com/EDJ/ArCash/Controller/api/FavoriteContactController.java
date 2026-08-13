@@ -6,6 +6,7 @@ import com.EDJ.ArCash.DTO.AuthDTO.UpdateFavoriteContactRequest;
 import com.EDJ.ArCash.Models.FavoriteContact;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.FavoriteContactService;
+import com.EDJ.ArCash.Service.FavoriteUpdateResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -161,30 +162,14 @@ public class FavoriteContactController {
             return createUnauthorizedResponse("Token no proporcionado o inválido");
         }
 
-        Long userId = principal.getUser().getId();
+        FavoriteUpdateResult result = favoriteContactService.updateFavoriteContactForOwner(
+                contactId, principal.getUser().getId(), request.contactAlias(), request.description());
 
-        if ((request.contactAlias() == null || request.contactAlias().trim().isEmpty()) &&
-                request.description() == null) {
-            return ResponseEntity.status(400).body(Map.of(
-                    "status", "ERROR",
-                    "message", "Debe proporcionar al menos un campo para actualizar"
-            ));
-        }
-
-        boolean success = favoriteContactService.updateFavoriteContact(
-                contactId, userId, request.contactAlias(), request.description());
-
-        if (success) {
-            return ResponseEntity.ok(Map.of(
-                    "status", "SUCCESS",
-                    "message", "Contacto favorito actualizado correctamente"
-            ));
-        }
-
-        return ResponseEntity.status(404).body(Map.of(
-                "status", "ERROR",
-                "message", "No se pudo actualizar el contacto. Verifique que existe y le pertenece."
-        ));
+        return switch (result.getKind()) {
+            case OK -> ResponseEntity.ok(result.toBody("SUCCESS"));
+            case BAD_REQUEST -> ResponseEntity.status(400).body(result.toBody("ERROR"));
+            case NOT_FOUND -> ResponseEntity.status(404).body(result.toBody("ERROR"));
+        };
     }
 
     private List<FavoriteContactResponse> toResponse(List<FavoriteContact> favorites) {

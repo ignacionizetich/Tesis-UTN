@@ -100,10 +100,10 @@ class AccountServiceTest {
         User user = usuario();
         when(accountRepository.existsByUserAndAccountType(user, Currency.USD)).thenReturn(true);
 
-        IllegalStateException error = assertThrows(IllegalStateException.class,
-                () -> accountService.openUsdAccount(user));
+        OpenUsdResult result = accountService.openUsdAccount(user);
 
-        assertEquals("El usuario ya cuenta con una cuenta en dolares", error.getMessage());
+        assertEquals(OpenUsdResult.Kind.ALREADY_EXISTS, result.getKind());
+        assertEquals("El usuario ya cuenta con una cuenta en dolares", result.getMessage());
         verify(accountRepository, never()).save(any());
     }
 
@@ -113,9 +113,9 @@ class AccountServiceTest {
         User user = usuario();
         when(accountRepository.existsByUserAndAccountType(user, Currency.USD)).thenReturn(false);
 
-        Account cuenta = accountService.openUsdAccount(user);
+        OpenUsdResult result = accountService.openUsdAccount(user);
 
-        assertEquals(Currency.USD, cuenta.getAccountType());
+        assertEquals(OpenUsdResult.Kind.OK, result.getKind());
         verify(accountRepository).save(any());
     }
 

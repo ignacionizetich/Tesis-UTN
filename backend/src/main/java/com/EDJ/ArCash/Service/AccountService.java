@@ -70,14 +70,16 @@ public class AccountService {
         return account;
     }
 
-    public Account openUsdAccount(User user){
-        boolean alreadyHasAccount = accountRepository.existsByUserAndAccountType(user, Currency.USD);
-
-        if(alreadyHasAccount){
-            throw new IllegalStateException("El usuario ya cuenta con una cuenta en dolares");
+    public OpenUsdResult openUsdAccount(User user) {
+        try {
+            boolean alreadyHasAccount = accountRepository.existsByUserAndAccountType(user, Currency.USD);
+            if (alreadyHasAccount) {
+                return OpenUsdResult.alreadyExists();
+            }
+            return OpenUsdResult.ok(createUsdAccount(user));
+        } catch (Exception e) {
+            return OpenUsdResult.error(e.getMessage());
         }
-
-        return createUsdAccount(user);
     }
 
     /**

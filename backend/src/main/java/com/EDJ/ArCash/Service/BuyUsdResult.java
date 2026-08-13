@@ -3,9 +3,11 @@ package com.EDJ.ArCash.Service;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.EDJ.ArCash.DTO.AuthDTO.BuyUsdResponse;
+
 /**
- * Resultado de buyUsd. El controller mapea el exito a BuyUsdResponse;
- * el fail se expone como map minimo {success, message} para no cambiar el JSON.
+ * Resultado de buyUsd. El controller mapea Kind; el JSON de exito/error
+ * se arma desde aca para no duplicar campos en el controller.
  */
 public final class BuyUsdResult {
 
@@ -91,6 +93,21 @@ public final class BuyUsdResult {
 
     public Double getNewBalanceUsd() {
         return newBalanceUsd;
+    }
+
+    public BuyUsdResponse toResponse() {
+        return new BuyUsdResponse(
+                true,
+                message,
+                amountArs,
+                amountUsd,
+                exchangeRate,
+                taxAmount,
+                taxPercentage,
+                totalDebitado,
+                newBalanceArs,
+                newBalanceUsd
+        );
     }
 
     /** Cuerpo de error HTTP actual: solo success + message. */

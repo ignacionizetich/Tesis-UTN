@@ -1,8 +1,9 @@
 package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.NonAuthDTO.RegistrerRequest;
+import com.EDJ.ArCash.Service.RegisterResult;
 import com.EDJ.ArCash.Service.RegistrationConflictCode;
-import com.EDJ.ArCash.Service.RegistrationConflictException;
+import com.EDJ.ArCash.Service.RegistrationConflictMessages;
 import com.EDJ.ArCash.Service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,10 +18,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,6 +42,9 @@ class UserControllerTest {
     @Test
     @DisplayName("Campos obligatorios faltantes: 400 Todos los campos son obligatorios")
     void camposObligatoriosFaltantes() throws Exception {
+        when(userService.registerFromRequest(any(RegistrerRequest.class)))
+                .thenReturn(RegisterResult.validation("Todos los campos son obligatorios."));
+
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -50,15 +53,14 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Todos los campos son obligatorios."));
-
-        verify(userService, never()).register(any());
     }
 
     @Test
     @DisplayName("Conflicto de email: mensaje ES singular")
     void conflictoEmail() throws Exception {
-        doThrow(new RegistrationConflictException(List.of(RegistrationConflictCode.EMAIL_ALREADY_EXISTS)))
-                .when(userService).register(any(RegistrerRequest.class));
+        when(userService.registerFromRequest(any(RegistrerRequest.class)))
+                .thenReturn(RegisterResult.conflict(
+                        RegistrationConflictMessages.format(List.of(RegistrationConflictCode.EMAIL_ALREADY_EXISTS))));
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -71,8 +73,9 @@ class UserControllerTest {
     @Test
     @DisplayName("Conflicto de alias: mensaje ES singular")
     void conflictoAlias() throws Exception {
-        doThrow(new RegistrationConflictException(List.of(RegistrationConflictCode.ALIAS_ALREADY_EXISTS)))
-                .when(userService).register(any(RegistrerRequest.class));
+        when(userService.registerFromRequest(any(RegistrerRequest.class)))
+                .thenReturn(RegisterResult.conflict(
+                        RegistrationConflictMessages.format(List.of(RegistrationConflictCode.ALIAS_ALREADY_EXISTS))));
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -84,8 +87,9 @@ class UserControllerTest {
     @Test
     @DisplayName("Conflicto de DNI: mensaje ES singular")
     void conflictoDni() throws Exception {
-        doThrow(new RegistrationConflictException(List.of(RegistrationConflictCode.DNI_ALREADY_EXISTS)))
-                .when(userService).register(any(RegistrerRequest.class));
+        when(userService.registerFromRequest(any(RegistrerRequest.class)))
+                .thenReturn(RegisterResult.conflict(
+                        RegistrationConflictMessages.format(List.of(RegistrationConflictCode.DNI_ALREADY_EXISTS))));
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -97,10 +101,10 @@ class UserControllerTest {
     @Test
     @DisplayName("Dos conflictos: mensaje con 'y'")
     void dosConflictos() throws Exception {
-        doThrow(new RegistrationConflictException(List.of(
+        when(userService.registerFromRequest(any(RegistrerRequest.class)))
+                .thenReturn(RegisterResult.conflict(RegistrationConflictMessages.format(List.of(
                         RegistrationConflictCode.EMAIL_ALREADY_EXISTS,
-                        RegistrationConflictCode.ALIAS_ALREADY_EXISTS)))
-                .when(userService).register(any(RegistrerRequest.class));
+                        RegistrationConflictCode.ALIAS_ALREADY_EXISTS))));
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -113,11 +117,11 @@ class UserControllerTest {
     @Test
     @DisplayName("Tres conflictos: mensaje con comas y 'y'")
     void tresConflictos() throws Exception {
-        doThrow(new RegistrationConflictException(List.of(
+        when(userService.registerFromRequest(any(RegistrerRequest.class)))
+                .thenReturn(RegisterResult.conflict(RegistrationConflictMessages.format(List.of(
                         RegistrationConflictCode.EMAIL_ALREADY_EXISTS,
                         RegistrationConflictCode.ALIAS_ALREADY_EXISTS,
-                        RegistrationConflictCode.DNI_ALREADY_EXISTS)))
-                .when(userService).register(any(RegistrerRequest.class));
+                        RegistrationConflictCode.DNI_ALREADY_EXISTS))));
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -130,7 +134,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Registro exitoso: 200 y mensaje de activacion por email")
     void registroExitoso() throws Exception {
-        doNothing().when(userService).register(any(RegistrerRequest.class));
+        when(userService.registerFromRequest(any(RegistrerRequest.class))).thenReturn(RegisterResult.ok());
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)

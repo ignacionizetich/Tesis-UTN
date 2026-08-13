@@ -49,5 +49,16 @@ public final class QrDataResult {
             String email,
             String currency
     ) {
+        public java.util.Map<String, Object> toResponseMap() {
+            java.util.Map<String, Object> qrData = new java.util.HashMap<>();
+            qrData.put("walletApp", walletApp);
+            qrData.put("accountId", accountId);
+            qrData.put("accountAlias", accountAlias);
+            qrData.put("receiverName", receiverName);
+            qrData.put("dni", dni);
+            qrData.put("email", email);
+            qrData.put("currency", currency);
+            return qrData;
+        }
     }
 }

@@ -10,11 +10,9 @@ import com.EDJ.ArCash.DTO.AuthDTO.TransactionResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TranscationRequest;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.AccountService;
-import com.EDJ.ArCash.Service.BuyUsdResult;
 import com.EDJ.ArCash.Service.OwnedBuyUsdResult;
 import com.EDJ.ArCash.Service.OwnedSellUsdResult;
 import com.EDJ.ArCash.Service.OwnedTransferResult;
-import com.EDJ.ArCash.Service.SellUsdResult;
 import com.EDJ.ArCash.Service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -144,25 +142,9 @@ public class TransactionController {
                 principal.getUser().getId(), accountArsId, accountUsdId, request.getAmountArs());
 
         return switch (owned.getKind()) {
-            case ARS_NOT_FOUND -> ResponseEntity.status(404)
-                    .body(Map.of("success", false, "message", "Cuenta en pesos no encontrada"));
-            case FORBIDDEN -> ResponseEntity.status(403)
-                    .body(Map.of("success", false, "message", "No tiene permiso para operar esta cuenta"));
-            case OK -> {
-                BuyUsdResult result = owned.getResult();
-                yield ResponseEntity.ok(new BuyUsdResponse(
-                        true,
-                        result.getMessage(),
-                        result.getAmountArs(),
-                        result.getAmountUsd(),
-                        result.getExchangeRate(),
-                        result.getTaxAmount(),
-                        result.getTaxPercentage(),
-                        result.getTotalDebitado(),
-                        result.getNewBalanceArs(),
-                        result.getNewBalanceUsd()
-                ));
-            }
+            case ARS_NOT_FOUND -> ResponseEntity.status(404).body(owned.toErrorBody());
+            case FORBIDDEN -> ResponseEntity.status(403).body(owned.toErrorBody());
+            case OK -> ResponseEntity.ok(owned.getResult().toResponse());
             case FAIL -> ResponseEntity.status(400).body(owned.getResult().toErrorMap());
         };
     }
@@ -219,25 +201,9 @@ public class TransactionController {
                 principal.getUser().getId(), accountUsdId, accountArsId, request.getAmountUsd());
 
         return switch (owned.getKind()) {
-            case USD_NOT_FOUND -> ResponseEntity.status(404)
-                    .body(Map.of("success", false, "message", "Cuenta en dólares no encontrada"));
-            case FORBIDDEN -> ResponseEntity.status(403)
-                    .body(Map.of("success", false, "message", "No tiene permiso para operar esta cuenta"));
-            case OK -> {
-                SellUsdResult result = owned.getResult();
-                yield ResponseEntity.ok(new SellUsdResponse(
-                        true,
-                        result.getMessage(),
-                        result.getAmountUsd(),
-                        result.getAmountArs(),
-                        result.getExchangeRate(),
-                        result.getTaxAmount(),
-                        result.getTaxPercentage(),
-                        result.getTotalDebitado(),
-                        result.getNewBalanceArs(),
-                        result.getNewBalanceUsd()
-                ));
-            }
+            case USD_NOT_FOUND -> ResponseEntity.status(404).body(owned.toErrorBody());
+            case FORBIDDEN -> ResponseEntity.status(403).body(owned.toErrorBody());
+            case OK -> ResponseEntity.ok(owned.getResult().toResponse());
             case FAIL -> ResponseEntity.status(400).body(owned.getResult().toErrorMap());
         };
     }
