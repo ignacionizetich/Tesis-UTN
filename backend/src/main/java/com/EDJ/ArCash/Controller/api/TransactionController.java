@@ -8,15 +8,14 @@ import com.EDJ.ArCash.DTO.AuthDTO.SellUsdResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TransactionDTO;
 import com.EDJ.ArCash.DTO.AuthDTO.TransactionResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TranscationRequest;
-import com.EDJ.ArCash.Models.Account;
-import com.EDJ.ArCash.Models.FavoriteContact;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.BuyUsdResult;
-import com.EDJ.ArCash.Service.FavoriteContactService;
+import com.EDJ.ArCash.Service.OwnedBuyUsdResult;
+import com.EDJ.ArCash.Service.OwnedSellUsdResult;
+import com.EDJ.ArCash.Service.OwnedTransferResult;
 import com.EDJ.ArCash.Service.SellUsdResult;
 import com.EDJ.ArCash.Service.TransactionService;
-import com.EDJ.ArCash.Service.TransferOperationResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,13 +23,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,15 +36,15 @@ import java.util.Optional;
 @Tag(name = "Transacciones", description = "Operaciones relacionadas con transferencias y consultas de cuentas")
 public class TransactionController {
 
-    @Autowired
-    private AccountService accountService;
-    @Autowired
-    private TransactionService transactionService;
-    @Autowired
-    private FavoriteContactService favoriteContactService;
+    private final AccountService accountService;
+    private final TransactionService transactionService;
+
+    public TransactionController(AccountService accountService, TransactionService transactionService) {
+        this.accountService = accountService;
+        this.transactionService = transactionService;
+    }
 
     @PostMapping("/{id1}/transfer/{id2}")
-    @Transactional
     public ResponseEntity<TransactionResponse> transaction(
             @Parameter(description = "ID de la cuenta origen", required = true) @PathVariable Long id1,
             @Parameter(description = "ID de la cuenta destino", required = true) @PathVariable Long id2,
@@ -60,80 +56,34 @@ public class TransactionController {
             @RequestBody TranscationRequest transcationRequest,
             @AuthenticationPrincipal CustomUserDetails principal) {
 
-        Optional<Account> optionalOrigen = accountService.findAccountByID(id1);
-        Optional<Account> optionalDestination = accountService.findAccountByID(id2);
-
-        if (optionalOrigen.isEmpty() || optionalDestination.isEmpty()) {
-            return ResponseEntity.status(404).body(new TransactionResponse(false, "No se pudo encontrar la cuenta de orig."));
-        }
-
         // Inalcanzable en produccion: SecurityConfig.anyRequest().authenticated().
         // Se preserva para tests con addFilters=false (mismo criterio Fase 4).
         if (principal == null) {
             return ResponseEntity.status(498).body(new TransactionResponse(false, "Token no valido"));
         }
 
-        Long userId = principal.getUser().getId();
-        Account account = optionalOrigen.get();
+        OwnedTransferResult result = transactionService.transferForOwner(
+                principal.getUser().getId(), id1, id2, transcationRequest.getBalance());
 
-        if (!account.getUser().getId().equals(userId)) {
-            return ResponseEntity.status(403).body(new TransactionResponse(false, "No tiene permiso para operar esta cuenta"));
-        }
-
-        TransferOperationResult result = transactionService.transactionWithDetails(id1, id2, transcationRequest.getBalance());
-
-        if (result.isSuccess()) {
-            updateLastUsedForFavoriteContact(userId, id2);
-            return ResponseEntity.ok(new TransactionResponse(true, "Transferencia realizada correctamente"));
-        } else {
-            String errorMessage = result.getMessage() != null ?
-                    result.getMessage() : "Not enough cash, stranger.";
-            return ResponseEntity.status(400).body(new TransactionResponse(false, errorMessage));
-        }
-    }
-
-    private void updateLastUsedForFavoriteContact(Long userId, Long destinationAccountId) {
-        try {
-            List<FavoriteContact> userFavorites = favoriteContactService.getFavoriteContactsByUser(userId);
-
-            Optional<FavoriteContact> matchingFavorite = userFavorites.stream()
-                    .filter(favorite -> favorite.getFavoriteAccount().getIdAccount().equals(destinationAccountId))
-                    .findFirst();
-
-            if (matchingFavorite.isPresent()) {
-                favoriteContactService.updateLastUsedForContact(matchingFavorite.get().getId());
-            }
-        } catch (Exception e) {
-            System.out.println("Error actualizando lastUsed para contacto favorito: " + e.getMessage());
-        }
+        return switch (result.getKind()) {
+            case OK -> ResponseEntity.ok(new TransactionResponse(true, result.getMessage()));
+            case ACCOUNT_NOT_FOUND -> ResponseEntity.status(404)
+                    .body(new TransactionResponse(false, result.getMessage()));
+            case FORBIDDEN -> ResponseEntity.status(403)
+                    .body(new TransactionResponse(false, result.getMessage()));
+            case FAIL -> ResponseEntity.status(400)
+                    .body(new TransactionResponse(false, result.getMessage()));
+        };
     }
 
     @GetMapping("/search/{input}")
     public ResponseEntity<?> searchAccount(
             @Parameter(description = "Alias o CVU de la cuenta", required = true) @PathVariable String input) {
-        Optional<Account> account = accountService.encontrarCuentaPorAlias(input);
-        if (account.isEmpty()) {
-            account = accountService.encontrarCuentaPorCvu(input);
+        Optional<AccountSearchResponse> found = accountService.searchByAliasOrCvu(input);
+        if (found.isPresent()) {
+            return ResponseEntity.ok(found.get());
         }
-
-        if (account.isPresent()) {
-            Account acc = account.get();
-            AccountSearchResponse.UserSummary user = new AccountSearchResponse.UserSummary(
-                    acc.getUser().getName(),
-                    acc.getUser().getLastName(),
-                    acc.getUser().getDni()
-            );
-            AccountSearchResponse result = new AccountSearchResponse(
-                    acc.getIdAccount(),
-                    acc.getAccountNickname(),
-                    acc.getAccountCvu(),
-                    acc.getAccountType() != null ? acc.getAccountType().name() : null,
-                    user
-            );
-            return ResponseEntity.ok(result);
-        } else {
-            return ResponseEntity.status(404).body(Map.of("error", "Cuenta no encontrada."));
-        }
+        return ResponseEntity.status(404).body(Map.of("error", "Cuenta no encontrada."));
     }
 
     @GetMapping("/{id}/getTransactions")
@@ -190,38 +140,31 @@ public class TransactionController {
                     .body(Map.of("success", false, "message", "Token no proporcionado o inválido"));
         }
 
-        Long userId = principal.getUser().getId();
+        OwnedBuyUsdResult owned = transactionService.buyUsdForOwner(
+                principal.getUser().getId(), accountArsId, accountUsdId, request.getAmountArs());
 
-        Optional<Account> accountArsOpt = accountService.findAccountByID(accountArsId);
-        if (accountArsOpt.isEmpty()) {
-            return ResponseEntity.status(404)
+        return switch (owned.getKind()) {
+            case ARS_NOT_FOUND -> ResponseEntity.status(404)
                     .body(Map.of("success", false, "message", "Cuenta en pesos no encontrada"));
-        }
-
-        Account accountArs = accountArsOpt.get();
-        if (!accountArs.getUser().getId().equals(userId)) {
-            return ResponseEntity.status(403)
+            case FORBIDDEN -> ResponseEntity.status(403)
                     .body(Map.of("success", false, "message", "No tiene permiso para operar esta cuenta"));
-        }
-
-        BuyUsdResult result = transactionService.buyUsd(accountArsId, accountUsdId, request.getAmountArs());
-
-        if (result.isSuccess()) {
-            return ResponseEntity.ok(new BuyUsdResponse(
-                    true,
-                    result.getMessage(),
-                    result.getAmountArs(),
-                    result.getAmountUsd(),
-                    result.getExchangeRate(),
-                    result.getTaxAmount(),
-                    result.getTaxPercentage(),
-                    result.getTotalDebitado(),
-                    result.getNewBalanceArs(),
-                    result.getNewBalanceUsd()
-            ));
-        } else {
-            return ResponseEntity.status(400).body(result.toErrorMap());
-        }
+            case OK -> {
+                BuyUsdResult result = owned.getResult();
+                yield ResponseEntity.ok(new BuyUsdResponse(
+                        true,
+                        result.getMessage(),
+                        result.getAmountArs(),
+                        result.getAmountUsd(),
+                        result.getExchangeRate(),
+                        result.getTaxAmount(),
+                        result.getTaxPercentage(),
+                        result.getTotalDebitado(),
+                        result.getNewBalanceArs(),
+                        result.getNewBalanceUsd()
+                ));
+            }
+            case FAIL -> ResponseEntity.status(400).body(owned.getResult().toErrorMap());
+        };
     }
 
     @Operation(
@@ -272,37 +215,30 @@ public class TransactionController {
                     .body(Map.of("success", false, "message", "Token no proporcionado o inválido"));
         }
 
-        Long userId = principal.getUser().getId();
+        OwnedSellUsdResult owned = transactionService.sellUsdForOwner(
+                principal.getUser().getId(), accountUsdId, accountArsId, request.getAmountUsd());
 
-        Optional<Account> accountUsdOpt = accountService.findAccountByID(accountUsdId);
-        if (accountUsdOpt.isEmpty()) {
-            return ResponseEntity.status(404)
+        return switch (owned.getKind()) {
+            case USD_NOT_FOUND -> ResponseEntity.status(404)
                     .body(Map.of("success", false, "message", "Cuenta en dólares no encontrada"));
-        }
-
-        Account accountUsd = accountUsdOpt.get();
-        if (!accountUsd.getUser().getId().equals(userId)) {
-            return ResponseEntity.status(403)
+            case FORBIDDEN -> ResponseEntity.status(403)
                     .body(Map.of("success", false, "message", "No tiene permiso para operar esta cuenta"));
-        }
-
-        SellUsdResult result = transactionService.sellUsd(accountUsdId, accountArsId, request.getAmountUsd());
-
-        if (result.isSuccess()) {
-            return ResponseEntity.ok(new SellUsdResponse(
-                    true,
-                    result.getMessage(),
-                    result.getAmountUsd(),
-                    result.getAmountArs(),
-                    result.getExchangeRate(),
-                    result.getTaxAmount(),
-                    result.getTaxPercentage(),
-                    result.getTotalDebitado(),
-                    result.getNewBalanceArs(),
-                    result.getNewBalanceUsd()
-            ));
-        } else {
-            return ResponseEntity.status(400).body(result.toErrorMap());
-        }
+            case OK -> {
+                SellUsdResult result = owned.getResult();
+                yield ResponseEntity.ok(new SellUsdResponse(
+                        true,
+                        result.getMessage(),
+                        result.getAmountUsd(),
+                        result.getAmountArs(),
+                        result.getExchangeRate(),
+                        result.getTaxAmount(),
+                        result.getTaxPercentage(),
+                        result.getTotalDebitado(),
+                        result.getNewBalanceArs(),
+                        result.getNewBalanceUsd()
+                ));
+            }
+            case FAIL -> ResponseEntity.status(400).body(owned.getResult().toErrorMap());
+        };
     }
 }

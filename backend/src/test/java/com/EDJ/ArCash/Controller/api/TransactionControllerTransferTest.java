@@ -1,17 +1,13 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Credentials;
-import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.AccountService;
-import com.EDJ.ArCash.Service.FavoriteContactService;
+import com.EDJ.ArCash.Service.OwnedTransferResult;
 import com.EDJ.ArCash.Service.TransactionService;
-import com.EDJ.ArCash.Service.TransferOperationResult;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +22,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -58,14 +50,6 @@ class TransactionControllerTransferTest {
     @MockitoBean
     private TransactionService transactionService;
 
-    @MockitoBean
-    private FavoriteContactService favoriteContactService;
-
-    @BeforeEach
-    void setUp() {
-        when(favoriteContactService.getFavoriteContactsByUser(ID_USUARIO)).thenReturn(List.of());
-    }
-
     @AfterEach
     void limpiarSecurityContext() {
         TestSecurityContextHolder.clearContext();
@@ -73,11 +57,10 @@ class TransactionControllerTransferTest {
     }
 
     @Test
-    @DisplayName("C1 Self-transfer: si el service devuelve success=true (aunque sea FAILED), HTTP 200")
+    @DisplayName("C1 Self-transfer: si el service devuelve OK, HTTP 200")
     void selfTransferConSuccessTrueDevuelve200() throws Exception {
-        when(accountService.findAccountByID(ID_ORIGEN)).thenReturn(Optional.of(cuenta(ID_ORIGEN)));
-        when(transactionService.transactionWithDetails(eq(ID_ORIGEN), eq(ID_ORIGEN), eq(100.0)))
-                .thenReturn(TransferOperationResult.ok());
+        when(transactionService.transferForOwner(ID_USUARIO, ID_ORIGEN, ID_ORIGEN, 100.0))
+                .thenReturn(OwnedTransferResult.ok());
 
         mockMvc.perform(post("/api/transactions/{id1}/transfer/{id2}", ID_ORIGEN, ID_ORIGEN)
                         .with(comoUsuarioAutenticado())
@@ -87,17 +70,14 @@ class TransactionControllerTransferTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Transferencia realizada correctamente"));
 
-        verify(transactionService).transactionWithDetails(ID_ORIGEN, ID_ORIGEN, 100.0);
+        verify(transactionService).transferForOwner(ID_USUARIO, ID_ORIGEN, ID_ORIGEN, 100.0);
     }
 
     @Test
-    @DisplayName("C2 Transfer: success=true → 200; success=false → 400 con message del result")
+    @DisplayName("C2 Transfer: OK → 200; FAIL → 400 con message del result")
     void transferOkYFailContratoTipado() throws Exception {
-        when(accountService.findAccountByID(ID_ORIGEN)).thenReturn(Optional.of(cuenta(ID_ORIGEN)));
-        when(accountService.findAccountByID(ID_DESTINO)).thenReturn(Optional.of(cuenta(ID_DESTINO)));
-
-        when(transactionService.transactionWithDetails(ID_ORIGEN, ID_DESTINO, 50.0))
-                .thenReturn(TransferOperationResult.ok());
+        when(transactionService.transferForOwner(ID_USUARIO, ID_ORIGEN, ID_DESTINO, 50.0))
+                .thenReturn(OwnedTransferResult.ok());
 
         mockMvc.perform(post("/api/transactions/{id1}/transfer/{id2}", ID_ORIGEN, ID_DESTINO)
                         .with(comoUsuarioAutenticado())
@@ -107,8 +87,8 @@ class TransactionControllerTransferTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Transferencia realizada correctamente"));
 
-        when(transactionService.transactionWithDetails(ID_ORIGEN, ID_DESTINO, 999.0))
-                .thenReturn(TransferOperationResult.fail("Saldo insuficiente o error en la transacción"));
+        when(transactionService.transferForOwner(ID_USUARIO, ID_ORIGEN, ID_DESTINO, 999.0))
+                .thenReturn(OwnedTransferResult.fail("Saldo insuficiente o error en la transacción"));
 
         mockMvc.perform(post("/api/transactions/{id1}/transfer/{id2}", ID_ORIGEN, ID_DESTINO)
                         .with(comoUsuarioAutenticado())
@@ -136,13 +116,5 @@ class TransactionControllerTransferTest {
         user.setPermissions(Permissions.USER);
         user.setCredentials(new Credentials(user, "ana.gomez", "irrelevante"));
         return user;
-    }
-
-    private Account cuenta(long id) {
-        Account account = new Account();
-        account.setIdAccount(id);
-        account.setUser(usuario());
-        account.setAccountType(Currency.ARS);
-        return account;
     }
 }

@@ -2,6 +2,7 @@ package com.EDJ.ArCash.Service;
 
 import com.EDJ.ArCash.DTO.AuthDTO.TransactionDTO;
 import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.Models.FavoriteContact;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.Transaction;
 import com.EDJ.ArCash.Repository.AccountRepository;
@@ -25,17 +26,86 @@ public class TransactionService {
     private final EventPublisher eventPublisher;
     private final ArsToUsdConversionService arsToUsdConversionService;
     private final UsdToArsConversionService usdToArsConversionService;
+    private final FavoriteContactService favoriteContactService;
 
     public TransactionService(AccountRepository accountRepository,
                               TransactionRepository transactionRepository,
                               EventPublisher eventPublisher,
                               ArsToUsdConversionService arsToUsdConversionService,
-                              UsdToArsConversionService usdToArsConversionService) {
+                              UsdToArsConversionService usdToArsConversionService,
+                              FavoriteContactService favoriteContactService) {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
         this.eventPublisher = eventPublisher;
         this.arsToUsdConversionService = arsToUsdConversionService;
         this.usdToArsConversionService = usdToArsConversionService;
+        this.favoriteContactService = favoriteContactService;
+    }
+
+    /**
+     * Transferencia con ownership del origen + side-effect lastUsed de favoritos.
+     */
+    @Transactional
+    public OwnedTransferResult transferForOwner(Long userId, Long idOrigen, Long idDestino, double monto) {
+        Optional<Account> optionalOrigen = accountRepository.findByIdAccount(idOrigen);
+        Optional<Account> optionalDestino = accountRepository.findByIdAccount(idDestino);
+
+        if (optionalOrigen.isEmpty() || optionalDestino.isEmpty()) {
+            return OwnedTransferResult.accountNotFound();
+        }
+
+        Account origen = optionalOrigen.get();
+        if (!origen.getUser().getId().equals(userId)) {
+            return OwnedTransferResult.forbidden();
+        }
+
+        TransferOperationResult result = transactionWithDetails(idOrigen, idDestino, monto);
+        if (result.isSuccess()) {
+            touchFavoriteLastUsed(userId, idDestino);
+            return OwnedTransferResult.ok();
+        }
+        return OwnedTransferResult.fail(result.getMessage());
+    }
+
+    private void touchFavoriteLastUsed(Long userId, Long destinationAccountId) {
+        try {
+            List<FavoriteContact> userFavorites = favoriteContactService.getFavoriteContactsByUser(userId);
+            Optional<FavoriteContact> matchingFavorite = userFavorites.stream()
+                    .filter(favorite -> favorite.getFavoriteAccount().getIdAccount().equals(destinationAccountId))
+                    .findFirst();
+            matchingFavorite.ifPresent(favorite ->
+                    favoriteContactService.updateLastUsedForContact(favorite.getId()));
+        } catch (Exception e) {
+            System.out.println("Error actualizando lastUsed para contacto favorito: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public OwnedBuyUsdResult buyUsdForOwner(Long userId, Long accountArsId, Long accountUsdId, double amountArs) {
+        Optional<Account> accountArsOpt = accountRepository.findByIdAccount(accountArsId);
+        if (accountArsOpt.isEmpty()) {
+            return OwnedBuyUsdResult.arsNotFound();
+        }
+        if (!accountArsOpt.get().getUser().getId().equals(userId)) {
+            return OwnedBuyUsdResult.forbidden();
+        }
+
+        BuyUsdResult result = buyUsd(accountArsId, accountUsdId, amountArs);
+        return result.isSuccess() ? OwnedBuyUsdResult.ok(result) : OwnedBuyUsdResult.fail(result);
+    }
+
+    @Transactional
+    public OwnedSellUsdResult sellUsdForOwner(Long userId, Long accountUsdId, Long accountArsId, double amountUsd) {
+        Optional<Account> accountUsdOpt = accountRepository.findByIdAccount(accountUsdId);
+        if (accountUsdOpt.isEmpty()) {
+            return OwnedSellUsdResult.usdNotFound();
+        }
+        if (!accountUsdOpt.get().getUser().getId().equals(userId)) {
+            return OwnedSellUsdResult.forbidden();
+        }
+
+        SellUsdResult result = sellUsd(accountUsdId, accountArsId, amountUsd);
+        return result.isSuccess() ? OwnedSellUsdResult.ok(result) : OwnedSellUsdResult.fail(result);
     }
 
     @Transactional

@@ -1,5 +1,6 @@
 package com.EDJ.ArCash.Service;
 
+import com.EDJ.ArCash.DTO.AuthDTO.AccountSearchResponse;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
@@ -185,6 +186,32 @@ public class AccountService {
 
     public Optional<Account> encontrarCuentaPorCvu(String cvu){
         return accountRepository.findByAccountCvu(cvu);
+    }
+
+    /**
+     * Busqueda por alias o CVU para transferencias (shape tipado del search HTTP).
+     */
+    public Optional<AccountSearchResponse> searchByAliasOrCvu(String input) {
+        Optional<Account> account = encontrarCuentaPorAlias(input);
+        if (account.isEmpty()) {
+            account = encontrarCuentaPorCvu(input);
+        }
+        return account.map(this::toSearchResponse);
+    }
+
+    private AccountSearchResponse toSearchResponse(Account acc) {
+        AccountSearchResponse.UserSummary user = new AccountSearchResponse.UserSummary(
+                acc.getUser().getName(),
+                acc.getUser().getLastName(),
+                acc.getUser().getDni()
+        );
+        return new AccountSearchResponse(
+                acc.getIdAccount(),
+                acc.getAccountNickname(),
+                acc.getAccountCvu(),
+                acc.getAccountType() != null ? acc.getAccountType().name() : null,
+                user
+        );
     }
 
     public AliasChangeResult changeAlias(String newAlias, Long id, Long userId) {

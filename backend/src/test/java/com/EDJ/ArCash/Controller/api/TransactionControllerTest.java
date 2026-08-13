@@ -1,13 +1,14 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.DTO.AuthDTO.AccountSearchResponse;
 import com.EDJ.ArCash.Models.Credentials;
-import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.BuyUsdResult;
+import com.EDJ.ArCash.Service.OwnedBuyUsdResult;
+import com.EDJ.ArCash.Service.OwnedSellUsdResult;
 import com.EDJ.ArCash.Service.SellUsdResult;
 import com.EDJ.ArCash.Service.TransactionService;
 import org.junit.jupiter.api.AfterEach;
@@ -25,7 +26,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.anyDouble;
@@ -83,7 +83,8 @@ class TransactionControllerTest {
     @Test
     @DisplayName("Comprar dolares con una cuenta en pesos inexistente devuelve 404")
     void comprarDolaresConCuentaInexistenteDevuelve404() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.empty());
+        when(transactionService.buyUsdForOwner(ID_USUARIO, ID_CUENTA_ARS, ID_CUENTA_USD, 10000.0))
+                .thenReturn(OwnedBuyUsdResult.arsNotFound());
 
         mockMvc.perform(post("/api/transactions/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
                         .with(comoUsuarioAutenticado())
@@ -96,7 +97,8 @@ class TransactionControllerTest {
     @Test
     @DisplayName("Comprar dolares desde una cuenta ajena devuelve 403")
     void comprarDolaresDesdeCuentaAjenaDevuelve403() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(99L))));
+        when(transactionService.buyUsdForOwner(ID_USUARIO, ID_CUENTA_ARS, ID_CUENTA_USD, 10000.0))
+                .thenReturn(OwnedBuyUsdResult.forbidden());
 
         mockMvc.perform(post("/api/transactions/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
                         .with(comoUsuarioAutenticado())
@@ -111,8 +113,8 @@ class TransactionControllerTest {
     @Test
     @DisplayName("La compra exitosa devuelve el detalle completo de la conversion")
     void comprarDolaresDevuelveElDetalleDeLaOperacion() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(ID_USUARIO))));
-        when(transactionService.buyUsd(ID_CUENTA_ARS, ID_CUENTA_USD, 10000.0)).thenReturn(compraExitosa());
+        when(transactionService.buyUsdForOwner(ID_USUARIO, ID_CUENTA_ARS, ID_CUENTA_USD, 10000.0))
+                .thenReturn(OwnedBuyUsdResult.ok(compraExitosa()));
 
         mockMvc.perform(post("/api/transactions/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
                         .with(comoUsuarioAutenticado())
@@ -134,9 +136,8 @@ class TransactionControllerTest {
     @Test
     @DisplayName("Si la compra falla se devuelve el mapa minimo del service con 400")
     void comprarDolaresQueFallaDevuelve400ConElMapaDelService() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(ID_USUARIO))));
-        when(transactionService.buyUsd(ID_CUENTA_ARS, ID_CUENTA_USD, 10000.0))
-                .thenReturn(BuyUsdResult.fail("Saldo insuficiente en cuenta en pesos"));
+        when(transactionService.buyUsdForOwner(ID_USUARIO, ID_CUENTA_ARS, ID_CUENTA_USD, 10000.0))
+                .thenReturn(OwnedBuyUsdResult.fail(BuyUsdResult.fail("Saldo insuficiente en cuenta en pesos")));
 
         mockMvc.perform(post("/api/transactions/{ars}/buy-usd/{usd}", ID_CUENTA_ARS, ID_CUENTA_USD)
                         .with(comoUsuarioAutenticado())
@@ -165,7 +166,8 @@ class TransactionControllerTest {
     @Test
     @DisplayName("Vender dolares con cuenta USD inexistente devuelve 404")
     void venderDolaresConCuentaInexistenteDevuelve404() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_USD)).thenReturn(Optional.empty());
+        when(transactionService.sellUsdForOwner(ID_USUARIO, ID_CUENTA_USD, ID_CUENTA_ARS, 100.0))
+                .thenReturn(OwnedSellUsdResult.usdNotFound());
 
         mockMvc.perform(post("/api/transactions/{usd}/sell-usd/{ars}", ID_CUENTA_USD, ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
@@ -178,7 +180,8 @@ class TransactionControllerTest {
     @Test
     @DisplayName("Vender dolares desde una cuenta ajena devuelve 403")
     void venderDolaresDesdeCuentaAjenaDevuelve403() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_USD)).thenReturn(Optional.of(cuentaUsd(usuario(99L))));
+        when(transactionService.sellUsdForOwner(ID_USUARIO, ID_CUENTA_USD, ID_CUENTA_ARS, 100.0))
+                .thenReturn(OwnedSellUsdResult.forbidden());
 
         mockMvc.perform(post("/api/transactions/{usd}/sell-usd/{ars}", ID_CUENTA_USD, ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
@@ -193,8 +196,8 @@ class TransactionControllerTest {
     @Test
     @DisplayName("La venta exitosa devuelve el detalle completo de la conversion")
     void venderDolaresDevuelveElDetalleDeLaOperacion() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_USD)).thenReturn(Optional.of(cuentaUsd(usuario(ID_USUARIO))));
-        when(transactionService.sellUsd(ID_CUENTA_USD, ID_CUENTA_ARS, 100.0)).thenReturn(ventaExitosa());
+        when(transactionService.sellUsdForOwner(ID_USUARIO, ID_CUENTA_USD, ID_CUENTA_ARS, 100.0))
+                .thenReturn(OwnedSellUsdResult.ok(ventaExitosa()));
 
         mockMvc.perform(post("/api/transactions/{usd}/sell-usd/{ars}", ID_CUENTA_USD, ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
@@ -216,9 +219,8 @@ class TransactionControllerTest {
     @Test
     @DisplayName("Si la venta falla se devuelve el mapa minimo del service con 400")
     void venderDolaresQueFallaDevuelve400ConElMapaDelService() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_USD)).thenReturn(Optional.of(cuentaUsd(usuario(ID_USUARIO))));
-        when(transactionService.sellUsd(ID_CUENTA_USD, ID_CUENTA_ARS, 100.0))
-                .thenReturn(SellUsdResult.fail("Saldo insuficiente"));
+        when(transactionService.sellUsdForOwner(ID_USUARIO, ID_CUENTA_USD, ID_CUENTA_ARS, 100.0))
+                .thenReturn(OwnedSellUsdResult.fail(SellUsdResult.fail("Saldo insuficiente")));
 
         mockMvc.perform(post("/api/transactions/{usd}/sell-usd/{ars}", ID_CUENTA_USD, ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
@@ -276,9 +278,14 @@ class TransactionControllerTest {
     @Test
     @DisplayName("Search por alias: DTO tipado con currency y user anidado")
     void searchPorAliasDevuelveDtoTipado() throws Exception {
-        User titular = usuario(ID_USUARIO);
-        Account ars = cuentaArs(titular);
-        when(accountService.encontrarCuentaPorAlias("MI.CUENTA.AA")).thenReturn(Optional.of(ars));
+        AccountSearchResponse dto = new AccountSearchResponse(
+                ID_CUENTA_ARS,
+                "MI.CUENTA.AA",
+                "0000200112345678901234",
+                "ARS",
+                new AccountSearchResponse.UserSummary("Ana", "Gomez", "30111222")
+        );
+        when(accountService.searchByAliasOrCvu("MI.CUENTA.AA")).thenReturn(Optional.of(dto));
 
         mockMvc.perform(get("/api/transactions/search/{input}", "MI.CUENTA.AA"))
                 .andExpect(status().isOk())
@@ -294,10 +301,14 @@ class TransactionControllerTest {
     @Test
     @DisplayName("Search por CVU si no hay alias: currency USD")
     void searchPorCvuCuandoNoHayAlias() throws Exception {
-        User titular = usuario(ID_USUARIO);
-        Account usd = cuentaUsd(titular);
-        when(accountService.encontrarCuentaPorAlias("0000200199999999999999")).thenReturn(Optional.empty());
-        when(accountService.encontrarCuentaPorCvu("0000200199999999999999")).thenReturn(Optional.of(usd));
+        AccountSearchResponse dto = new AccountSearchResponse(
+                ID_CUENTA_USD,
+                "MI.CUENTA.USD",
+                "0000200199999999999999",
+                "USD",
+                new AccountSearchResponse.UserSummary("Ana", "Gomez", "30111222")
+        );
+        when(accountService.searchByAliasOrCvu("0000200199999999999999")).thenReturn(Optional.of(dto));
 
         mockMvc.perform(get("/api/transactions/search/{input}", "0000200199999999999999"))
                 .andExpect(status().isOk())
@@ -309,8 +320,7 @@ class TransactionControllerTest {
     @Test
     @DisplayName("Search sin resultado: 404")
     void searchSinResultado404() throws Exception {
-        when(accountService.encontrarCuentaPorAlias("ghost")).thenReturn(Optional.empty());
-        when(accountService.encontrarCuentaPorCvu("ghost")).thenReturn(Optional.empty());
+        when(accountService.searchByAliasOrCvu("ghost")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/transactions/search/{input}", "ghost"))
                 .andExpect(status().isNotFound())
@@ -326,25 +336,5 @@ class TransactionControllerTest {
         user.setPermissions(Permissions.USER);
         user.setCredentials(new Credentials(user, "ana.gomez", "irrelevante"));
         return user;
-    }
-
-    private Account cuentaArs(User propietario) {
-        Account account = new Account();
-        account.setIdAccount(ID_CUENTA_ARS);
-        account.setUser(propietario);
-        account.setAccountType(Currency.ARS);
-        account.setAccountNickname("MI.CUENTA.AA");
-        account.setAccountCvu("0000200112345678901234");
-        return account;
-    }
-
-    private Account cuentaUsd(User propietario) {
-        Account account = new Account();
-        account.setIdAccount(ID_CUENTA_USD);
-        account.setUser(propietario);
-        account.setAccountType(Currency.USD);
-        account.setAccountNickname("MI.CUENTA.USD");
-        account.setAccountCvu("0000200199999999999999");
-        return account;
     }
 }

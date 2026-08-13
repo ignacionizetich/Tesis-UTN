@@ -73,7 +73,8 @@ class TransactionServiceTest {
                 transactionRepository,
                 eventPublisher,
                 arsToUsdConversionService,
-                usdToArsConversionService
+                usdToArsConversionService,
+                mock(FavoriteContactService.class)
         );
 
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
