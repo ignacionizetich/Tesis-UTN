@@ -8,9 +8,15 @@
 
 # Maven (backend)
 backend/target/
+.env
 
-# Node
-/node_modules
+# Node / Angular (repo root or frontend/)
+node_modules/
+dist/
+.angular/
+*.iml
+
+# Node logs
 npm-debug.log
 yarn-error.log
 

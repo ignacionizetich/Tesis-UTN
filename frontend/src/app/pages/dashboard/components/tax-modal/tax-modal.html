@@ -1,0 +1,45 @@
+<div class="modal" (click)="onBackdrop($event)">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="close-tax-button" (click)="close()">&times;</span>
+      <h2>Calculadora de Impuestos</h2>
+    </div>
+
+    @if (!showTaxForm) {
+    <div id="currency-selection">
+      <p>¿En qué moneda querés calcular?</p>
+      <button class="currency-button" (click)="selectCurrency('ARS')">Pesos (ARS)</button>
+      <button class="currency-button" (click)="selectCurrency('USD')">Dólares (USD)</button>
+    </div>
+    }
+
+    @if (showTaxForm) {
+    <div id="tax-form">
+      <label>Monto en {{ selectedCurrency }}:</label>
+      <input
+        type="number"
+        [(ngModel)]="taxMonto"
+        min="0"
+        step="0.01"
+        placeholder="0.00"
+      />
+      <button (click)="calculate()">Calcular</button>
+      @if (result) {
+      <div id="tax-result">
+        @if (result.currency === 'ARS') {
+          <p><strong class="label">Monto sin impuestos:</strong> <span class="value">${{ formatAmount(result.montoOriginal) }} ARS</span></p>
+          <p><strong class="label">IVA 21%:</strong> <span class="value">${{ formatAmount(result.iva) }} ARS</span></p>
+          <p><strong class="label">Total con impuestos:</strong> <span class="value strong">${{ formatAmount(result.totalFinal) }} ARS</span></p>
+        } @else {
+          <p><strong class="label">Monto original USD:</strong> <span class="value">${{ formatAmount(result.inputAmount) }} USD</span></p>
+          <p><strong class="label">Cotización dólar oficial:</strong> <span class="value">${{ formatAmount(result.precioDolar || 0) }} ARS</span></p>
+          <p><strong class="label">Monto en ARS:</strong> <span class="value">${{ formatAmount(result.montoOriginal) }} ARS</span></p>
+          <p><strong class="label">IVA 21%:</strong> <span class="value">${{ formatAmount(result.iva) }} ARS</span></p>
+          <p><strong class="label">Total final:</strong> <span class="value strong">${{ formatAmount(result.totalFinal) }} ARS</span></p>
+        }
+      </div>
+      }
+    </div>
+    }
+  </div>
+</div>

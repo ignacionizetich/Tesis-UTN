@@ -1,0 +1,25 @@
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  ViewEncapsulation,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-alias-modal',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './alias-modal.html',
+  styleUrls: ['../../dashboard.css'],
+  encapsulation: ViewEncapsulation.None,
+})
+export class AliasModalComponent {
+  @Input() alias = '';
+  @Input() cvu = '';
+
+  @Output() closed = new EventEmitter<void>();
+  @Output() copy = new EventEmitter<{ value: string; type: string }>();
+  @Output() backdropClick = new EventEmitter<MouseEvent>();
+}

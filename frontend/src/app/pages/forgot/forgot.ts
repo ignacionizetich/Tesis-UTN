@@ -7,7 +7,6 @@ import { BackButtonComponent } from '../../components/ui/back-button/back-button
 import { BrandLogoComponent } from '../../components/ui/brand-logo/brand-logo';
 import { ForgotPasswordFormComponent } from '../../components/forms/forgot-password-form/forgot-password-form';
 import { GlobalFooterComponent } from '../../components/ui/global-footer/global-footer';
-import { UtilService } from '../../services/util-service/util-service';
 
 @Component({
   selector: 'app-forgot',
@@ -26,8 +25,6 @@ import { UtilService } from '../../services/util-service/util-service';
 })
 export class ForgotComponent  {
   
-  constructor(private utilService : UtilService){}
-
   onEmailSent(){
     console.log("Correo reenviado correctamente!")
   }

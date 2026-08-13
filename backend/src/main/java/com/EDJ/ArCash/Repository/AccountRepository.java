@@ -38,16 +38,18 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByIdAccount(Long id);
 
     /// METODO PAR ENCONTRAR LA CUENTA EN PESOS DE UN USUARIO (cuenta principal)
-    @Query("SELECT a FROM Account a WHERE a.user.id = :userId AND a.accountType = 'ARS'")
-    Optional<Account> findArsAccountByUserId(@Param("userId") Long userId);
+    @Query("SELECT a FROM Account a WHERE a.user.id = :userId AND a.accountType = :type")
+    Optional<Account> findArsAccountByUserId(@Param("userId") Long userId,
+                                             @Param("type") Currency type);
 
     /// METODO PAR ENCONTRAR TODAS LAS CUENTAS DE UN USUARIO
     List<Account> findAllByUser_Id(Long userId);
 
-    /// METODO PAR ENCONTRAR UNA CUENTA CON EL ID DEL USUARIO (DEPRECADO - usar findArsAccountByUserId)
+    /// Compat: misma consulta ARS (login / perfil). Preferir findArsAccountByUserId.
     @Deprecated
-    @Query("SELECT a FROM Account a WHERE a.user.id = :userId AND a.accountType = 'ARS'")
-    Optional<Account> findByUser_Id(@Param("userId") Long userId);
+    default Optional<Account> findByUser_Id(Long userId) {
+        return findArsAccountByUserId(userId, Currency.ARS);
+    }
 
     @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Account a WHERE a.user = :user AND a.accountType = :currency")
     boolean existsByUserAndAccountType(@Param("user") User user, @Param("currency") Currency currency);

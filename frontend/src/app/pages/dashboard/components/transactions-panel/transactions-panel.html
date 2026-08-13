@@ -1,0 +1,156 @@
+<section class="transactions-section">
+  <div class="transactions-header">
+    <h2 class="section-title">Movimientos Recientes</h2>
+    <button class="view-all-btn" (click)="openAllTransactionsModal()">Ver todos</button>
+  </div>
+
+  <div class="transactions-container">
+    @if (recentTransactions.length === 0) {
+    <div class="no-transactions">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      <p>No hay transacciones recientes</p>
+    </div>
+    }
+
+    @for (transaction of recentTransactions; track trackTransaction($index, transaction)) {
+    <div class="transaction-item" (click)="openTransactionModal(transaction)">
+      <div class="transaction-icon" [class]="transaction.type">
+        @if (transaction.type === 'income') {
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2v20M5 9l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        } @else if (transaction.type === 'expense') {
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 22V2M19 15l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        }
+      </div>
+
+      <div class="transaction-details">
+        <h4 class="transaction-description">{{transaction.description}}</h4>
+        <p class="transaction-date">{{formatDate(transaction.date)}}</p>
+        @if (transaction.status === 'FAILED') {
+        <span class="transaction-status failed">Fallida</span>
+        }
+      </div>
+
+      <div class="transaction-amount" [class]="transaction.type">
+        <span class="amount-value">
+          {{transaction.type === 'income' ? '+' : '-'}}{{formatAmount(transaction.amount)}}
+        </span>
+      </div>
+    </div>
+    }
+  </div>
+</section>
+
+@if (currentModal === 'transaction') {
+<div class="modal" (click)="onModalBackdropClick($event, 'transaction')">
+  <div class="modal-content">
+    <span class="close-button" (click)="closeTransactionModal()">&times;</span>
+    <h2>Detalle de la Transferencia</h2>
+    @if (selectedTransaction) {
+    <ul class="transfer-details">
+      <li><b>ID Operación:</b> <span>{{selectedTransaction.id}}</span></li>
+      <li><b>Origen:</b> <span>{{getTransactionOrigin(selectedTransaction)}}</span></li>
+      <li><b>Destino:</b> <span>{{getTransactionDestination(selectedTransaction)}}</span></li>
+      <li><b>Monto:</b> <span [class]="selectedTransaction.type">
+          {{selectedTransaction.type === 'income' ? '+' : '-'}}{{formatAmount(selectedTransaction.amount)}}
+        </span></li>
+      <li><b>Estado:</b> <span
+          [class]="'estado-' + selectedTransaction.status?.toLowerCase()">{{selectedTransaction.status}}</span></li>
+      <li><b>Fecha y hora:</b> <span>{{formatDateDetailed(selectedTransaction.date)}}</span></li>
+    </ul>
+    }
+  </div>
+</div>
+}
+
+@if (currentModal === 'allTransactions') {
+<div class="modal" (click)="onModalBackdropClick($event, 'allTransactions')">
+  <div class="modal-content all-transactions-modal">
+    <span class="close-button" (click)="closeAllTransactionsModal()">&times;</span>
+    <h2>Todas las Transacciones</h2>
+
+    <div class="all-transactions-container">
+      @if (allTransactions.length === 0) {
+      <div class="no-transactions-message">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+          <path d="M8 12h8" stroke="currentColor" stroke-width="2" />
+          <path d="M12 8v8" stroke="currentColor" stroke-width="2" />
+        </svg>
+        <p>No hay transacciones para mostrar</p>
+      </div>
+      } @else {
+      <div class="transactions-list">
+        @for (transaction of displayedTransactions; track trackTransaction($index, transaction)) {
+        <div class="transaction-item-modal">
+          <div class="transaction-icon-modal" [class]="transaction.type">
+            @if (transaction.type === 'income') {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" />
+              <path d="M19 12H5" stroke="currentColor" stroke-width="2" />
+            </svg>
+            }
+            @if (transaction.type === 'expense') {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" />
+              <path d="M5 12h14" stroke="currentColor" stroke-width="2" />
+            </svg>
+            }
+          </div>
+
+          <div class="transaction-info-modal">
+            <h4 class="transaction-description-modal">{{transaction.description}}</h4>
+            <p class="transaction-date-modal">{{formatDate(transaction.date)}}</p>
+            @if (transaction.status === 'FAILED') {
+            <span class="transaction-status-modal failed">Fallida</span>
+            }
+          </div>
+
+          <div class="transaction-amount-modal" [class]="transaction.type">
+            <span class="amount-value-modal">
+              {{transaction.type === 'income' ? '+' : '-'}}{{formatAmount(transaction.amount)}}
+            </span>
+          </div>
+        </div>
+        }
+
+        @if (hasMoreTransactions && !hasLoadedAllTransactions) {
+        <div class="load-more-container">
+          <button class="load-more-btn"
+                  (click)="loadMoreTransactions()"
+                  [disabled]="isLoadingMoreTransactions"
+                  [class.loading]="isLoadingMoreTransactions">
+            @if (isLoadingMoreTransactions) {
+              <div class="button-loading">
+                <div class="spinner"></div>
+                Cargando...
+              </div>
+            } @else {
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2v20M5 9l7-7 7 7" stroke="currentColor" stroke-width="2" />
+              </svg>
+              Cargar más transacciones
+            }
+          </button>
+        </div>
+        }
+
+        @if (hasLoadedAllTransactions && displayedTransactions.length > 0) {
+        <div class="all-transactions-loaded">
+          <p>Has visto todas las transacciones</p>
+        </div>
+        }
+      </div>
+      }
+    </div>
+  </div>
+</div>
+}

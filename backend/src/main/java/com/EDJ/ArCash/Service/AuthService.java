@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -49,12 +50,15 @@ public class AuthService {
     private AccountRepository accountRepository;
 
     @Autowired
+    private AccountService accountService;
+
+    @Autowired
     private RefreshTokenCleanupService refreshTokenCleanupService;
 
     /**
      * Valida credenciales, exige cuenta ARS y recien entonces emite tokens.
-     * Sin cuenta ARS la respuesta sigue siendo error "Cuenta no encontrada",
-     * pero no se genera ni persiste ningun refresh/access token.
+     * Si el usuario esta activo pero nunca tuvo cuenta ARS (p. ej. enable por admin),
+     * se crea en el momento.
      */
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
@@ -69,8 +73,15 @@ public class AuthService {
 
         Optional<Account> optionalAccount = accountRepository.findByUser_Id(user.getId());
         if (optionalAccount.isEmpty()) {
-            logger.error("Cuenta no encontrada para usuario: {}", user.getId());
-            return loginResponseFactory.createErrorResponse("Cuenta no encontrada");
+            List<Account> existentes = accountRepository.findAllByUser_Id(user.getId());
+            if (existentes.isEmpty()) {
+                logger.warn("Usuario {} activo sin cuentas; creando cuenta ARS automaticamente", user.getId());
+                optionalAccount = Optional.of(accountService.ensureArsAccount(user));
+            } else {
+                logger.error("Cuenta ARS no encontrada para usuario: {} (tiene {} cuenta(s) de otro tipo)",
+                        user.getId(), existentes.size());
+                return loginResponseFactory.createErrorResponse("Cuenta no encontrada");
+            }
         }
 
         String refreshToken = tokenManagementStrategy.getActiveRefreshToken(user);
@@ -98,7 +109,7 @@ public class AuthService {
 
     /**
      * Cierra la sesión del usuario revocando sus tokens
-     * 
+     *
      * @param accessToken Token de acceso del usuario
      * @return Estado del logout
      */
@@ -109,7 +120,7 @@ public class AuthService {
 
     /**
      * Valida si la sesión del usuario es válida
-     * 
+     *
      * @param token Token de acceso
      * @return true si la sesión es válida, false en caso contrario
      */
@@ -119,7 +130,7 @@ public class AuthService {
 
     /**
      * Envía un correo de recuperación de contraseña
-     * 
+     *
      * @param email Email del usuario
      * @return true si se envió correctamente, false en caso contrario
      */
@@ -131,7 +142,7 @@ public class AuthService {
 
     /**
      * Valida si un token de recuperación es válido
-     * 
+     *
      * @param tokenValue Valor del token
      * @return true si el token es válido, false en caso contrario
      */
@@ -141,7 +152,7 @@ public class AuthService {
 
     /**
      * Reenvía el enlace de recuperación de contraseña
-     * 
+     *
      * @param email Email del usuario
      * @return true si se envió exitosamente, false si no se pudo enviar
      */

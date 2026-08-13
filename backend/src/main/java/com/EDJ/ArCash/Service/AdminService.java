@@ -74,6 +74,8 @@ public class AdminService {
         }
         User user = userOpt.get();
         user.setActive(true);
+        // Si nunca valido el email, puede no tener cuenta ARS; sin ella el login falla.
+        accountService.ensureArsAccount(user);
         userRepository.save(user);
     }
 

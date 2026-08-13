@@ -1,6 +1,7 @@
 import { HttpInterceptorFn, HttpErrorResponse, HttpRequest, HttpHandlerFn, HttpEvent } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../../services/auth-service/auth-service';
+import { SessionStore } from '../session/session-store';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError, BehaviorSubject, filter, take, Observable } from 'rxjs';
 
@@ -10,6 +11,7 @@ const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+  const sessionStore = inject(SessionStore);
   const router = inject(Router);
 
   // Endpoints públicos: no adjuntar Bearer.
@@ -31,7 +33,7 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  const token = localStorage.getItem('JWT');
+  const token = sessionStore.getAccessToken();
 
   if (!token) {
     return next(req);
@@ -57,7 +59,7 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
       // Access vencido / inválido: el filtro BE responde 401; algunos flujos legacy usan 498.
       // En ambos casos intentamos renovar con la cookie de refresh.
       if (error.status === 401 || error.status === 498) {
-        return handleAccessTokenExpired(reqConToken, next, authService, router);
+        return handleAccessTokenExpired(reqConToken, next, authService, sessionStore, router);
       }
 
       if (error.status === 409) {
@@ -73,6 +75,7 @@ function handleAccessTokenExpired(
   request: HttpRequest<unknown>,
   next: HttpHandlerFn,
   authService: AuthService,
+  sessionStore: SessionStore,
   router: Router
 ): Observable<HttpEvent<unknown>> {
   if (!isRefreshing) {
@@ -84,7 +87,7 @@ function handleAccessTokenExpired(
         isRefreshing = false;
 
         const newToken = response.accessToken;
-        localStorage.setItem('JWT', newToken);
+        sessionStore.setAccessToken(newToken);
         refreshTokenSubject.next(newToken);
 
         const newRequest = request.clone({

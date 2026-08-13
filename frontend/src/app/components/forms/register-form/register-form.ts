@@ -1,45 +1,21 @@
 import { Component, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { 
-  ReactiveFormsModule, 
+import {
+  ReactiveFormsModule,
   FormBuilder,
   FormGroup,
   Validators,
-  AbstractControl,
-  ValidationErrors 
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth-service/auth-service';
 import { ResendService } from '../../../services/resend-service/resend.service';
-import { UtilService } from '../../../services/util-service/util-service';
-
-// Validadores personalizados
-export function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const password = control.get('password')?.value;
-  const confirmPassword = control.get('confirmPassword')?.value;
-  return password === confirmPassword ? null : { passwordMismatch: true };
-}
-
-export function emailMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const email = control.get('email')?.value;
-  const confirmEmail = control.get('confirmEmail')?.value;
-  return email === confirmEmail ? null : { emailMismatch: true };
-}
-
-export function strongPasswordValidator(control: AbstractControl): ValidationErrors | null {
-  const value = control.value;
-  if (!value) return null;
-
-  const errors: ValidationErrors = {};
-
-  if (value.length < 8) errors['minLength'] = true;
-  if (!/[a-z]/.test(value)) errors['lowercase'] = true;
-  if (!/[A-Z]/.test(value)) errors['uppercase'] = true;
-  if (!/\d/.test(value)) errors['number'] = true;
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\?]/.test(value)) errors['specialChar'] = true;
-
-  return Object.keys(errors).length > 0 ? errors : null;
-}
+import { ToastService } from '../../../services/toast-service/toast.service';
+import {
+  passwordMatchValidator,
+  emailMatchValidator,
+  strongPasswordValidator,
+} from '../../../shared/validators/auth.validators';
+import { maskEmail } from '../../../shared/utils/email-mask';
 
 @Component({
   selector: 'app-register-form',
@@ -64,7 +40,7 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
 
   constructor(
     private fb: FormBuilder,
-    private utilService: UtilService, 
+    private toast: ToastService, 
     private authService: AuthService, 
     private resendService: ResendService,
     private router: Router
@@ -96,7 +72,7 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
   onSubmit(): void {
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
-      this.utilService.showToast("Formulario incompleto: Revisa y completa todos los campos marcados en rojo.", "warning");
+      this.toast.show("Formulario incompleto: Revisa y completa todos los campos marcados en rojo.", "warning");
       return;
     }
 
@@ -120,8 +96,8 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
         this.registrationSuccessful = true;
         this.registeredEmail = userData.email;
         
-        const emailCensurado = this.censurarCorreo(userData.email);
-        this.utilService.showToast(`¡Registro exitoso! Se envió un correo de validación a ${emailCensurado}. Revisa tu bandeja de entrada para activar tu cuenta.`, "success");
+        const emailCensurado = maskEmail(userData.email);
+        this.toast.show(`¡Registro exitoso! Se envió un correo de validación a ${emailCensurado}. Revisa tu bandeja de entrada para activar tu cuenta.`, "success");
         
         this.registerSuccess.emit(userData.email);
         
@@ -139,21 +115,21 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
           if (backendMessage.includes("email ya se encuentra en uso") ||
               backendMessage.includes("nombre de usuario no está disponible") ||
               backendMessage.includes("DNI ya está registrado")) {
-            this.utilService.showToast(backendMessage, "warning");
+            this.toast.show(backendMessage, "warning");
           } else if (backendMessage.includes("campos son obligatorios")) {
-            this.utilService.showToast("Todos los campos son obligatorios.", "warning");
+            this.toast.show("Todos los campos son obligatorios.", "warning");
           } else {
-            this.utilService.showToast(backendMessage, "error");
+            this.toast.show(backendMessage, "error");
           }
         } else {
           if (error.status === 400) {
-            this.utilService.showToast("Datos inválidos. Revisa que todos los campos tengan el formato correcto.", "warning");
+            this.toast.show("Datos inválidos. Revisa que todos los campos tengan el formato correcto.", "warning");
           } else if (error.status >= 500) {
-            this.utilService.showToast("Error del servidor. Intenta registrarte nuevamente en unos momentos.", "error");
+            this.toast.show("Error del servidor. Intenta registrarte nuevamente en unos momentos.", "error");
           } else if (error.status === 0 || !navigator.onLine) {
-            this.utilService.showToast("Sin conexión. Verifica tu conexión a internet e intenta nuevamente.", "warning");
+            this.toast.show("Sin conexión. Verifica tu conexión a internet e intenta nuevamente.", "warning");
           } else {
-            this.utilService.showToast("Error inesperado. No se pudo completar el registro. Intenta nuevamente.", "error");
+            this.toast.show("Error inesperado. No se pudo completar el registro. Intenta nuevamente.", "error");
           }
         }
       }
@@ -182,13 +158,9 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
+  /** Usado por el template. */
   censurarCorreo(email: string): string {
-    const [usuario, dominio] = email.split('@');
-    if (usuario.length <= 2) {
-      return usuario[0] + '***@' + dominio;
-    }
-    const visible = usuario.slice(0, 2);
-    return visible + '***@' + dominio;
+    return maskEmail(email);
   }
 
   resendValidationEmail(): void {
@@ -198,8 +170,8 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
     
     this.resendService.resendValidationEmail(this.registeredEmail).subscribe({
       next: (response) => {
-        const censurado = this.censurarCorreo(this.registeredEmail);
-        this.utilService.showToast(`Correo reenviado exitosamente a ${censurado}.`, 'success');
+        const censurado = maskEmail(this.registeredEmail);
+        this.toast.show(`Correo reenviado exitosamente a ${censurado}.`, 'success');
         this.isResending = false;
         this.startResendCooldown();
       },
@@ -207,9 +179,9 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
         console.error('Error al reenviar:', error);
         
         if (error.status === 429) {
-          this.utilService.showToast('Demasiados intentos: Espera un momento antes de solicitar otro reenvío.', 'warning');
+          this.toast.show('Demasiados intentos: Espera un momento antes de solicitar otro reenvío.', 'warning');
         } else {
-          this.utilService.showToast('Error al reenviar: Intenta nuevamente en unos momentos.', 'error');
+          this.toast.show('Error al reenviar: Intenta nuevamente en unos momentos.', 'error');
         }
         
         this.isResending = false;

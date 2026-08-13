@@ -1,16 +1,28 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import Transaction from '../../models/transaction';
-import { DataService } from '../data-service/data-service';
+import { TransactionHistoryStore } from '../transaction-history-store/transaction-history.store';
 import { CacheService } from '../cache-service/cache.service';
 import { CacheConfig } from '../../models/cache.interface';
 import { PaginationConfig } from '../../models/common.interface';
+import { formatCurrencyArs } from '../../shared/utils/money-format';
+import { formatDateTime, formatDateTimeDetailed } from '../../shared/utils/date-format';
 
+/**
+ * Capa de UI sobre TransactionHistoryStore:
+ * - localStorage cache (TTL)
+ * - recent / displayed streams
+ * - paginación client-side
+ * - helpers de formato para templates
+ *
+ * HTTP y mapeo de DTOs viven solo en TransactionHistoryStore.
+ * Las páginas deben inyectar TransactionService (no el store),
+ * salvo casos de invalidación/clear de sesión.
+ */
 @Injectable({
-  providedIn: 'root'
+    providedIn: 'root'
 })
 export class TransactionService {
-  // Cache configuration
   private readonly cacheConfig: CacheConfig = {
     key: 'arcash_transactions_cache',
     expiryKey: 'arcash_transactions_cache_expiry',
@@ -35,14 +47,14 @@ export class TransactionService {
   public displayedTransactions$ = this.displayedTransactionsSubject.asObservable();
 
   constructor(
-    private dataService: DataService,
+    private transactionHistoryStore: TransactionHistoryStore,
     private cacheService: CacheService
   ) {
     this.initializeSubscriptions();
   }
 
   private initializeSubscriptions(): void {
-    this.dataService.transactions$.subscribe(transactions => {
+    this.transactionHistoryStore.transactions$.subscribe(transactions => {
       this.allTransactionsSubject.next(transactions);
       this.recentTransactionsSubject.next(transactions.slice(0, 3));
       this.resetPagination();
@@ -60,7 +72,7 @@ export class TransactionService {
           return;
         }
       }
-      await this.dataService.loadTransactions();
+      await this.transactionHistoryStore.load();
       
       const transactions = this.allTransactionsSubject.value;
       if (transactions.length > 0) {
@@ -125,43 +137,17 @@ export class TransactionService {
     this.displayedTransactionsSubject.next(allTransactions.slice(startIndex, endIndex));
   }
 
-  // Métodos de formateo
+  // Métodos de formateo (delegados a shared utils)
   formatAmount(amount: number): string {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS'
-    }).format(amount);
+    return formatCurrencyArs(amount);
   }
 
   formatDate(date: Date): string {
-    return new Intl.DateTimeFormat('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).format(new Date(date));
+    return formatDateTime(date);
   }
 
   formatDateDetailed(date: Date): string {
-    const dateObj = new Date(date);
-    const dateStr = dateObj.toLocaleDateString('es-AR', {
-      weekday: 'long',
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-    
-    const timeStr = dateObj.toLocaleTimeString('es-AR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
-    
-    return `${dateStr} a las ${timeStr}`;
+    return formatDateTimeDetailed(date);
   }
 
   getTransactionClass(transaction: Transaction): string {

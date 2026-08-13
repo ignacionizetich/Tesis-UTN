@@ -220,274 +220,50 @@
 
 <!-- Comprar USD Section -->
 @if (showBuyUsdSection) {
-<div class="modal-overlay" (click)="closeBuyUsdSection()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Comprar Dólares</h2>
-      <button class="close-btn" (click)="closeBuyUsdSection()">&times;</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="info-cards">
-        <div class="info-card">
-          <span class="label">Tu saldo en pesos:</span>
-          <span class="value">${{formatMoney(arsBalance)}} ARS</span>
-        </div>
-        <div class="info-card">
-          <span class="label">Tu saldo en dólares:</span>
-          <span class="value">${{formatMoney(usdBalance)}} USD</span>
-        </div>
-      </div>
-
-      <div class="warning-box">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
-                stroke="var(--text-secondary)" stroke-width="2"/>
-        </svg>
-        <span>Se aplicará una comisión del 3% por el servicio</span>
-      </div>
-
-      <form (ngSubmit)="buyUsd()">
-        <div class="form-group">
-          <input type="number" [(ngModel)]="amountToBuyUsd" name="amountToBuyUsd" 
-                 (ngModelChange)="onAmountToBuyChange()"
-                 placeholder=" " required min="1" step="0.01" [disabled]="isBuyingUsd">
-          <label>Monto en pesos (ARS)</label>
-        </div>
-
-        @if (amountToBuyUsd && amountToBuyUsd > 0) {
-        <div class="conversion-preview">
-          <div class="preview-label">Estimación:</div>
-          <div class="preview-amount">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" 
-                    stroke="var(--text-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>≈ {{formatMoney(estimatedUsdAmount)}} USD</span>
-          </div>
-          <div class="preview-note">
-            Comisión ({{taxPercentage}}%): ${{formatMoney(estimatedTaxAmount)}} ARS
-            · Total a debitar: ${{formatMoney(estimatedTotalDebitado)}} ARS
-          </div>
-        </div>
-        }
-
-        <div class="modal-actions">
-          <button type="submit" class="primary" 
-                  [disabled]="!amountToBuyUsd || amountToBuyUsd <= 0 || isBuyingUsd" 
-                  [class.loading]="isBuyingUsd">
-            <span class="button-text">
-              {{ isBuyingUsd ? 'Procesando...' : 'Comprar' }}
-            </span>
-            @if (isBuyingUsd) {
-            <div class="progress-bar"></div>
-            }
-          </button>
-          @if (!isBuyingUsd) {
-          <button type="button" class="secondary" (click)="closeBuyUsdSection()">Cancelar</button>
-          }
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+<app-buy-usd-panel
+  [arsBalance]="arsBalance"
+  [usdBalance]="usdBalance"
+  [taxPercentage]="taxPercentage"
+  [estimatedUsdAmount]="estimatedUsdAmount"
+  [estimatedTaxAmount]="estimatedTaxAmount"
+  [estimatedTotalDebitado]="estimatedTotalDebitado"
+  [isBuyingUsd]="isBuyingUsd"
+  [(amountToBuyUsd)]="amountToBuyUsd"
+  (amountChanged)="onAmountToBuyChange()"
+  (closed)="closeBuyUsdSection()"
+  (submitted)="buyUsd()"
+/>
 }
 
 <!-- Vender USD Section -->
 @if (showSellUsdSection) {
-<div class="modal-overlay" (click)="closeSellUsdSection()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Vender Dólares</h2>
-      <button class="close-btn" (click)="closeSellUsdSection()">&times;</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="info-cards">
-        <div class="info-card">
-          <span class="label">Tu saldo en dólares:</span>
-          <span class="value">${{formatMoney(usdBalance)}} USD</span>
-        </div>
-        <div class="info-card">
-          <span class="label">Tu saldo en pesos:</span>
-          <span class="value">${{formatMoney(arsBalance)}} ARS</span>
-        </div>
-      </div>
-
-      <div class="warning-box">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
-                stroke="var(--text-secondary)" stroke-width="2"/>
-        </svg>
-        <span>Se aplicará una comisión del 3% por el servicio</span>
-      </div>
-
-      <form (ngSubmit)="sellUsd()">
-        <div class="form-group">
-          <input type="number" [(ngModel)]="amountToSellUsd" name="amountToSellUsd" 
-                 (ngModelChange)="onAmountToSellChange()"
-                 placeholder=" " required min="1" step="0.01" [disabled]="isSellingUsd">
-          <label>Monto en dólares (USD)</label>
-        </div>
-
-        @if (amountToSellUsd && amountToSellUsd > 0) {
-        <div class="conversion-preview">
-          <div class="preview-label">Estimación:</div>
-          <div class="preview-amount">
-            <span class="currency-symbol">$</span>
-            <span>≈ {{formatMoney(estimatedArsAmount)}} ARS</span>
-          </div>
-          <div class="preview-note">
-            Comisión ({{taxPercentage}}%): ${{formatMoney(estimatedTaxAmount)}} USD
-            · Total a debitar: ${{formatMoney(estimatedTotalDebitado)}} USD
-          </div>
-        </div>
-        }
-
-        <div class="modal-actions">
-          <button type="submit" class="primary" 
-                  [disabled]="!amountToSellUsd || amountToSellUsd <= 0 || isSellingUsd" 
-                  [class.loading]="isSellingUsd">
-            <span class="button-text">
-              {{ isSellingUsd ? 'Procesando...' : 'Vender' }}
-            </span>
-            @if (isSellingUsd) {
-            <div class="progress-bar"></div>
-            }
-          </button>
-          @if (!isSellingUsd) {
-          <button type="button" class="secondary" (click)="closeSellUsdSection()">Cancelar</button>
-          }
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+<app-sell-usd-panel
+  [arsBalance]="arsBalance"
+  [usdBalance]="usdBalance"
+  [taxPercentage]="taxPercentage"
+  [estimatedArsAmount]="estimatedArsAmount"
+  [estimatedTaxAmount]="estimatedTaxAmount"
+  [estimatedTotalDebitado]="estimatedTotalDebitado"
+  [isSellingUsd]="isSellingUsd"
+  [(amountToSellUsd)]="amountToSellUsd"
+  (amountChanged)="onAmountToSellChange()"
+  (closed)="closeSellUsdSection()"
+  (submitted)="sellUsd()"
+/>
 }
 
 <!-- Transfer Section -->
 @if (showTransferSection) {
-<div class="modal-overlay" (click)="closeTransferSection()">
-  <div class="modal-content transfer-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Transferir</h2>
-      <button class="close-btn" (click)="closeTransferSection()">&times;</button>
-    </div>
-
-    <div class="modal-body">
-      
-      <!-- Selector de moneda -->
-      <div class="currency-selector">
-        <label>Transferir desde:</label>
-        <div class="currency-options">
-          <button type="button" class="currency-option" 
-                  [class.active]="selectedCurrency === 'ARS'" 
-                  (click)="selectedCurrency = 'ARS'">
-            <span class="currency">ARS</span>
-            <span class="balance">${{formatMoney(arsBalance)}}</span>
-          </button>
-          <button type="button" class="currency-option" 
-                  [class.active]="selectedCurrency === 'USD'" 
-                  (click)="selectedCurrency = 'USD'">
-            <span class="currency">USD</span>
-            <span class="balance">${{formatMoney(usdBalance)}}</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Step 1: Buscar cuenta -->
-      @if (transferStep === 1) {
-      <div class="transfer-step">
-        <div class="form-group">
-          <input type="text" [(ngModel)]="destinationInput" placeholder=" " required>
-          <label>Alias o CVU del destinatario</label>
-        </div>
-
-        <button class="primary" (click)="searchDestinationAccount()" 
-                [disabled]="!destinationInput.trim() || isSearchingAccount" 
-                [class.loading]="isSearchingAccount">
-          <span class="button-text">
-            {{ isSearchingAccount ? 'Buscando...' : 'Buscar cuenta' }}
-          </span>
-          @if (isSearchingAccount) {
-          <div class="progress-bar"></div>
-          }
-        </button>
-      </div>
-      }
-
-      <!-- Step 2: Confirmar cuenta -->
-      @if (transferStep === 2 && destinationAccountData) {
-      <div class="transfer-step">
-        <h3>Datos de la cuenta destino:</h3>
-        <div class="account-details">
-          <div class="detail-row">
-            <span class="label">Alias:</span>
-            <span class="value">{{destinationAccountData.alias}}</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">CVU:</span>
-            <span class="value">{{destinationAccountData.cvu}}</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Titular:</span>
-            <span class="value">{{destinationAccountData.user.nombre}} {{destinationAccountData.user.apellido}}</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Tipo de cuenta:</span>
-            <span class="value currency-badge" [class.usd]="destinationAccountData.currency === 'USD'">
-              {{getCurrencyLabel(destinationAccountData.currency || 'ARS')}}
-            </span>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="primary" (click)="confirmDestinationAccount()">Confirmar</button>
-          <button class="secondary" (click)="cancelSearch()">Cancelar</button>
-        </div>
-      </div>
-      }
-
-      <!-- Step 3: Ingresar monto -->
-      @if (transferStep === 3) {
-      <div class="transfer-step">
-        <h3>¿Cuánto querés transferir?</h3>
-        <p class="transfer-info">
-          A: {{destinationAccountData.user.nombre}} {{destinationAccountData.user.apellido}} 
-          ({{destinationAccountData.alias}})
-        </p>
-        <p class="transfer-currency">
-          Cuenta: <strong>{{getCurrencyLabel(destinationAccountData.currency || 'ARS')}}</strong>
-        </p>
-
-        <form (ngSubmit)="executeTransfer()">
-          <div class="form-group">
-            <input type="number" [(ngModel)]="amountToTransfer" name="amountToTransfer" 
-                   placeholder=" " required min="1" step="0.01" [disabled]="isTransferring">
-            <label>Monto en {{selectedCurrency}}</label>
-          </div>
-
-          <div class="modal-actions">
-            <button type="submit" class="primary" 
-                    [disabled]="!amountToTransfer || amountToTransfer <= 0 || isTransferring" 
-                    [class.loading]="isTransferring">
-              <span class="button-text">
-                {{ isTransferring ? 'Transfiriendo...' : 'Transferir' }}
-              </span>
-              @if (isTransferring) {
-              <div class="progress-bar"></div>
-              }
-            </button>
-            @if (!isTransferring) {
-            <button type="button" class="secondary" (click)="cancelSearch()">Volver</button>
-            }
-          </div>
-        </form>
-      </div>
-      }
-    </div>
-  </div>
-</div>
+<app-transfer-wizard
+  [arsAccount]="arsAccountView"
+  [usdAccount]="usdAccountView"
+  [ownAccountIds]="[arsAccountId, usdAccountId]"
+  [showQrScan]="false"
+  [showPostTransferFavorite]="false"
+  [useModalService]="false"
+  (closed)="closeTransferSection()"
+  (accountsNeedReload)="onTransferAccountsReload()"
+/>
 }
 
 <!-- Receive Section -->

@@ -1,0 +1,43 @@
+<div class="modal" (click)="backdropClick.emit($event)">
+  <div class="modal-content alias-modal">
+    <span class="close-button" (click)="closed.emit()">&times;</span>
+    <h2>Mi Alias y CVU</h2>
+
+    <div class="info-alias-cvu">
+      <div class="info-line">
+        <div class="info-text">
+          <strong>Alias:</strong> <span>{{ alias }}</span>
+        </div>
+        <button
+          class="copy-button"
+          (click)="copy.emit({ value: alias, type: 'Alias' })"
+          title="Copiar Alias"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M20 9h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zm0 11h-9v-9h9v9zm-4-17H6c-1.1 0-2 .9-2 2v9h2V5h10V3z"
+              fill="currentColor"
+            />
+          </svg>
+        </button>
+      </div>
+      <div class="info-line">
+        <div class="info-text">
+          <strong>CVU:</strong> <span>{{ cvu }}</span>
+        </div>
+        <button
+          class="copy-button"
+          (click)="copy.emit({ value: cvu, type: 'CVU' })"
+          title="Copiar CVU"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M20 9h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zm0 11h-9v-9h9v9zm-4-17H6c-1.1 0-2 .9-2 2v9h2V5h10V3z"
+              fill="currentColor"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

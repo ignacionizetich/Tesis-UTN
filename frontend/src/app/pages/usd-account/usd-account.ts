@@ -2,41 +2,50 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subscription, interval, forkJoin, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Subscription, of, from } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 // Services
 import { AccountService } from '../../services/account-service/account.service';
-import { DataService } from '../../services/data-service/data-service';
-import { UtilService } from '../../services/util-service/util-service';
+import { UserDataStore } from '../../services/user-data-store/user-data.store';
+import { ToastService } from '../../services/toast-service/toast.service';
 import { TransactionService } from '../../services/transaction-service/transaction-service';
-import { ModalService } from '../../services/modal-service/modal-service';
+import { AccountPollingCoordinator } from '../../services/account-polling/account-polling.coordinator';
 
-// Models
+// Feature components
+import { BuyUsdPanelComponent } from './components/buy-usd-panel/buy-usd-panel';
+import { SellUsdPanelComponent } from './components/sell-usd-panel/sell-usd-panel';
+import { TransferWizardComponent } from '../dashboard/components/transfer-wizard/transfer-wizard';
+
+// Models / utils
 import Transaction from '../../models/transaction';
 import UserData from '../../models/user-data';
+import { formatMoney as formatMoneyShared } from '../../shared/utils/money-format';
+import { formatDateTime } from '../../shared/utils/date-format';
 
 @Component({
   selector: 'app-usd-account',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    BuyUsdPanelComponent,
+    SellUsdPanelComponent,
+    TransferWizardComponent,
+  ],
   templateUrl: './usd-account.html',
   styleUrls: ['./usd-account.css']
 })
 export class UsdAccountComponent implements OnInit, OnDestroy {
-  
+
   private subscriptions: Subscription[] = [];
   private dataPollingSubscription: Subscription | null = null;
-  
-  // Estados de carga
+
   isLoading = true;
   isCreatingUsdAccount = false;
   isBuyingUsd = false;
   isSellingUsd = false;
-  isTransferring = false;
-  isSearchingAccount = false;
-  
-  // Datos de cuentas
+
   hasUsdAccount = false;
   usdAccountId = '';
   usdBalance = 0;
@@ -44,32 +53,26 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
   usdCvu = '';
   arsAccountId = '';
   arsBalance = 0;
-  
+
   userData: UserData = {
     name: 'Cargando...', lastName: '', dni: '', email: '', alias: '',
     cvu: '', username: '', balance: 0, idAccount: ''
   };
-  
-  // Transacciones USD
+
   usdTransactions: Transaction[] = [];
   filteredTransactions: Transaction[] = [];
   selectedFilter: 'ALL' | 'ARS' | 'USD' = 'ALL';
   selectedTransaction: Transaction | null = null;
   showTransactionDetail = false;
-  
-  // Estados de modales/secciones
+
   showBuyUsdSection = false;
   showSellUsdSection = false;
   showTransferSection = false;
   showReceiveSection = false;
-  
-  // Datos de operaciones
+
   amountToBuyUsd: number | null = null;
   amountToSellUsd: number | null = null;
-  amountToTransfer: number | null = null;
-  selectedCurrency: 'ARS' | 'USD' = 'USD';
-  
-  // Conversión en tiempo real para compra/venta USD (misma fórmula que el backend)
+
   readonly taxRate = 0.03;
   readonly taxPercentage = 3;
   estimatedUsdAmount = 0;
@@ -77,29 +80,31 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
   estimatedTaxAmount = 0;
   estimatedTotalDebitado = 0;
   currentExchangeRate = 0;
-  
-  // Transfer data
-  transferStep = 1;
-  destinationInput = '';
-  destinationAccountData: any = null;
-  
-  // Exchange rate
+
   exchangeRate = 0;
+
+  get arsAccountView(): { balance: number } | null {
+    return this.arsAccountId ? { balance: this.arsBalance } : null;
+  }
+
+  get usdAccountView(): { balance: number } | null {
+    return this.hasUsdAccount ? { balance: this.usdBalance } : null;
+  }
 
   constructor(
     private router: Router,
     private accountService: AccountService,
-    private dataService: DataService,
-    private utilService: UtilService,
+    private userDataStore: UserDataStore,
+    private toast: ToastService,
     private transactionService: TransactionService,
-    private modalService: ModalService
+    private accountPolling: AccountPollingCoordinator
   ) {}
 
   ngOnInit(): void {
     this.loadUserData();
     this.checkUsdAccount();
     this.loadExchangeRate();
-    this.startDataPolling(10000); // Iniciar polling cada 10 segundos
+    this.startDataPolling(10000);
   }
 
   ngOnDestroy(): void {
@@ -108,7 +113,7 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
   }
 
   private loadUserData(): void {
-    const userDataSub = this.dataService.userData$.subscribe(userData => {
+    const userDataSub = this.userDataStore.userData$.subscribe(userData => {
       if (userData) {
         this.userData = userData;
         this.arsBalance = userData.balance;
@@ -117,8 +122,8 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
       this.isLoading = false;
     });
     this.subscriptions.push(userDataSub);
-    
-    this.dataService.loadUserData(true).subscribe();
+
+    this.userDataStore.load(true).subscribe();
   }
 
   private checkUsdAccount(): void {
@@ -143,34 +148,29 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
     });
   }
 
-  // =================== CREAR CUENTA USD ===================
-  
   async createUsdAccount(): Promise<void> {
     this.isCreatingUsdAccount = true;
-    
+
     try {
       const response = await this.accountService.openUsdAccount().toPromise();
-      
+
       if (response.success) {
-        this.utilService.showToast('Cuenta en dólares creada exitosamente', 'success');
+        this.toast.show('Cuenta en dólares creada exitosamente', 'success');
         this.usdAccountId = response.accountId;
         this.hasUsdAccount = true;
         this.usdBalance = 0;
-        // Recargar las cuentas para actualizar la información
         this.checkUsdAccount();
       } else {
-        this.utilService.showToast(response.message || 'Error al crear cuenta en dólares', 'error');
+        this.toast.show(response.message || 'Error al crear cuenta en dólares', 'error');
       }
     } catch (error: any) {
       console.error('Error creando cuenta USD:', error);
-      this.utilService.showToast(error.error?.message || 'Error al crear cuenta en dólares', 'error');
+      this.toast.show(error.error?.message || 'Error al crear cuenta en dólares', 'error');
     } finally {
       this.isCreatingUsdAccount = false;
     }
   }
 
-  // =================== COMPRAR DÓLARES ===================
-  
   openBuyUsdSection(): void {
     this.closeSections();
     this.showBuyUsdSection = true;
@@ -184,13 +184,13 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
 
   async buyUsd(): Promise<void> {
     if (!this.amountToBuyUsd || this.amountToBuyUsd <= 0) {
-      this.utilService.showToast('Por favor ingrese un monto válido', 'error');
+      this.toast.show('Por favor ingrese un monto válido', 'error');
       return;
     }
 
     const totalDebitado = this.amountToBuyUsd * (1 + this.taxRate);
     if (totalDebitado > this.arsBalance) {
-      this.utilService.showToast(
+      this.toast.show(
         `Saldo insuficiente. Necesitás $${totalDebitado.toFixed(2)} ARS (incluye comisión del ${this.taxPercentage}%)`,
         'error'
       );
@@ -207,29 +207,28 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
       ).toPromise();
 
       if (response && response.success) {
-        // Guardar el exchange rate para futuras conversiones
         if (response.exchangeRate) {
           this.currentExchangeRate = response.exchangeRate;
         }
-        
-        this.utilService.showToast(
+
+        this.toast.show(
           `Compra exitosa: $${response.amountUsd.toFixed(2)} USD`,
           'success'
         );
-        
+
         this.arsBalance = response.newBalanceArs;
         this.usdBalance = response.newBalanceUsd;
         this.userData.balance = response.newBalanceArs;
-        
+
         this.closeBuyUsdSection();
         this.loadTransactions();
-        this.dataService.loadUserData(true).subscribe();
+        this.userDataStore.load(true).subscribe();
       } else {
-        this.utilService.showToast(response?.message || 'Error en la compra', 'error');
+        this.toast.show(response?.message || 'Error en la compra', 'error');
       }
     } catch (error: any) {
       console.error('Error comprando USD:', error);
-      this.utilService.showToast(
+      this.toast.show(
         error.error?.message || 'Error al comprar dólares',
         'error'
       );
@@ -238,8 +237,6 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
     }
   }
 
-  // =================== VENDER DÓLARES ===================
-  
   openSellUsdSection(): void {
     this.closeSections();
     this.showSellUsdSection = true;
@@ -253,13 +250,13 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
 
   async sellUsd(): Promise<void> {
     if (!this.amountToSellUsd || this.amountToSellUsd <= 0) {
-      this.utilService.showToast('Por favor ingrese un monto válido', 'error');
+      this.toast.show('Por favor ingrese un monto válido', 'error');
       return;
     }
 
     const totalDebitado = this.amountToSellUsd * (1 + this.taxRate);
     if (totalDebitado > this.usdBalance) {
-      this.utilService.showToast(
+      this.toast.show(
         `Saldo insuficiente. Necesitás $${totalDebitado.toFixed(2)} USD (incluye comisión del ${this.taxPercentage}%)`,
         'error'
       );
@@ -276,29 +273,28 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
       ).toPromise();
 
       if (response && response.success) {
-        // Guardar el exchange rate para futuras conversiones
         if (response.exchangeRate) {
           this.currentExchangeRate = response.exchangeRate;
         }
-        
-        this.utilService.showToast(
+
+        this.toast.show(
           `Venta exitosa: $${response.amountArs.toFixed(2)} ARS`,
           'success'
         );
-        
+
         this.usdBalance = response.newBalanceUsd;
         this.arsBalance = response.newBalanceArs;
         this.userData.balance = response.newBalanceArs;
-        
+
         this.closeSellUsdSection();
         this.loadTransactions();
-        this.dataService.loadUserData(true).subscribe();
+        this.userDataStore.load(true).subscribe();
       } else {
-        this.utilService.showToast(response?.message || 'Error en la venta', 'error');
+        this.toast.show(response?.message || 'Error en la venta', 'error');
       }
     } catch (error: any) {
       console.error('Error vendiendo USD:', error);
-      this.utilService.showToast(
+      this.toast.show(
         error.error?.message || 'Error al vender dólares',
         'error'
       );
@@ -307,107 +303,20 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
     }
   }
 
-  // =================== TRANSFERIR ===================
-  
   openTransferSection(): void {
     this.closeSections();
     this.showTransferSection = true;
-    this.transferStep = 1;
   }
 
   closeTransferSection(): void {
     this.showTransferSection = false;
-    this.transferStep = 1;
-    this.destinationInput = '';
-    this.destinationAccountData = null;
-    this.amountToTransfer = null;
   }
 
-  async searchDestinationAccount(): Promise<void> {
-    if (!this.destinationInput.trim()) {
-      this.utilService.showToast('Por favor ingrese un Alias o CVU', 'error');
-      return;
-    }
-
-    this.isSearchingAccount = true;
-
-    try {
-      const accountData = await this.dataService.buscarCuenta(this.destinationInput.trim());
-      
-      // Verificar que no sea la misma cuenta
-      if (this.selectedCurrency === 'ARS' && accountData.idaccount === this.arsAccountId) {
-        this.utilService.showToast('No puedes transferir a tu misma cuenta', 'error');
-        this.isSearchingAccount = false;
-        return;
-      }
-      
-      if (this.selectedCurrency === 'USD' && accountData.idaccount === this.usdAccountId) {
-        this.utilService.showToast('No puedes transferir a tu misma cuenta', 'error');
-        this.isSearchingAccount = false;
-        return;
-      }
-      
-      this.destinationAccountData = accountData;
-      this.transferStep = 2;
-      
-    } catch (error: any) {
-      console.error('Error buscando cuenta:', error);
-      this.utilService.showToast(error.message || 'Cuenta no encontrada', 'error');
-    } finally {
-      this.isSearchingAccount = false;
-    }
+  onTransferAccountsReload(): void {
+    this.checkUsdAccount();
+    this.loadTransactions();
   }
 
-  confirmDestinationAccount(): void {
-    this.transferStep = 3;
-  }
-
-  cancelSearch(): void {
-    this.transferStep = 1;
-    this.destinationAccountData = null;
-  }
-
-  async executeTransfer(): Promise<void> {
-    if (!this.amountToTransfer || this.amountToTransfer <= 0) {
-      this.utilService.showToast('Por favor ingrese un monto válido', 'error');
-      return;
-    }
-
-    const currentBalance = this.selectedCurrency === 'ARS' ? this.arsBalance : this.usdBalance;
-    
-    if (this.amountToTransfer > currentBalance) {
-      this.utilService.showToast('Saldo insuficiente', 'error');
-      return;
-    }
-
-    this.isTransferring = true;
-
-    try {
-      const sourceAccountId = this.selectedCurrency === 'ARS' ? this.arsAccountId : this.usdAccountId;
-      
-      await this.dataService.realizarTransferencia(
-        this.destinationAccountData.idaccount.toString(),
-        this.amountToTransfer,
-        this.selectedCurrency
-      );
-      
-      this.utilService.showToast('Transferencia realizada con éxito', 'success');
-      
-      // Recargar datos
-      this.dataService.loadUserData(true).subscribe();
-      this.loadTransactions();
-      this.closeTransferSection();
-      
-    } catch (error: any) {
-      console.error('Error realizando transferencia:', error);
-      this.utilService.showToast('Error al realizar la transferencia', 'error');
-    } finally {
-      this.isTransferring = false;
-    }
-  }
-
-  // =================== RECIBIR ===================
-  
   openReceiveSection(): void {
     this.closeSections();
     this.showReceiveSection = true;
@@ -419,14 +328,12 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
 
   copyToClipboard(text: string, label: string): void {
     navigator.clipboard.writeText(text).then(() => {
-      this.utilService.showToast(`${label} copiado al portapapeles`, 'success');
+      this.toast.show(`${label} copiado al portapapeles`, 'success');
     }).catch(() => {
-      this.utilService.showToast('Error al copiar', 'error');
+      this.toast.show('Error al copiar', 'error');
     });
   }
 
-  // =================== HELPERS ===================
-  
   private closeSections(): void {
     this.showBuyUsdSection = false;
     this.showSellUsdSection = false;
@@ -438,9 +345,8 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
     if (this.usdAccountId) {
       this.transactionService.loadAllTransactions(true);
       const transSub = this.transactionService.allTransactions$.subscribe(transactions => {
-        // Filtrar transacciones USD (basado en descripción o campo currency)
-        this.usdTransactions = transactions.filter(t => 
-          t.description.includes('USD') || 
+        this.usdTransactions = transactions.filter(t =>
+          t.description.includes('USD') ||
           t.description.includes('dólar') ||
           t.currency === 'USD'
         );
@@ -451,41 +357,41 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
   }
 
   private startDataPolling(intervalMs: number = 10000): void {
-    this.stopDataPolling(); // Evita duplicados
+    this.stopDataPolling();
 
-    this.dataPollingSubscription = interval(intervalMs)
-      .pipe(
-        switchMap(() => {
-          // Actualizar datos del usuario ARS y cuenta USD
-          return forkJoin([
-            this.dataService.loadUserData(true),
-            this.hasUsdAccount ? this.accountService.getUserAccounts() : of(null),
-            this.hasUsdAccount ? this.transactionService.loadAllTransactions(true) : of(null)
-          ]);
-        })
-      )
-      .subscribe({
-        next: ([userData, accounts]) => {
-          // Actualizar saldo USD si existe la cuenta
-          if (accounts) {
-            const usdAccount = accounts.find(acc => acc.currency === 'USD');
-            if (usdAccount) {
-              this.usdBalance = usdAccount.balance;
-              this.usdAccountId = usdAccount.id;
-              this.usdAlias = usdAccount.alias;
-              this.usdCvu = usdAccount.cvu;
-            }
+    this.dataPollingSubscription = this.accountPolling.start(
+      intervalMs,
+      [
+        () => this.userDataStore.load(true),
+        () => {
+          if (!this.hasUsdAccount) {
+            return of(null);
           }
+          return this.accountService.getUserAccounts().pipe(
+            tap((accounts) => {
+              const usdAccount = accounts.find((acc) => acc.currency === 'USD');
+              if (usdAccount) {
+                this.usdBalance = usdAccount.balance;
+                this.usdAccountId = usdAccount.id;
+                this.usdAlias = usdAccount.alias;
+                this.usdCvu = usdAccount.cvu;
+              }
+            })
+          );
         },
-        error: (err) => {
+        () =>
+          this.hasUsdAccount
+            ? from(this.transactionService.loadAllTransactions(true))
+            : of(null),
+      ],
+      {
+        onError: (err) => {
           console.error('>>> Polling: Error durante la actualización de datos USD:', err);
-        }
-      });
+        },
+      }
+    );
 
-    // Guardamos la suscripción para poder cancelarla en ngOnDestroy
-    if (this.dataPollingSubscription) {
-      this.subscriptions.push(this.dataPollingSubscription);
-    }
+    this.subscriptions.push(this.dataPollingSubscription);
   }
 
   private stopDataPolling(): void {
@@ -500,38 +406,25 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
   }
 
   formatMoney(amount: number): string {
-    if (amount == null || isNaN(amount)) return '0';
-    if (amount % 1 === 0) {
-      return amount.toLocaleString('es-AR');
-    }
-    const formatted = amount.toLocaleString('es-AR', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2
-    });
-    return formatted;
+    return formatMoneyShared(amount);
   }
 
   formatDate(date: Date): string {
-    return this.transactionService.formatDate(date);
+    return formatDateTime(date);
   }
 
   getCurrencyLabel(currency: string): string {
     return currency === 'ARS' ? 'Pesos' : 'Dólares';
   }
 
-  // =================== CONVERSIÓN EN TIEMPO REAL ===================
-  // Espejo del backend: input = base; comisión 3% sobre la base; crédito solo sobre la base.
-  
   private loadExchangeRate(): void {
-    // Obtener el tipo de cambio actual
     this.accountService.getUserAccounts().subscribe({
       next: () => {
-        // El tipo de cambio se actualizará cuando sea necesario
-        this.currentExchangeRate = 1100; // Valor por defecto, se actualizará con la API
+        this.currentExchangeRate = 1100;
       },
       error: (error) => {
         console.error('Error cargando tipo de cambio:', error);
-        this.currentExchangeRate = 1100; // Valor fallback
+        this.currentExchangeRate = 1100;
       }
     });
   }
@@ -548,7 +441,6 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
       const amountArs = this.amountToBuyUsd;
       this.estimatedTaxAmount = amountArs * this.taxRate;
       this.estimatedTotalDebitado = amountArs + this.estimatedTaxAmount;
-      // Solo la base se convierte (igual que ArsToUsdConversionService).
       this.estimatedUsdAmount = this.currentExchangeRate > 0
         ? amountArs / this.currentExchangeRate
         : 0;
@@ -562,24 +454,21 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
       const amountUsd = this.amountToSellUsd;
       this.estimatedTaxAmount = amountUsd * this.taxRate;
       this.estimatedTotalDebitado = amountUsd + this.estimatedTaxAmount;
-      // Solo la base se convierte (igual que UsdToArsConversionService).
       this.estimatedArsAmount = amountUsd * this.currentExchangeRate;
     } else {
       this.resetConversionPreview();
     }
   }
 
-  // =================== FILTROS Y DETALLES ===================
-  
   applyFilter(): void {
     if (this.selectedFilter === 'ALL') {
       this.filteredTransactions = this.usdTransactions;
     } else if (this.selectedFilter === 'USD') {
-      this.filteredTransactions = this.usdTransactions.filter(t => 
+      this.filteredTransactions = this.usdTransactions.filter(t =>
         t.currency === 'USD' || t.originalCurrency === 'USD'
       );
     } else if (this.selectedFilter === 'ARS') {
-      this.filteredTransactions = this.usdTransactions.filter(t => 
+      this.filteredTransactions = this.usdTransactions.filter(t =>
         !t.currency || t.currency === 'ARS'
       );
     }
@@ -601,28 +490,31 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
   }
 
   getDisplayAmount(transaction: Transaction): number {
-    // Solo mostrar en USD si es una transferencia directa USD → USD
-    // (mismo currency en origen y destino)
     if (transaction.currency === 'USD' && transaction.originalCurrency === 'USD') {
       return transaction.amount;
     }
-    
-    // Para todas las otras combinaciones, mostrar en ARS
+
     if (transaction.amountInArs) {
       return transaction.amountInArs;
     }
-    
+
     return transaction.amount;
   }
 
   getDisplayCurrency(transaction: Transaction): string {
-    // Solo mostrar USD si es una transferencia directa USD → USD
     if (transaction.currency === 'USD' && transaction.originalCurrency === 'USD') {
       return 'USD';
     }
-    
-    // En todos los otros casos, mostrar ARS
+
     return 'ARS';
+  }
+
+  shouldShowSecondaryAmount(transaction: Transaction): boolean {
+    return !!(
+      transaction.currency === 'USD' &&
+      transaction.originalCurrency === 'USD' &&
+      transaction.amountInArs
+    );
   }
 
   getTransferType(transaction: Transaction): string {

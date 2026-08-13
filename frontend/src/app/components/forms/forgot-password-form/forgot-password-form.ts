@@ -3,7 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth-service/auth-service';
 import { ResendService } from '../../../services/resend-service/resend.service';
-import { UtilService } from '../../../services/util-service/util-service';
+import { ToastService } from '../../../services/toast-service/toast.service';
+import { maskEmail } from '../../../shared/utils/email-mask';
 
 
 
@@ -29,7 +30,7 @@ export class ForgotPasswordFormComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private resendService: ResendService,
-    private utilService: UtilService
+    private toast: ToastService
   ) {}
 
   ngOnInit() {}
@@ -62,7 +63,7 @@ export class ForgotPasswordFormComponent implements OnInit, OnDestroy {
     
     this.authService.sendRecoverMail(this.email).subscribe({
       next: (response: any) => {
-        const censurado = this.censurarCorreo(this.email);
+        const censurado = maskEmail(this.email);
         this.showToast(`Correo enviado exitosamente a ${censurado}. Revisa tu bandeja de entrada.`, 'info');
         this.isLoading = false;
         this.emailSentSuccess = true;
@@ -99,17 +100,13 @@ export class ForgotPasswordFormComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Usado por el template. */
   censurarCorreo(email: string): string {
-    const [usuario, dominio] = email.split('@');
-    if (usuario.length <= 2) {
-      return usuario[0] + '***@' + dominio;
-    }
-    const visible = usuario.slice(0, 2);
-    return visible + '***@' + dominio;
+    return maskEmail(email);
   }
 
   private showToast(message: string, type: 'success' | 'error' | 'info' | 'warning'): void {
-    this.utilService.showToast(message, type);
+    this.toast.show(message, type);
   }
 
   /**
@@ -124,7 +121,7 @@ export class ForgotPasswordFormComponent implements OnInit, OnDestroy {
     
     this.resendService.resendPasswordRecovery(this.email).subscribe({
       next: (response) => {
-        const censurado = this.censurarCorreo(this.email);
+        const censurado = maskEmail(this.email);
         this.showToast(`Correo reenviado exitosamente a ${censurado}.`, 'success');
         this.isResending = false;
         this.startResendCooldown();

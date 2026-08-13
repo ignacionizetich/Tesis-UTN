@@ -3192,9 +3192,9 @@ Boton de cerrar el modal de taxes
     width: 100%;
     justify-content: center;
   }
+}
 
-
-  /* Estilos para la versión con animación */
+/* Estilos para la versión con animación */
 .cancel-btn.hidden {
   opacity: 0;
   transform: scale(0.8);
@@ -3292,85 +3292,4 @@ Boton de cerrar el modal de taxes
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-
-}
-/* ==================== Selector de Moneda ==================== */
-.currency-selector {
-  margin-bottom: 1.5rem;
-}
-
-.currency-label {
-  display: block;
-  margin-bottom: 0.75rem;
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.currency-options {
-  display: flex;
-  gap: 1rem;
-  flex-direction: column;
-}
-
-.currency-option {
-  display: flex;
-  align-items: center;
-  padding: 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.currency-option:hover:not(.disabled) {
-  border-color: var(--text-accent);
-  background: rgba(0, 212, 255, 0.05);
-}
-
-.currency-option input[type="radio"] {
-  margin-right: 1rem;
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: var(--text-accent);
-}
-
-.currency-option input[type="radio"]:checked + .currency-info {
-  color: var(--text-accent);
-}
-
-.currency-option.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: rgba(255, 255  background: rgba(255, 255  background: rgba(255, 255  backgrotion  background: p: 0.25  background: rgb
-
-.currency.currency.cont-wei.currency
-  font-s  font-s  font-s  font-s--  font-s  font-s  font-sncy-ba  font-s  font-s  e:  font-s  font-svar(--  font-s  fony);
-  f  f  f  fy: 'Cour  f  f  f mon  f  f  f  fy: 'Cour  f arnin  f  onversion-info  f  f  fing: 0.75rem;
-  border-radius: 8px;
-  margin-bot  margin-bot  margin-bot  margin-bot  marginx;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.conversion-warning {
-  background: rgba(255, 152, 0, 0.1);
-  border: 1px solid rgba(255, 152, 0, 0.3);
-  color: #ff9800;
-}
-
-.conversion-info {
-  background: rgba(0, 212, 255, 0.1);
-  border:  border:  border:  border:  border: co  border:  border:  nt ;
-}
-
-.transfer.transfer.tr-cur.transfer.transfeze.transfer.transfer.tr--text-secondary);.transfer.transfer.tr-cur.transfer.transfeze.transfer.transfergba(255, 255, 255, 0.05);
-  border-radius: 6px;
-}
-
-.transfer-d.tranation-curre.trastrong {
-  color: var(--text-accent);
 }

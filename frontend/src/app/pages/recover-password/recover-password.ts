@@ -2,20 +2,19 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators} from '@angular/forms';
-import { UtilService } from '../../services/util-service/util-service';
+import { ToastService } from '../../services/toast-service/toast.service';
 import { RecoveryService } from '../../services/recovery-service/recovery-service';
 import { Subscription } from 'rxjs';
 
 import { ThemeToggleComponent } from "../../components/ui/theme-toggle/theme-toggle";
-import { strongPasswordValidator, passwordMatchValidator } from '../../components/forms/register-form/register-form';
+import { passwordMatchValidator, strongPasswordValidator } from '../../shared/validators/auth.validators';
 import { BrandLogoComponent } from "../../components/ui/brand-logo/brand-logo";
-
-
+import { GlobalFooterComponent } from '../../components/ui/global-footer/global-footer';
 
 @Component({
   selector: 'app-recover-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ThemeToggleComponent, BrandLogoComponent],
+  imports: [CommonModule, ReactiveFormsModule, ThemeToggleComponent, BrandLogoComponent, GlobalFooterComponent],
   templateUrl: './recover-password.html',
   styleUrls: ['./recover-password.css']
 })
@@ -34,7 +33,7 @@ export class RecoverPasswordComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private fb: FormBuilder,
-    private utilService: UtilService,
+    private toast: ToastService,
     private recoveryService: RecoveryService
   ) {}
 
@@ -120,7 +119,7 @@ private initializeForm(): void {
       next: (response) => {
         this.isLoading = false;
         if (response.success) {
-          this.utilService.showToast('Contraseña restablecida correctamente', 'success');
+          this.toast.show('Contraseña restablecida correctamente', 'success');
           setTimeout(() => {
             this.router.navigate(['/login']);
           }, 2000);

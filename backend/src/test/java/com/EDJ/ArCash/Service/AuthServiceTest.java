@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,6 +44,7 @@ class AuthServiceTest {
     private AuthenticationStrategy authenticationStrategy;
     private TokenManagementStrategy tokenManagementStrategy;
     private AccountRepository accountRepository;
+    private AccountService accountService;
     private RefreshTokenCleanupService refreshTokenCleanupService;
     private AuthService authService;
 
@@ -53,6 +55,7 @@ class AuthServiceTest {
         PasswordRecoveryStrategy passwordRecoveryStrategy = mock(PasswordRecoveryStrategy.class);
         LoginResponseFactory loginResponseFactory = new LoginResponseFactoryImpl();
         accountRepository = mock(AccountRepository.class);
+        accountService = mock(AccountService.class);
         refreshTokenCleanupService = mock(RefreshTokenCleanupService.class);
 
         authService = new AuthService();
@@ -61,6 +64,7 @@ class AuthServiceTest {
         ReflectionTestUtils.setField(authService, "passwordRecoveryStrategy", passwordRecoveryStrategy);
         ReflectionTestUtils.setField(authService, "loginResponseFactory", loginResponseFactory);
         ReflectionTestUtils.setField(authService, "accountRepository", accountRepository);
+        ReflectionTestUtils.setField(authService, "accountService", accountService);
         ReflectionTestUtils.setField(authService, "refreshTokenCleanupService", refreshTokenCleanupService);
     }
 
@@ -80,12 +84,36 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Sin cuenta ARS: mismo mensaje de error y no se persiste ningun refresh token")
-    void sinCuentaNoPersisteRefreshToken() {
+    @DisplayName("Sin ninguna cuenta: auto-crea ARS y completa el login")
+    void sinCuentasCreaArsYLoginOk() {
         LoginRequest request = pedido();
         User user = usuario();
+        Account ars = cuenta(user);
         when(authenticationStrategy.authenticate(request)).thenReturn(AuthenticationResult.success(user));
         when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.empty());
+        when(accountRepository.findAllByUser_Id(ID_USUARIO)).thenReturn(List.of());
+        when(accountService.ensureArsAccount(user)).thenReturn(ars);
+        when(tokenManagementStrategy.getActiveRefreshToken(user)).thenReturn("refresh");
+        when(tokenManagementStrategy.generateAccessToken("5", "USER")).thenReturn("access");
+
+        LoginResponse response = authService.login(request);
+
+        assertTrue(response.isSuccess());
+        assertEquals(ID_CUENTA, response.getAccountId());
+        verify(accountService).ensureArsAccount(user);
+        verify(tokenManagementStrategy).generateAccessToken("5", "USER");
+    }
+
+    @Test
+    @DisplayName("Tiene cuentas pero no ARS: Cuenta no encontrada y no emite tokens")
+    void conCuentasNoArsNoPersisteRefreshToken() {
+        LoginRequest request = pedido();
+        User user = usuario();
+        Account usd = cuenta(user);
+        usd.setAccountType(com.EDJ.ArCash.Models.Imp.Currency.USD);
+        when(authenticationStrategy.authenticate(request)).thenReturn(AuthenticationResult.success(user));
+        when(accountRepository.findByUser_Id(ID_USUARIO)).thenReturn(Optional.empty());
+        when(accountRepository.findAllByUser_Id(ID_USUARIO)).thenReturn(List.of(usd));
 
         LoginResponse response = authService.login(request);
 
@@ -93,6 +121,7 @@ class AuthServiceTest {
         assertEquals("Cuenta no encontrada", response.getMessage());
         assertNull(response.getAccessToken());
         assertNull(response.getRefreshToken());
+        verify(accountService, never()).ensureArsAccount(any());
         verify(tokenManagementStrategy, never()).getActiveRefreshToken(any());
         verify(tokenManagementStrategy, never()).generateRefreshToken(anyString(), anyString());
         verify(tokenManagementStrategy, never()).saveRefreshToken(any(), anyString());

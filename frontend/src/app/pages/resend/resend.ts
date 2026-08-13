@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ResendService } from '../../services/resend-service/resend.service';
-import { UtilService } from '../../services/util-service/util-service';
+import { ToastService } from '../../services/toast-service/toast.service';
 
 // Importar componentes
 import { ThemeToggleComponent } from '../../components/ui/theme-toggle/theme-toggle';
@@ -33,7 +33,7 @@ export class ResendComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private resendService: ResendService,
-    private utilService: UtilService,
+    private toast: ToastService,
     private router: Router
   ) {}
 
@@ -68,12 +68,12 @@ export class ResendComponent implements OnInit {
 
     try {
       await this.resendService.resendValidationEmail(email);
-      this.utilService.showToast('Email de validación reenviado correctamente', 'success');
+      this.toast.show('Email de validación reenviado correctamente', 'success');
       setTimeout(() => {
         this.router.navigate(['/login']);
       }, 2000);
     } catch (error) {
-      this.utilService.showToast('Error al reenviar email de validación', 'error');
+      this.toast.show('Error al reenviar email de validación', 'error');
     } finally {
       this.isLoading = false;
     }
@@ -91,12 +91,12 @@ export class ResendComponent implements OnInit {
 
     try {
       await this.resendService.resendPasswordRecovery(email);
-      this.utilService.showToast('Email de recuperación enviado correctamente', 'success');
+      this.toast.show('Email de recuperación enviado correctamente', 'success');
       setTimeout(() => {
         this.router.navigate(['/login']);
       }, 2000);
     } catch (error) {
-      this.utilService.showToast('Error al enviar email de recuperación', 'error');
+      this.toast.show('Error al enviar email de recuperación', 'error');
     } finally {
       this.isLoading = false;
     }

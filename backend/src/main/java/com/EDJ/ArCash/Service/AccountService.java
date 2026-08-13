@@ -70,6 +70,21 @@ public class AccountService {
         return account;
     }
 
+    /**
+     * Garantiza cuenta ARS. Si no existe, la crea (p. ej. usuario habilitado por admin
+     * sin haber pasado por validacion de email).
+     */
+    public Account ensureArsAccount(User user) {
+        Optional<Account> existing = accountRepository.findArsAccountByUserId(user.getId(), Currency.ARS);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        createAccount(user);
+        return accountRepository.findArsAccountByUserId(user.getId(), Currency.ARS)
+                .orElseThrow(() -> new IllegalStateException(
+                        "No se pudo crear la cuenta ARS para el usuario " + user.getId()));
+    }
+
     public OpenUsdResult openUsdAccount(User user) {
         try {
             boolean alreadyHasAccount = accountRepository.existsByUserAndAccountType(user, Currency.USD);

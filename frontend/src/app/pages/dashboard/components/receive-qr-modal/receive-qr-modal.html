@@ -1,0 +1,21 @@
+<div class="modal" (click)="onBackdrop($event)">
+  <div class="modal-content" [class.loading-qr]="isLoadingQr" (click)="$event.stopPropagation()">
+    <span class="close-button qr-close-button" (click)="close()">&times;</span>
+
+    @if (isLoadingQr) {
+    <div class="search-loading-overlay">
+      <div class="search-loading-content">
+        <div class="search-spinner"></div>
+        <p>Cargando QR...</p>
+      </div>
+    </div>
+    }
+    @if (qrCodeDataString && qrCodeDataObject && !isLoadingQr) {
+    <div class="qr-container">
+      <h2>Recibi dinero con tu QR</h2>
+      <qrcode [qrdata]="qrCodeDataString" [width]="256" [errorCorrectionLevel]="'M'"></qrcode>
+      <h5 class="qr-footer">Tu QR para recibir transferencias en {{ qrCodeDataObject.currency }}</h5>
+    </div>
+    }
+  </div>
+</div>

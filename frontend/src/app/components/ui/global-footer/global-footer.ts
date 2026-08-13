@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+/** Footer de contacto (email) en pantallas auth. Distinto de `app-footer` (créditos en shell). */
 @Component({
   selector: 'app-global-footer',
   standalone: true,

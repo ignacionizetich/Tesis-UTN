@@ -26,17 +26,13 @@ export class App implements OnInit, OnDestroy {
       this.initSmoothTransitions();
     }
 
-    // Escuchar cambios de ruta para mostrar/ocultar el footer global
+    // Footer de autores (app-footer): ocultar en pantallas auth que usan app-global-footer
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
-        // Ocultar footer global en las páginas de register, login, forgot y recover-password
-        this.showGlobalFooter = !event.url.includes('/register') &&
-                               !event.url.includes('/login') &&
-                               !event.url.includes('/forgot') &&
-                               !event.url.includes('/recover-password') &&
-                               !event.url.includes('/validate-request') &&
-                               !event.url.includes('/reset-password');
+        const url = event.urlAfterRedirects || event.url;
+        this.showGlobalFooter = !['/register', '/login', '/forgot', '/resend', '/reset-password']
+          .some((path) => url.includes(path));
       });
   }
 

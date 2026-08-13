@@ -1,0 +1,109 @@
+<div class="formulario">
+            <!-- Botón de navegación solo visible cuando no está cargando -->
+            @if (!isLoadingUsers) {
+               <nav class="button-nav">
+
+                    <button class="nav-button" type="button" (click)="refreshUsersList()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M1 4v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" />
+                    </svg>
+                        Refrescar lista
+                    </button>
+
+                  <button type="button" class="nav-button" (click)="goToCreate.emit()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="margin-right: 6px;">
+                    <path d="M12 5v14m7-7H5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Crear Nuevo Administrador
+                </button>
+               </nav>
+          
+            }
+            
+            <div class="usuarios-container">
+                <!-- Título solo visible cuando no está cargando -->
+                @if (!isLoadingUsers) {
+                <h2>Usuarios Autenticados</h2>
+                }
+                
+                <!-- Loading State con estilo del QR -->
+                @if (isLoadingUsers) {
+                <div class="search-loading-overlay">
+                    <div class="search-loading-content">
+                        <div class="search-spinner"></div>
+                        <p>Cargando usuarios...</p>
+                    </div>
+                </div>
+                }
+                
+                <!-- Lista de Usuarios -->
+                @if (!isLoadingUsers && users.length > 0) {
+                <ul class="usuarios-lista">
+                    @for (user of users; track user.id) {
+                    <li class="usuario-item" (click)="openUserModal(user)">
+                        <div class="usuario-datos">
+                            <strong>{{user.name}} {{user.lastName}}</strong>
+                            <span class="usuario-username">{{user.username}}</span>
+                            <span class="usuario-dni">DNI: {{user.dni}}</span>
+                            <span class="usuario-email">{{user.email}}</span>
+                        </div>
+                        <div class="action-buttons" (click)="$event.stopPropagation()">
+                            <span class="status-indicator" [class]="user.active ? 'status-active' : 'status-inactive'">
+                                {{user.active ? 'Activo' : 'Inactivo'}}
+                            </span>
+                            @if (user.active) {
+                            <button 
+                                class="inhabilitar-btn"
+                                (click)="openConfirmModal(user)"
+                                [disabled]="loadingUserAction === user.id">
+                                @if (loadingUserAction === user.id) {
+                                    <div class="spinner"></div>
+                                } @else {
+                                    Deshabilitar
+                                }
+                            </button>
+                            } @else {
+                            <button 
+                                class="habilitar-btn"
+                                (click)="openConfirmModal(user)"
+                                [disabled]="loadingUserAction === user.id">
+                                @if (loadingUserAction === user.id) {
+                                    <div class="spinner"></div>
+                                } @else {
+                                    Habilitar
+                                }
+                            </button>
+                            }
+                        </div>
+                    </li>
+                    }
+
+                    
+                </ul>
+                }
+                
+                <!-- Sin Usuarios -->
+                @if (!isLoadingUsers && users.length === 0) {
+                <div class="no-users">
+                    <p>No hay usuarios autenticados para mostrar.</p>
+                </div>
+                }
+            </div>
+</div>
+
+<app-authenticated-info
+    [user]="selectedUser"
+    [showModal]="showUserModal"
+    (closeModal)="resetUserModal()"
+    (toggleUserStatus)="onToggleUserStatus($event)">
+</app-authenticated-info>
+
+<app-user-status-confirm-modal
+  [user]="userToToggle"
+  [visible]="showConfirmModal"
+  [loading]="!!userToToggle && loadingUserAction === userToToggle.id"
+  (confirmed)="confirmToggleUser()"
+  (cancelled)="closeConfirmModal()"
+/>
