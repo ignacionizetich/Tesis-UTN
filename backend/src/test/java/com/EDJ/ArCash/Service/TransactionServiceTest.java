@@ -140,6 +140,25 @@ class TransactionServiceTest {
     }
 
     @Test
+    @DisplayName("Self-transfer via orquestador: mensaje especifico, no el de saldo insuficiente")
+    void selfTransferViaOrquestadorDevuelveMensajeEspecifico() {
+        Account misma = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 500.0);
+        when(accountRepository.findByIdAccount(ID_ARS)).thenReturn(Optional.of(misma));
+
+        TransferOperationResult result =
+                transactionService.transactionWithDetails(ID_ARS, ID_ARS, 100.0);
+
+        assertFalse(result.isSuccess());
+        assertEquals("No podés transferir a la misma cuenta", result.getMessage());
+        assertEquals(500.0, misma.getBalance(), DELTA);
+
+        ArgumentCaptor<Transaction> txnCaptor = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(txnCaptor.capture());
+        assertEquals("FAILED", txnCaptor.getValue().getState());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
     @DisplayName("Conversion ARS→USD mismo usuario: 3%, usd=ars/venta, comision NO se convierte a USD, evento si")
     void conversionArsAUsdMismaUsuarioFormulaYComisionNoConvertida() {
         Account ars = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 20_000.0);

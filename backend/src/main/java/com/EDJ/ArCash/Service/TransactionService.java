@@ -63,12 +63,13 @@ public class TransactionService {
             return transactionWithConversionDetails(cuentaOrigen, cuentaDestino, monto);
         }
 
+        if (cuentaOrigen.getIdAccount().equals(cuentaDestino.getIdAccount())) {
+            transactionSameCurrency(cuentaOrigen, cuentaDestino, monto);
+            return TransferOperationResult.fail("No podés transferir a la misma cuenta");
+        }
+
         boolean success = transactionSameCurrency(cuentaOrigen, cuentaDestino, monto);
         if (!success) {
-            // Fase 8: self-transfer también cae acá con este mensaje genérico
-            // ("Saldo insuficiente o error en la transacción"), engañoso para ese
-            // caso. Candidato a mensaje específico (p. ej. no transferir a la misma
-            // cuenta); no ahora.
             return TransferOperationResult.fail("Saldo insuficiente o error en la transacción");
         }
         return TransferOperationResult.ok();
