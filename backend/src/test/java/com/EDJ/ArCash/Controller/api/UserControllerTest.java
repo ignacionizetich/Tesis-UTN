@@ -1,11 +1,9 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.Models.User;
+import com.EDJ.ArCash.DTO.NonAuthDTO.RegistrerRequest;
 import com.EDJ.ArCash.Service.RegistrationConflictCode;
 import com.EDJ.ArCash.Service.RegistrationConflictException;
 import com.EDJ.ArCash.Service.UserService;
-
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +14,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -53,14 +51,14 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Todos los campos son obligatorios."));
 
-        verify(userService, never()).insertarUsuario(any(), anyString());
+        verify(userService, never()).register(any());
     }
 
     @Test
     @DisplayName("Conflicto de email: mensaje ES singular")
     void conflictoEmail() throws Exception {
         doThrow(new RegistrationConflictException(List.of(RegistrationConflictCode.EMAIL_ALREADY_EXISTS)))
-                .when(userService).insertarUsuario(any(User.class), anyString());
+                .when(userService).register(any(RegistrerRequest.class));
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -74,7 +72,7 @@ class UserControllerTest {
     @DisplayName("Conflicto de alias: mensaje ES singular")
     void conflictoAlias() throws Exception {
         doThrow(new RegistrationConflictException(List.of(RegistrationConflictCode.ALIAS_ALREADY_EXISTS)))
-                .when(userService).insertarUsuario(any(User.class), anyString());
+                .when(userService).register(any(RegistrerRequest.class));
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -87,7 +85,7 @@ class UserControllerTest {
     @DisplayName("Conflicto de DNI: mensaje ES singular")
     void conflictoDni() throws Exception {
         doThrow(new RegistrationConflictException(List.of(RegistrationConflictCode.DNI_ALREADY_EXISTS)))
-                .when(userService).insertarUsuario(any(User.class), anyString());
+                .when(userService).register(any(RegistrerRequest.class));
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -102,7 +100,7 @@ class UserControllerTest {
         doThrow(new RegistrationConflictException(List.of(
                         RegistrationConflictCode.EMAIL_ALREADY_EXISTS,
                         RegistrationConflictCode.ALIAS_ALREADY_EXISTS)))
-                .when(userService).insertarUsuario(any(User.class), anyString());
+                .when(userService).register(any(RegistrerRequest.class));
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -119,7 +117,7 @@ class UserControllerTest {
                         RegistrationConflictCode.EMAIL_ALREADY_EXISTS,
                         RegistrationConflictCode.ALIAS_ALREADY_EXISTS,
                         RegistrationConflictCode.DNI_ALREADY_EXISTS)))
-                .when(userService).insertarUsuario(any(User.class), anyString());
+                .when(userService).register(any(RegistrerRequest.class));
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -132,7 +130,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Registro exitoso: 200 y mensaje de activacion por email")
     void registroExitoso() throws Exception {
-        doNothing().when(userService).insertarUsuario(any(User.class), eq("secreta"));
+        doNothing().when(userService).register(any(RegistrerRequest.class));
 
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)

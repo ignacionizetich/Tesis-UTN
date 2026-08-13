@@ -2,7 +2,6 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.NonAuthDTO.RegisterResponse;
 import com.EDJ.ArCash.DTO.NonAuthDTO.RegistrerRequest;
-import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Service.RegistrationConflictException;
 import com.EDJ.ArCash.Service.RegistrationConflictMessages;
 import com.EDJ.ArCash.Service.UserService;
@@ -13,7 +12,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.mail.MessagingException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +22,6 @@ import java.io.UnsupportedEncodingException;
 @Tag(name = "Usuarios", description = "Operaciones relacionadas con usuarios")
 public class UserController {
 
-    @Autowired
     private final UserService userService;
 
     public UserController(UserService userService) {
@@ -63,16 +60,17 @@ public class UserController {
             )
     })
     @PostMapping("/create")
-    public ResponseEntity<RegisterResponse> register(@RequestBody RegistrerRequest dto) throws MessagingException, UnsupportedEncodingException {
+    public ResponseEntity<RegisterResponse> register(@RequestBody RegistrerRequest dto)
+            throws MessagingException, UnsupportedEncodingException {
 
         if (dto.getName() == null || dto.getEmail() == null || dto.getPassword() == null || dto.getAlias() == null) {
             return ResponseEntity.badRequest().body(new RegisterResponse(false, "Todos los campos son obligatorios."));
         }
 
         try {
-            User user = new User(dto.getName(), dto.getLastName(), dto.getDni(), dto.getEmail(), dto.getAlias());
-            userService.insertarUsuario(user, dto.getPassword());
-            return ResponseEntity.ok(new RegisterResponse(true, "Usuario registrado correctamente. Revisa tu email para activar tu cuenta."));
+            userService.register(dto);
+            return ResponseEntity.ok(new RegisterResponse(true,
+                    "Usuario registrado correctamente. Revisa tu email para activar tu cuenta."));
         } catch (RegistrationConflictException e) {
             return ResponseEntity.badRequest().body(
                     new RegisterResponse(false, RegistrationConflictMessages.format(e.getCodes())));

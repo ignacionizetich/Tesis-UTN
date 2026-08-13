@@ -1,5 +1,6 @@
 package com.EDJ.ArCash.Service;
 
+import com.EDJ.ArCash.DTO.NonAuthDTO.RegistrerRequest;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Permissions;
@@ -87,6 +88,36 @@ public class UserService {
 
         // El email se enviará a través del observer, comentamos el envío directo
         // emailService.sendVerificationEmail(user, user.getValidationToken().getToken());
+    }
+
+    /**
+     * Registro publico: construye el User desde el DTO (el controller no arma entidades).
+     */
+    public void register(RegistrerRequest dto) {
+        User user = new User(dto.getName(), dto.getLastName(), dto.getDni(), dto.getEmail(), dto.getAlias());
+        insertarUsuario(user, dto.getPassword());
+    }
+
+    /**
+     * Datos de perfil del autenticado (User + cuenta ARS primaria).
+     */
+    public Optional<UserDataView> getUserData(User user) {
+        Optional<Account> optionalAccount = accountRepository.findByUser_Id(user.getId());
+        if (optionalAccount.isEmpty()) {
+            return Optional.empty();
+        }
+        Account account = optionalAccount.get();
+        return Optional.of(new UserDataView(
+                user.getName(),
+                user.getLastName(),
+                user.getDni(),
+                user.getEmail(),
+                user.getAlias(),
+                account.getAccountNickname(),
+                account.getIdAccount(),
+                account.getAccountCvu(),
+                account.getBalance()
+        ));
     }
     
     private void validateUserConflicts(User user) {

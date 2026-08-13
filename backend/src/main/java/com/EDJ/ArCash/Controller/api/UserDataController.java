@@ -1,16 +1,15 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Security.CustomUserDetails;
+import com.EDJ.ArCash.Service.UserDataView;
+import com.EDJ.ArCash.Service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,8 +24,11 @@ import java.util.Optional;
 @Tag(name = "Datos de usuario", description = "Operaciones para obtener datos del usuario autenticado")
 public class UserDataController {
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final UserService userService;
+
+    public UserDataController(UserService userService) {
+        this.userService = userService;
+    }
 
     @Operation(
             summary = "Obtener datos del usuario autenticado",
@@ -52,22 +54,22 @@ public class UserDataController {
     @GetMapping("/data")
     public ResponseEntity<?> getUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        Optional<Account> optionalAccount =  accountRepository.findByUser_Id(user.getId());
-        if (optionalAccount.isEmpty()) {
+        Optional<UserDataView> data = userService.getUserData(user);
+        if (data.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(java.util.Map.of("error", "Cuenta no encontrada para el usuario"));
         }
-        Account account = optionalAccount.get();
+        UserDataView view = data.get();
         return ResponseEntity.ok(new UserDTO(
-                user.getName(),
-                user.getLastName(),
-                user.getDni(),
-                user.getEmail(),
-                user.getAlias(),
-                account.getAccountNickname(),
-                account.getIdAccount(),
-                account.getAccountCvu(),
-                account.getBalance()
+                view.getName(),
+                view.getLastName(),
+                view.getDni(),
+                view.getEmail(),
+                view.getUsername(),
+                view.getAlias(),
+                view.getIdAccount(),
+                view.getCvu(),
+                view.getBalance()
         ));
     }
 
