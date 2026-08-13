@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable, of, lastValueFrom } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import UserData from '../../models/user-data';
 import { environment } from '../../../environments/environment';
-import { SessionStore } from '../../core/session/session-store';
+import { SessionStore } from '../../core/session/session.store';
 
 /**
  * Estado + API de perfil de usuario autenticado (userData$).

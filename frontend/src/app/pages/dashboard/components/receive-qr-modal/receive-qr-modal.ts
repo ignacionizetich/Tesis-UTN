@@ -8,8 +8,8 @@ import { CommonModule } from '@angular/common';
 import { QRCodeComponent } from 'angularx-qrcode';
 import qrData from '../../../../models/qrData';
 import { QrApi } from '../../../../services/qr-api/qr.api';
-import { SessionStore } from '../../../../core/session/session-store';
-import { ModalService } from '../../../../services/modal-service/modal-service';
+import { SessionStore } from '../../../../core/session/session.store';
+import { ModalService } from '../../../../services/modal-service/modal.service';
 
 @Component({
   selector: 'app-receive-qr-modal',

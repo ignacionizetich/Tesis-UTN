@@ -9,7 +9,7 @@ import { tap } from 'rxjs/operators';
 import { AccountService } from '../../services/account-service/account.service';
 import { UserDataStore } from '../../services/user-data-store/user-data.store';
 import { ToastService } from '../../services/toast-service/toast.service';
-import { TransactionService } from '../../services/transaction-service/transaction-service';
+import { TransactionService } from '../../services/transaction-service/transaction.service';
 import { AccountPollingCoordinator } from '../../services/account-polling/account-polling.coordinator';
 
 // Feature components

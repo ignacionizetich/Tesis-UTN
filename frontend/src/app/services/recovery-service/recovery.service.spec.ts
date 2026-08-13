@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { RecoveryService } from './recovery-service';
+import { RecoveryService } from './recovery.service';
 
 describe('RecoveryService', () => {
   let service: RecoveryService;

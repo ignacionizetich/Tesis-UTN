@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, lastValueFrom } from 'rxjs';
 import Transaction from '../../models/transaction';
 import { environment } from '../../../environments/environment';
-import { SessionStore } from '../../core/session/session-store';
+import { SessionStore } from '../../core/session/session.store';
 
 /**
  * Fuente HTTP del historial: GET + mapeo a modelo Transaction + memoria (transactions$).

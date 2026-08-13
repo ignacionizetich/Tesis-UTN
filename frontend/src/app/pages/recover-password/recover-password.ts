@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators} from '@angular/forms';
 import { ToastService } from '../../services/toast-service/toast.service';
-import { RecoveryService } from '../../services/recovery-service/recovery-service';
+import { RecoveryService } from '../../services/recovery-service/recovery.service';
 import { Subscription } from 'rxjs';
 
 import { ThemeToggleComponent } from "../../components/ui/theme-toggle/theme-toggle";

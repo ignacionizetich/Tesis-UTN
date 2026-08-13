@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ThemeService } from '../../services/theme-service/theme-service';
+import { ThemeService } from '../../services/theme-service/theme.service';
 import { ToastService } from '../../services/toast-service/toast.service';
-import { ValidationService, type ValidationResponse } from '../../services/validation-service/validation-service';
+import { ValidationService, type ValidationResponse } from '../../services/validation-service/validation.service';
 import { ResendNavigationService } from '../../services/resend-navigation/resend-navigation.service';
 import { ResendService } from '../../services/resend-service/resend.service';
 import { Subscription } from 'rxjs';

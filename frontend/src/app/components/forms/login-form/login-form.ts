@@ -2,7 +2,7 @@ import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '../../../services/auth-service/auth-service';
+import { AuthService } from '../../../services/auth-service/auth.service';
 import { ToastService } from '../../../services/toast-service/toast.service';
 import { CacheService } from '../../../services/cache-service/cache.service';
 import { ResendNavigationService } from '../../../services/resend-navigation/resend-navigation.service';

@@ -7,7 +7,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../services/auth-service/auth-service';
+import { AuthService } from '../../../services/auth-service/auth.service';
 import { ResendService } from '../../../services/resend-service/resend.service';
 import { ToastService } from '../../../services/toast-service/toast.service';
 import {

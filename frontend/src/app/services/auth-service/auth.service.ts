@@ -5,7 +5,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { SessionCleanupService } from '../session-cleanup/session-cleanup.service';
-import { SessionStore } from '../../core/session/session-store';
+import { SessionStore } from '../../core/session/session.store';
 
 @Injectable({
   providedIn: 'root'

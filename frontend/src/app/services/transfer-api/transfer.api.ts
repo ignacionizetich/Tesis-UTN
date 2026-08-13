@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { SessionStore } from '../../core/session/session-store';
+import { SessionStore } from '../../core/session/session.store';
 import { UserDataStore } from '../user-data-store/user-data.store';
 import { TransactionHistoryStore } from '../transaction-history-store/transaction-history.store';
 

@@ -4,7 +4,7 @@ import { BehaviorSubject, lastValueFrom } from 'rxjs';
 import { CacheService } from '../cache-service/cache.service';
 import { CacheConfig } from '../../models/cache.interface';
 import { TransferData } from '../../models/transfer.interface';
-import { SessionStore } from '../../core/session/session-store';
+import { SessionStore } from '../../core/session/session.store';
 import { environment } from '../../../environments/environment';
 
 /**

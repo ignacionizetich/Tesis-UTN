@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { UserResponse, AdminRequest } from '../../models/admin.interface';
 import { environment } from '../../../environments/environment';
-import { SessionStore } from '../../core/session/session-store';
+import { SessionStore } from '../../core/session/session.store';
 
 @Injectable({
   providedIn: 'root'

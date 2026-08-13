@@ -4,17 +4,17 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription, of, from } from 'rxjs';
 
-import { ThemeService } from '../../services/theme-service/theme-service';
+import { ThemeService } from '../../services/theme-service/theme.service';
 import { ToastService } from '../../services/toast-service/toast.service';
-import { AuthService } from '../../services/auth-service/auth-service';
+import { AuthService } from '../../services/auth-service/auth.service';
 import { UserDataStore } from '../../services/user-data-store/user-data.store';
 import { TransactionHistoryStore } from '../../services/transaction-history-store/transaction-history.store';
-import { ModalService } from '../../services/modal-service/modal-service';
-import { TransactionService } from '../../services/transaction-service/transaction-service';
-import { FavoriteService } from '../../services/favorite-service/favorite-service';
+import { ModalService } from '../../services/modal-service/modal.service';
+import { TransactionService } from '../../services/transaction-service/transaction.service';
+import { FavoriteService } from '../../services/favorite-service/favorite.service';
 import { AdminService } from '../../services/admin-service/admin.service';
 import { AccountService } from '../../services/account-service/account.service';
-import { SessionStore } from '../../core/session/session-store';
+import { SessionStore } from '../../core/session/session.store';
 import { AccountPollingCoordinator } from '../../services/account-polling/account-polling.coordinator';
 import { formatMoney as formatMoneyShared } from '../../shared/utils/money-format';
 

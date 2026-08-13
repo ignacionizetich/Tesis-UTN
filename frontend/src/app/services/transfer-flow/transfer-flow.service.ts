@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { TransferApi, AccountSearchResult } from '../transfer-api/transfer.api';
 import { UserDataStore } from '../user-data-store/user-data.store';
-import { FavoriteService } from '../favorite-service/favorite-service';
+import { FavoriteService } from '../favorite-service/favorite.service';
 import { TransferData } from '../../models/transfer.interface';
 
 export type TransferFlowErrorCode =

@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs';
 import UserData from '../../../../models/user-data';
 import { UserDataStore } from '../../../../services/user-data-store/user-data.store';
 import { ToastService } from '../../../../services/toast-service/toast.service';
-import { ModalService } from '../../../../services/modal-service/modal-service';
+import { ModalService } from '../../../../services/modal-service/modal.service';
 
 @Component({
   selector: 'app-profile-modal',
