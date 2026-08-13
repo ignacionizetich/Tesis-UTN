@@ -1,0 +1,17 @@
+.modal-content.loading-qr .search-loading-overlay {
+  border-radius: 10px;
+}
+
+.modal-content:not(.loading-qr) {
+  min-height: auto;
+}
+
+/* Receive QR modal */
+.qr-container {
+  text-align: center;
+}
+
+.qr-footer {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+}

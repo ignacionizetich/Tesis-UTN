@@ -21,7 +21,7 @@ import Transaction from '../../../../models/transaction';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './transactions-panel.html',
-  styleUrls: ['../../dashboard.css'],
+  styleUrls: ['../../styles/modals-shared.css', '../../styles/transactions.css'],
   encapsulation: ViewEncapsulation.None,
 })
 export class TransactionsPanelComponent implements OnInit, OnDestroy {

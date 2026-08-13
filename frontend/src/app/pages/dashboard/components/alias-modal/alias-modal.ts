@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './alias-modal.html',
-  styleUrls: ['../../dashboard.css'],
+  styleUrls: ['../../styles/modals-shared.css'],
   encapsulation: ViewEncapsulation.None,
 })
 export class AliasModalComponent {

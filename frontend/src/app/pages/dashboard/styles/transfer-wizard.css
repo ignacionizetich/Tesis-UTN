@@ -1,0 +1,104 @@
+/* Transfer wizard extras */
+.transfer-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.success-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--tech-gradient-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: successPulse 2s ease-in-out infinite;
+}
+
+.success-icon svg {
+  stroke: white;
+  stroke-width: 2.5;
+  width: 24px;
+  height: 24px;
+}
+
+@keyframes successPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(57, 255, 204, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 15px rgba(57, 255, 204, 0);
+  }
+}
+
+.transfer-success h3 {
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.transfer-success p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+}
+
+.favorite-option {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  flex-direction: row;
+  width: 100%;
+}
+
+.favorite-option button {
+  
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  flex: 1;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.favorite-option .primary {
+  background: var(--tech-gradient-primary);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.favorite-option .primary svg{
+  width: 8px;
+  height: 8px;
+}
+
+.favorite-option .primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+}
+
+.favorite-option .secondary {
+  background: rgba(var(--text-secondary), 0.1);
+  color: var(--text-secondary);
+  border: 1px solid rgba(var(--text-secondary), 0.3);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.favorite-option .secondary:hover {
+  background: rgba(var(--text-secondary), 0.2);
+  transform: translateY(-2px);
+}

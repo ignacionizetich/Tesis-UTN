@@ -25,7 +25,7 @@ export interface TaxResultView {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './tax-modal.html',
-  styleUrls: ['../../dashboard.css'],
+  styleUrls: ['../../styles/modals-shared.css'],
   encapsulation: ViewEncapsulation.None,
 })
 export class TaxModalComponent {

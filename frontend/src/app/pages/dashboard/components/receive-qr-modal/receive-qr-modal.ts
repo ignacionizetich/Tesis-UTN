@@ -17,7 +17,7 @@ import { ModalService } from '../../../../services/modal-service/modal-service';
   standalone: true,
   imports: [CommonModule, QRCodeComponent],
   templateUrl: './receive-qr-modal.html',
-  styleUrls: ['../../dashboard.css'],
+  styleUrls: ['../../styles/modals-shared.css', '../../styles/receive-qr.css'],
   encapsulation: ViewEncapsulation.None,
 })
 export class ReceiveQrModalComponent implements OnInit {

@@ -48,7 +48,7 @@ import UserData from '../../models/user-data';
     TransactionsPanelComponent,
   ],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.css', './currency-selector.css'],
+  styleUrls: ['./dashboard.css'],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];

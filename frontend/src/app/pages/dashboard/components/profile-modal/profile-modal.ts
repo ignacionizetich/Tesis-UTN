@@ -19,7 +19,7 @@ import { ModalService } from '../../../../services/modal-service/modal-service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './profile-modal.html',
-  styleUrls: ['../../dashboard.css'],
+  styleUrls: ['../../styles/modals-shared.css'],
   encapsulation: ViewEncapsulation.None,
 })
 export class ProfileModalComponent implements OnInit, OnDestroy {

@@ -30,7 +30,11 @@ export interface TransferWizardSeed {
   standalone: true,
   imports: [CommonModule, FormsModule, ZXingScannerModule],
   templateUrl: './transfer-wizard.html',
-  styleUrls: ['../../dashboard.css', '../../currency-selector.css'],
+  styleUrls: [
+    '../../styles/modals-shared.css',
+    '../../currency-selector.css',
+    '../../styles/transfer-wizard.css',
+  ],
   encapsulation: ViewEncapsulation.None,
 })
 export class TransferWizardComponent implements OnInit {

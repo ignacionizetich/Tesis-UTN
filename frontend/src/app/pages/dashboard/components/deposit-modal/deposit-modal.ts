@@ -15,7 +15,7 @@ import { ModalService } from '../../../../services/modal-service/modal-service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './deposit-modal.html',
-  styleUrls: ['../../dashboard.css'],
+  styleUrls: ['../../styles/modals-shared.css'],
   encapsulation: ViewEncapsulation.None,
 })
 export class DepositModalComponent {

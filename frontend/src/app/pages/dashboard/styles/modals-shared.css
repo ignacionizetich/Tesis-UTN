@@ -1,0 +1,961 @@
+/* Shared modal base (dashboard split) */
+/* ====================================
+   MODAL STYLES
+   ==================================== */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: var(--bg-primary);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 450px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  contain: layout style paint;
+}
+
+.modal-content p > span {
+  color: var(--text-primary);
+}
+
+.modal-content h2 {
+  color: var(--text-primary);
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  text-align: center;
+  background: linear-gradient(135deg, var(--text-primary), var(--text-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.close-button {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--love-red);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  padding: 1rem;
+}
+
+/*
+Boton de cerrar el modal de taxes
+*/
+.close-tax-button{
+  position: absolute;
+  top: -25px;
+  right: -20px;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--love-red);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  padding: 1rem;
+}
+
+.close-tax-button:hover{
+  background-color: rgba(80, 80, 80, 0.068);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
+.close-button-favorite{
+    position: absolute;
+  top: -25px;
+  right: -20px;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--love-red);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  padding: 1rem;
+}
+
+.close-button-favorite:hover{
+    background-color: rgba(80, 80, 80, 0.068);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
+
+
+
+.close-button:hover{
+  background-color: rgba(80, 80, 80, 0.068);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
+
+.qr-close-button {
+  /* Mantenemos los estilos base pero ajustamos para móvil */
+  z-index: 10; /* Aseguramos que esté por encima del contenido */
+}
+
+
+
+
+.back-button,
+.back-button-list {
+  position: absolute;
+  top: 12px;
+  left: 15px !important;
+  width: 30px !important;
+  height: 30px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.back-button:hover,
+.back-button-list:hover {
+  transform: translateX(-2px);
+  box-shadow: 0 4px 15px rgba(139, 95, 191, 0.3);
+}
+
+.back-button:active,
+.back-button-list:active {
+  transform: translateY(0);
+  transition: transform 0.1s;
+}
+
+.back-button i,
+.back-button-list i {
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 1rem;
+  min-height: 30px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  text-align: center;
+}
+
+.modal-header-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: 1rem;
+  padding: 0;
+  height: 30px;
+  width: 100%;
+}
+
+.modal-header-info button {
+  background: linear-gradient(135deg, var(--text-accent) 0%, var(--text-secondary) 100%) !important;
+}
+
+.modal-content input[type='text'],
+.modal-content input[type='number'],
+.modal-content input[type='email'] {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 14px;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+:not([data-theme="dark"]) .modal-content input[type='text'],
+:not([data-theme="dark"]) .modal-content input[type='number'],
+:not([data-theme="dark"]) .modal-content input[type='email'] {
+  color: #1a1a1a;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #ddd;
+}
+
+:not([data-theme="dark"]) .modal-content input::placeholder {
+  color: rgba(26, 26, 26, 0.6);
+}
+
+[data-theme="dark"] .modal-content input[type='text'],
+[data-theme="dark"] .modal-content input[type='number'],
+[data-theme="dark"] .modal-content input[type='email'] {
+  color: #1a1a1a !important;
+}
+
+[data-theme="dark"] .modal-content input::placeholder {
+  color: rgba(26, 26, 26, 0.6) !important;
+}
+
+.modal-content input:focus {
+  outline: none;
+  border-color: var(--cyber-blue);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.modal-content input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.modal-content button {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--text-accent) 0%, var(--text-secondary) 100%);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-content button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.modal-content button:hover {
+  transform: translateX(-2px);
+  box-shadow: 0 4px 15px rgba(139, 95, 191, 0.3);
+  background: linear-gradient(135deg, var(--text-secondary) 0%, var(--text-accent) 100%);
+}
+
+.modal-content button:hover::before {
+  left: 100%;
+}
+
+.modal-content button:active {
+  transform: translateY(0);
+  transition: transform 0.1s;
+}
+
+.modal-content button.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.modal-content button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modal-content button.loading {
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(45deg, #2a3441, #3a4651) !important;
+  color: white;
+}
+
+.modal-content button .button-text {
+  position: relative;
+  z-index: 2;
+  transition: color 0.3s ease;
+}
+
+.modal-content button.loading .button-text {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(45deg, var(--cyber-blue), var(--electric-purple));
+  border-radius: 10px;
+  animation: fillProgress 4s ease-in-out forwards;
+  z-index: 1;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes fillProgress {
+  0% { width: 0%; opacity: 0.8; }
+  15% { width: 20%; opacity: 0.85; }
+  30% { width: 35%; opacity: 0.9; }
+  50% { width: 55%; opacity: 0.95; }
+  70% { width: 75%; opacity: 1; }
+  85% { width: 90%; opacity: 1; }
+  100% { width: 100%; opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+.search-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(26, 31, 46, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  border-radius: 10px;
+}
+
+.search-loading-content {
+  text-align: center;
+  color: white;
+}
+
+.search-loading-content p {
+  margin-top: 1rem;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.search-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top: 3px solid var(--cyber-blue);
+  border-radius: 50%;
+  animation: searchSpin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes searchSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.form-group {
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+
+.form-group input {
+  width: 100%;
+  padding: 16px 12px 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+:not([data-theme="dark"]) .form-group input {
+  color: #1a1a1a;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #ddd;
+}
+
+[data-theme="dark"] .form-group input {
+  color: var(--obsidian) !important;
+}
+
+.form-group label {
+  position: absolute;
+  top: 16px;
+  left: 12px;
+  color: transparent;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.form-group input:focus + label,
+.form-group input:not(:placeholder-shown) + label {
+  top: 2px;
+  font-size: 10px;
+  color: var(--text-accent);
+  font-weight: 600;
+  transform: translateY(-2px);
+}
+
+.alias-modal .modal-content {
+  max-width: 500px;
+}
+
+.info-alias-cvu {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.info-line:last-child {
+  border-bottom: none;
+}
+
+.info-text {
+  flex: 1;
+  color: #ffffff;
+  min-width: 0;
+}
+
+.info-text strong {
+  color: var(--text-accent);
+  margin-right: 0.5rem;
+}
+
+.info-text span {
+  color: var(--text-primary);
+  font-family: 'Courier New', monospace;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.copy-button {
+  width: 35px !important;
+  height: 35px;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: rgba(0, 212, 255, 0.2) !important;
+  border-radius: 50% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.copy-button:hover {
+  background: rgba(0, 212, 255, 0.4) !important;
+  transform: scale(1.1);
+}
+
+.copy-button svg {
+  color: var(--text-accent);
+  width: 16px;
+  height: 16px;
+}
+
+#currency-selection {
+  text-align: center;
+}
+
+#currency-selection p {
+  color: var(--text-primary);
+  margin-bottom: 1.25rem;
+  font-size: 1rem;
+}
+
+.currency-button {
+  width: 48% !important;
+  margin: 0 1% !important;
+  background: linear-gradient(135deg, var(--text-accent) 0%, var(--text-secondary) 100%) !important;
+}
+
+.currency-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 95, 191, 0.4);
+}
+
+#tax-form label {
+  display: block;
+  color: var(--text-accent);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+#tax-form input[type='number'] {
+  color: var(--obsidian);
+  background-color: rgba(var(--platinum-rgb), 0.8);
+  border: 1px solid var(--border-color);
+  padding: 10px 12px;
+  border-radius: 8px;
+  width: 100%;
+  margin-bottom: 1rem;
+  font-size: 14px;
+}
+
+#tax-form input[type='number']::placeholder {
+  color: rgba(var(--carbon-rgb), 0.4);
+}
+
+#tax-form input[type='number']:focus {
+  outline: none;
+  border-color: var(--cyber-blue);
+  box-shadow: 0 0 0 3px rgba(var(--cyber-blue-rgb), 0.3);
+}
+
+#tax-result {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  background: rgba(57, 255, 204, 0.1);
+  border: 1px solid rgba(57, 255, 204, 0.3);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.profile-details {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-photo {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.profile-photo svg {
+  border-radius: 50%;
+  border: 2px solid var(--text-accent);
+  padding: 8px;
+  background: rgba(0, 212, 255, 0.1);
+  width: 80px;
+  height: 80px;
+}
+
+.profile-details p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.profile-details p:last-child {
+  border-bottom: none;
+}
+
+.profile-details strong {
+  color: var(--text-accent);
+  min-width: 120px;
+  font-size: 0.9rem;
+}
+
+.profile-details span {
+  flex: 1;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.profile-details input {
+  flex: 1;
+  margin: 0 !important;
+  text-align: right;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+:not([data-theme="dark"]) .profile-details input {
+  color: #1a1a1a;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #ddd;
+}
+
+[data-theme="dark"] .profile-details input {
+  color: #1a1a1a !important;
+}
+
+.profile-details button {
+  width: auto !important;
+  padding: 4px 8px !important;
+  margin: 0 0 0 0.5rem !important;
+  background: rgba(0, 212, 255, 0.2) !important;
+  font-size: 12px !important;
+}
+
+.transfer-details {
+  list-style: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: none;
+}
+
+
+
+.transfer-details li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+
+
+.transfer-details li:last-child {
+  border-bottom: none;
+}
+
+.transfer-details b {
+  color: var(--text-accent);
+  min-width: 100px;
+  font-size: 0.9rem;
+}
+
+.transfer-details span {
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+.transfer-details span.income {
+  color: var(--laser-green) !important;
+  font-weight: 600;
+}
+
+.transfer-details span.expense {
+  color: var(--plasma-pink) !important;
+  font-weight: 600;
+}
+
+.estado-completed {
+  color: var(--laser-green) !important;
+  font-weight: 600;
+}
+
+.estado-failed {
+  color: var(--plasma-pink) !important;
+  font-weight: 600;
+}
+
+.estado-pending {
+  color: #ffa500 !important;
+  font-weight: 600;
+}
+
+#search-account-step,
+#confirm-account-step,
+#amount-step {
+  text-align: center;
+}
+
+#amount-step input[type='number'] {
+  color: var(--bg-primary);
+  background-color: rgba(var(--platinum-rgb), 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+#amount-step input[type='number']::placeholder {
+  color: rgba(var(--carbon-rgb), 0.4);
+}
+
+#amount-step input[type='number']:focus {
+  outline: none;
+  border-color: var(--cyber-blue);
+  box-shadow: 0 0 0 3px rgba(var(--cyber-blue-rgb), 0.3);
+}
+
+#account-details {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 1rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#account-details p {
+  color: var(--text-primary);
+  margin: 0.5rem 0;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+#account-details strong {
+  color: var(--cyber-blue);
+}
+
+/* ====================================
+   RESPONSIVE DESIGN
+   ==================================== */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95vw;
+    padding: 1.25rem;
+    margin: 1rem;
+  }
+
+  .alias-modal .modal-content {
+    width: 95vw;
+  }
+
+  .currency-button {
+    width: 100% !important;
+    margin: 0 0 0.75rem 0 !important;
+  }
+
+  .info-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .info-text {
+    width: 100%;
+  }
+
+  .info-text span {
+    display: block;
+    margin-top: 0.25rem;
+    word-break: break-all;
+  }
+
+  .copy-button {
+    align-self: flex-end;
+  }
+
+  .profile-details p {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .profile-details span,
+  .profile-details input {
+    text-align: left;
+    width: 100%;
+  }
+
+  .transfer-details li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.75rem 0;
+  }
+
+  .transfer-details b,
+  .transfer-details span {
+    text-align: left;
+    width: 100%;
+  }
+
+  .transfer-details b {
+    min-width: auto;
+    margin-bottom: 0.25rem;
+  }
+
+  
+
+  .transaction-item-modal {
+    padding: 0.75rem;
+  }
+
+  .transaction-icon-modal {
+    width: 35px;
+    height: 35px;
+    margin-right: 0.75rem;
+  }
+
+  .transaction-description-modal {
+    font-size: 0.8rem;
+  }
+
+  .amount-value-modal {
+    font-size: 0.875rem;
+  }
+
+  .favorites-modal,
+  .favorite-details-modal,
+  .add-favorite-modal,
+  .edit-favorite-modal {
+    min-width: 90vw;
+    max-width: 95vw;
+    margin: 1rem;
+  }
+
+  .favorite-card {
+    padding: 0.75rem;
+  }
+
+  .favorite-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+    margin-right: 0.75rem;
+  }
+
+  .favorite-alias {
+    font-size: 1rem;
+  }
+
+  .favorite-actions-buttons {
+    flex-direction: column;
+  }
+
+  .favorite-actions-buttons button {
+    min-width: auto;
+  }
+
+
+
+  .favorite-option button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .qr-close-button {
+    top: 8px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    padding: 0.8rem;
+    font-size: 22px;
+  }
+  
+  /* Opcional: Ajustar también el contenedor del QR si es necesario */
+  .qr-container {
+    padding-top: 10px; /* Da más espacio en la parte superior */
+  }
+  
+  .qr-container h2 {
+    margin-top: 5px;
+    font-size: 1.2rem; /* Ajusta el tamaño del texto si es muy grande */
+  }
+}
+
+
+@media (max-width: 480px) {
+  .balance-card {
+    padding: 1rem;
+  }
+
+  .action-card {
+    padding: 1rem;
+  }
+
+  .transaction-item {
+    padding: 0.75rem;
+  }
+
+   .qr-close-button {
+    top: 6px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    padding: 0.6rem;
+    font-size: 20px;
+  }
+  
+  .qr-container h2 {
+    font-size: 1.1rem;
+    margin-top: 8px;
+  }
+
+  .user-info {
+    display: none;
+  }
+
+  .nav-title {
+    font-size: 1.125rem;
+  }
+
+  .admin-panel-btn {
+    font-size: 0.7rem;
+    padding: 0.5rem 0.75rem;
+  }
+}

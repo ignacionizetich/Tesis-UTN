@@ -22,7 +22,7 @@ import { TransferFlowService } from '../../../../services/transfer-flow/transfer
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './favorites-modals.html',
-  styleUrls: ['../../dashboard.css'],
+  styleUrls: ['../../styles/modals-shared.css', '../../styles/favorites.css'],
   encapsulation: ViewEncapsulation.None,
 })
 export class FavoritesModalsComponent implements OnInit, OnDestroy {
