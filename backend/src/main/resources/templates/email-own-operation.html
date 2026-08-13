@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operación Completada</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0A0A0F; font-family: 'Inter', Arial, sans-serif;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td style="padding: 20px 0;">
+            <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="border-collapse: collapse; background-color: #1A1A2E; border-radius: 12px; border: 1px solid #00FF88;">
+
+                <tr>
+                    <td align="center" style="padding: 30px 20px; border-bottom: 1px solid rgba(0, 255, 136, 0.3);">
+                        <h1 style="margin: 0; color: #E8EAF6; font-size: 28px; font-weight: 700;">
+                            <span style="color: #E8EAF6;">AR</span><span style="color: #00D4FF;">Cash</span>™
+                        </h1>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding: 40px 30px;">
+                        <h2 style="margin: 0 0 20px 0; color: #E8EAF6; font-size: 24px; font-weight: 600;">
+                            ¡Operación exitosa, <span th:text="${username}" style="color: #00FF88;">Usuario</span>!
+                        </h2>
+                        <p th:if="${operationType == 'BUY_USD'}" style="margin: 0 0 30px 0; color: #E8EAF6; font-size: 16px; line-height: 1.6;">
+                            Tu compra de dólares se completó exitosamente.
+                        </p>
+                        <p th:if="${operationType == 'SELL_USD'}" style="margin: 0 0 30px 0; color: #E8EAF6; font-size: 16px; line-height: 1.6;">
+                            Tu venta de dólares se completó exitosamente.
+                        </p>
+                        <p th:if="${operationType == 'CONVERSION'}" style="margin: 0 0 30px 0; color: #E8EAF6; font-size: 16px; line-height: 1.6;">
+                            Tu conversión se completó exitosamente.
+                        </p>
+
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: rgba(0, 255, 136, 0.1); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                            <tr>
+                                <td>
+                                    <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
+                                        Monto acreditado:
+                                    </p>
+                                    <!-- BUY / CONVERSION: acredita USD -->
+                                    <p th:if="${operationType != 'SELL_USD'}" style="margin: 0 0 20px 0; color: #00FF88; font-size: 28px; font-weight: 700;">
+                                        US$ <span th:text="${amountUsd != null ? #numbers.formatDecimal(amountUsd, 0, 'COMMA', 2, 'POINT') : '0.00'}">5.00</span>
+                                        <span style="font-size: 18px; opacity: 0.8;">USD</span>
+                                    </p>
+                                    <!-- SELL: acredita ARS -->
+                                    <p th:if="${operationType == 'SELL_USD'}" style="margin: 0 0 20px 0; color: #00FF88; font-size: 28px; font-weight: 700;">
+                                        $ <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 2, 'POINT')}">1000.00</span>
+                                        <span style="font-size: 18px; opacity: 0.8;">ARS</span>
+                                    </p>
+
+                                    <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
+                                        Detalle de la operación:
+                                    </p>
+                                    <p th:if="${operationType != 'SELL_USD'}" style="margin: 0 0 10px 0; color: #00D4FF; font-size: 16px;">
+                                        <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 2, 'POINT')}">5000.00</span> ARS
+                                        →
+                                        <span th:text="${amountUsd != null ? #numbers.formatDecimal(amountUsd, 0, 'COMMA', 2, 'POINT') : '0.00'}">5.00</span> USD
+                                    </p>
+                                    <p th:if="${operationType == 'SELL_USD'}" style="margin: 0 0 10px 0; color: #00D4FF; font-size: 16px;">
+                                        <span th:text="${amountUsd != null ? #numbers.formatDecimal(amountUsd, 0, 'COMMA', 2, 'POINT') : '0.00'}">5.00</span> USD
+                                        →
+                                        <span th:text="${#numbers.formatDecimal(amount, 0, 'COMMA', 2, 'POINT')}">5000.00</span> ARS
+                                    </p>
+                                    <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
+                                        Tasa de cambio: $<span th:text="${exchangeRate != null ? #numbers.formatDecimal(exchangeRate, 0, 'COMMA', 2, 'POINT') : '0.00'}">1000.00</span>/USD
+                                    </p>
+
+                                    <div th:if="${taxAmount != null and taxAmount > 0}" style="background-color: rgba(0, 212, 255, 0.1); padding: 15px; border-radius: 8px; margin-top: 15px; margin-bottom: 15px;">
+                                        <p style="margin: 0 0 10px 0; color: #00D4FF; font-size: 14px; font-weight: 600;">
+                                            Comisión
+                                        </p>
+                                        <p th:if="${operationType != 'SELL_USD'}" style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px;">
+                                            Comisión (<span th:text="${taxPercentage}">3</span>%): $<span th:text="${#numbers.formatDecimal(taxAmount, 0, 'COMMA', 2, 'POINT')}">300.00</span> ARS
+                                        </p>
+                                        <p th:if="${operationType == 'SELL_USD'}" style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px;">
+                                            Comisión (<span th:text="${taxPercentage}">3</span>%): US$ <span th:text="${#numbers.formatDecimal(taxAmount, 0, 'COMMA', 2, 'POINT')}">0.30</span> USD
+                                        </p>
+                                        <p th:if="${operationType != 'SELL_USD'}" style="margin: 10px 0 0 0; color: #00FF88; font-size: 15px; font-weight: 700;">
+                                            Total debitado: $<span th:text="${totalDebitado != null ? #numbers.formatDecimal(totalDebitado, 0, 'COMMA', 2, 'POINT') : '0.00'}">10300.00</span> ARS
+                                        </p>
+                                        <p th:if="${operationType == 'SELL_USD'}" style="margin: 10px 0 0 0; color: #00FF88; font-size: 15px; font-weight: 700;">
+                                            Total debitado: US$ <span th:text="${totalDebitado != null ? #numbers.formatDecimal(totalDebitado, 0, 'COMMA', 2, 'POINT') : '0.00'}">10.30</span> USD
+                                        </p>
+                                    </div>
+
+                                    <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
+                                        Cuenta destino:
+                                    </p>
+                                    <p style="margin: 0 0 20px 0; color: #00D4FF; font-size: 18px; font-weight: 600;">
+                                        <span th:text="${destinationAlias}">alias.destino.XY</span>
+                                    </p>
+                                    <p style="margin: 0 0 10px 0; color: #E8EAF6; font-size: 14px; opacity: 0.7;">
+                                        Fecha:
+                                    </p>
+                                    <p style="margin: 0; color: #E8EAF6; font-size: 14px;">
+                                        <span th:text="${transactionDate}">2025-01-17</span>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="margin: 30px 0 0 0; color: #E8EAF6; font-size: 14px; line-height: 1.6;">
+                            Gracias por confiar en ArCash para tus operaciones.
+                        </p>
+                    </td>
+                </tr>
+
+                <tr style="background-color: #0A0A0F;">
+                    <td style="padding: 20px 30px;">
+                        <p style="margin: 0; color: #E8EAF6; opacity: 0.7; font-size: 12px; text-align: center;">
+                            © 2025 ArCash. Todos los derechos reservados.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

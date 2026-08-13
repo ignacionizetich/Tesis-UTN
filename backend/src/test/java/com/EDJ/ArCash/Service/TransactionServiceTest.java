@@ -101,6 +101,7 @@ class TransactionServiceTest {
         verify(eventPublisher).publish(eventoCaptor.capture());
         assertEquals(EventType.TRANSACTION_COMPLETED, eventoCaptor.getValue().getEventType());
         assertEquals(false, eventoCaptor.getValue().getData("converted"));
+        assertEquals("TRANSFER", eventoCaptor.getValue().getData("operationType"));
     }
 
     @Test
@@ -187,7 +188,9 @@ class TransactionServiceTest {
         assertEquals(3.0, txn.getTaxPercentage(), DELTA);
         assertEquals(TASA_VENTA, txn.getExchangeRate(), DELTA);
 
-        verify(eventPublisher).publish(any(Event.class));
+        ArgumentCaptor<Event> eventoCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventPublisher).publish(eventoCaptor.capture());
+        assertEquals("CONVERSION", eventoCaptor.getValue().getData("operationType"));
     }
 
     @Test
@@ -289,6 +292,7 @@ class TransactionServiceTest {
         assertEquals(TOTAL_DEBITO, (Double) evento.getData("totalDebitado"), DELTA);
         assertEquals("ALIAS." + ID_USD, evento.getData("destinationAlias"));
         assertEquals("USD", evento.getData("currency"));
+        assertEquals("BUY_USD", evento.getData("operationType"));
         assertEquals(ars.getUser(), evento.getData("user"));
     }
 
@@ -365,6 +369,7 @@ class TransactionServiceTest {
         assertEquals(TASA_COMPRA, (Double) evento.getData("exchangeRate"), DELTA);
         assertEquals("ARS", evento.getData("currency"));
         assertEquals("ALIAS." + ID_ARS, evento.getData("destinationAlias"));
+        assertEquals("SELL_USD", evento.getData("operationType"));
 
         verify(cotizationUsdService).obtenerCotizacionCompra();
         verify(cotizationUsdService, never()).obtenerCotizacionVenta();

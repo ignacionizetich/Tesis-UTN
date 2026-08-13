@@ -125,11 +125,13 @@ public class EmailEventObserver implements EventObserver {
         Double taxAmount = (Double) event.getData("taxAmount");
         Double taxPercentage = (Double) event.getData("taxPercentage");
         Double totalDebitado = (Double) event.getData("totalDebitado");
+        String operationType = (String) event.getData("operationType");
 
         if (user != null && amount != null && destinationAlias != null) {
-            emailService.sendTransactionCompletedEmail(user, amount, destinationAlias, currency, 
-                    converted != null ? converted : false, amountUsd, exchangeRate, 
-                    taxAmount, taxPercentage, totalDebitado);
+            emailService.sendTransactionCompletedEmail(user, amount, destinationAlias, currency,
+                    converted != null ? converted : false, amountUsd, exchangeRate,
+                    taxAmount, taxPercentage, totalDebitado,
+                    operationType != null ? operationType : "TRANSFER");
 
         } else {
             System.err.println("Error: Datos incompletos para TRANSACTION_COMPLETED");

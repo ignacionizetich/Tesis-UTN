@@ -54,9 +54,10 @@ public class EmailService {
     }
 
     @Async
-    public void sendTransactionCompletedEmail(User user, double amount, String destinationAlias, 
+    public void sendTransactionCompletedEmail(User user, double amount, String destinationAlias,
                                              String currency, boolean converted, Double amountUsd, Double exchangeRate,
-                                             Double taxAmount, Double taxPercentage, Double totalDebitado) {
+                                             Double taxAmount, Double taxPercentage, Double totalDebitado,
+                                             String operationType) {
         Map<String, Object> variables = new java.util.HashMap<>();
         variables.put("username", user.getName());
         variables.put("amount", amount);
@@ -65,28 +66,37 @@ public class EmailService {
                 java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         variables.put("currency", currency != null ? currency : "ARS");
         variables.put("converted", converted);
-        
-        // Siempre agregar las variables, aunque sean null
         variables.put("amountUsd", amountUsd);
         variables.put("exchangeRate", exchangeRate);
         variables.put("taxAmount", taxAmount);
         variables.put("taxPercentage", taxPercentage);
         variables.put("totalDebitado", totalDebitado);
-        
-        // Debug log
-        System.out.println("=== EMAIL TRANSACTION DATA ===");
-        System.out.println("Amount (original): " + amount);
-        System.out.println("AmountUsd (converted): " + amountUsd);
-        System.out.println("Currency: " + currency);
-        System.out.println("Converted: " + converted);
-        System.out.println("Exchange Rate: " + exchangeRate);
-        System.out.println("Tax Amount: " + taxAmount);
-        System.out.println("Tax Percentage: " + taxPercentage);
-        System.out.println("Total Debitado: " + totalDebitado);
-        System.out.println("==============================");
+        variables.put("operationType", operationType != null ? operationType : "TRANSFER");
 
-        sendEmail(user.getEmail(), "Transacción completada exitosamente",
-                "email-transaction", variables);
+        boolean ownOperation = isOwnOperation(operationType);
+        String template = ownOperation ? "email-own-operation" : "email-transaction";
+        String subject = ownOperationSubject(operationType);
+
+        sendEmail(user.getEmail(), subject, template, variables);
+    }
+
+    private static boolean isOwnOperation(String operationType) {
+        return "BUY_USD".equals(operationType)
+                || "SELL_USD".equals(operationType)
+                || "CONVERSION".equals(operationType);
+    }
+
+    private static String ownOperationSubject(String operationType) {
+        if ("BUY_USD".equals(operationType)) {
+            return "Compra de dólares completada";
+        }
+        if ("SELL_USD".equals(operationType)) {
+            return "Venta de dólares completada";
+        }
+        if ("CONVERSION".equals(operationType)) {
+            return "Conversión completada";
+        }
+        return "Transacción completada exitosamente";
     }
 
     @Async

@@ -116,6 +116,7 @@ public class TransactionService {
             event.addData("destinationAlias", cuentaDestino.getAccountNickname());
             event.addData("currency", cuentaOrigen.getAccountType().toString());
             event.addData("converted", false);
+            event.addData("operationType", "TRANSFER");
             eventPublisher.publish(event);
 
             return true;
@@ -198,6 +199,7 @@ public class TransactionService {
         event.addData("destinationAlias", cuentaDestino.getAccountNickname());
         event.addData("currency", "USD");
         event.addData("converted", true);
+        event.addData("operationType", "CONVERSION");
         eventPublisher.publish(event);
 
         return TransferOperationResult.ok("Transferencia completada exitosamente");
@@ -267,11 +269,7 @@ public class TransactionService {
         event.addData("destinationAlias", cuentaUsd.getAccountNickname());
         event.addData("currency", "USD");
         event.addData("converted", true);
-        // Fase 8: email-transaction.html habla de "transferencia" / "Destinatario"
-        // con destinationAlias. Eso ya era confuso en conversion ARS→USD a la
-        // propia cuenta USD (mismo alias = cuenta propia); buyUsd solo lo hace
-        // visible porque antes no publicaba evento. Alcance: copy de mail para
-        // conversion propia y buyUsd, no un bug exclusivo de buyUsd.
+        event.addData("operationType", "BUY_USD");
         eventPublisher.publish(event);
 
         return BuyUsdResult.ok(
@@ -349,8 +347,7 @@ public class TransactionService {
         event.addData("destinationAlias", cuentaArs.getAccountNickname());
         event.addData("currency", "ARS");
         event.addData("converted", true);
-        // Fase 8: mismo copy de mail (transferencia/Destinatario) — ahora tambien
-        // sellUsd (USD→ARS). Alcance: conversion propia, buyUsd y sellUsd.
+        event.addData("operationType", "SELL_USD");
         eventPublisher.publish(event);
 
         return SellUsdResult.ok(
