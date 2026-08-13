@@ -157,102 +157,41 @@
         </div>
       </div>
 
-      <!-- Transactions -->
-      @if (usdTransactions.length > 0) {
-      <div class="transactions-section">
-        <div class="section-header">
-          <h2 class="section-title">Movimientos</h2>
-          <div class="filter-tabs">
-            <button 
-              class="filter-tab" 
-              [class.active]="selectedFilter === 'ALL'"
-              (click)="setFilter('ALL')">
-              Todos
-            </button>
-            <button 
-              class="filter-tab" 
-              [class.active]="selectedFilter === 'ARS'"
-              (click)="setFilter('ARS')">
-              Pesos
-            </button>
-            <button 
-              class="filter-tab" 
-              [class.active]="selectedFilter === 'USD'"
-              (click)="setFilter('USD')">
-              Dólares
-            </button>
-          </div>
-        </div>
-        
-        <div class="transactions-list">
-          @for (transaction of filteredTransactions; track transaction.id) {
-          <div class="transaction-item" (click)="openTransactionDetail(transaction)">
-            <div class="transaction-icon" [class]="transaction.type">
-              @if (transaction.type === 'income') {
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2v20M5 9l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              } @else {
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 22V2M19 15l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              }
-            </div>
-            <div class="transaction-details">
-              <h4>{{transaction.description}}</h4>
-              <p>{{formatDate(transaction.date)}}</p>
-            </div>
-            <div class="transaction-amount" [class]="transaction.type">
-              <span class="amount-value">{{transaction.type === 'income' ? '+' : '-'}}${{formatMoney(getDisplayAmount(transaction))}}</span>
-              <span class="currency-badge" [class.usd]="getDisplayCurrency(transaction) === 'USD'">
-                {{getDisplayCurrency(transaction)}}
-              </span>
-            </div>
-          </div>
-          }
-        </div>
-      </div>
-      }
+      <app-usd-transactions-panel [enabled]="hasUsdAccount" />
     </div>
     }
   </div>
 </div>
 
-<!-- Comprar USD Section -->
+<!-- Comprar USD -->
 @if (showBuyUsdSection) {
 <app-buy-usd-panel
+  [arsAccountId]="arsAccountId"
+  [usdAccountId]="usdAccountId"
   [arsBalance]="arsBalance"
   [usdBalance]="usdBalance"
+  [taxRate]="taxRate"
   [taxPercentage]="taxPercentage"
-  [estimatedUsdAmount]="estimatedUsdAmount"
-  [estimatedTaxAmount]="estimatedTaxAmount"
-  [estimatedTotalDebitado]="estimatedTotalDebitado"
-  [isBuyingUsd]="isBuyingUsd"
-  [(amountToBuyUsd)]="amountToBuyUsd"
-  (amountChanged)="onAmountToBuyChange()"
+  [exchangeRate]="currentExchangeRate"
   (closed)="closeBuyUsdSection()"
-  (submitted)="buyUsd()"
+  (success)="onTradeSuccess($event)"
 />
 }
 
-<!-- Vender USD Section -->
 @if (showSellUsdSection) {
 <app-sell-usd-panel
+  [arsAccountId]="arsAccountId"
+  [usdAccountId]="usdAccountId"
   [arsBalance]="arsBalance"
   [usdBalance]="usdBalance"
+  [taxRate]="taxRate"
   [taxPercentage]="taxPercentage"
-  [estimatedArsAmount]="estimatedArsAmount"
-  [estimatedTaxAmount]="estimatedTaxAmount"
-  [estimatedTotalDebitado]="estimatedTotalDebitado"
-  [isSellingUsd]="isSellingUsd"
-  [(amountToSellUsd)]="amountToSellUsd"
-  (amountChanged)="onAmountToSellChange()"
+  [exchangeRate]="currentExchangeRate"
   (closed)="closeSellUsdSection()"
-  (submitted)="sellUsd()"
+  (success)="onTradeSuccess($event)"
 />
 }
 
-<!-- Transfer Section -->
 @if (showTransferSection) {
 <app-transfer-wizard
   [arsAccount]="arsAccountView"
@@ -266,172 +205,10 @@
 />
 }
 
-<!-- Receive Section -->
 @if (showReceiveSection) {
-<div class="modal-overlay" (click)="closeReceiveSection()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Recibir Dinero</h2>
-      <button class="close-btn" (click)="closeReceiveSection()">&times;</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="receive-info">
-        <h3>Datos de tu cuenta en Dólares:</h3>
-        
-        <div class="info-item">
-          <span class="label">Alias:</span>
-          <div class="info-value">
-            <span>{{usdAlias || userData.alias}}</span>
-            <button class="copy-btn" (click)="copyToClipboard(usdAlias || userData.alias, 'Alias')">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" 
-                      stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="info-item">
-          <span class="label">CVU:</span>
-          <div class="info-value">
-            <span>{{usdCvu || userData.cvu}}</span>
-            <button class="copy-btn" (click)="copyToClipboard(usdCvu || userData.cvu, 'CVU')">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" 
-                      stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="info-note">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
-                  stroke="var(--text-accent)" stroke-width="2"/>
-          </svg>
-          <span>Estos datos son específicos para recibir dólares (USD)</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-}
-
-<!-- Transaction Detail Modal -->
-@if (showTransactionDetail && selectedTransaction) {
-<div class="modal-overlay" (click)="closeTransactionDetail()">
-  <div class="modal-content detail-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Detalles de la Transacción</h2>
-      <button class="close-btn" (click)="closeTransactionDetail()">&times;</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="detail-section">
-        <div class="detail-header">
-          <div class="detail-icon" [class]="selectedTransaction.type">
-            @if (selectedTransaction.type === 'income') {
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2v20M5 9l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            } @else {
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <path d="M12 22V2M19 15l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            }
-          </div>
-          <div class="detail-title">
-            <h3>{{selectedTransaction.description}}</h3>
-            <p>{{formatDate(selectedTransaction.date)}}</p>
-          </div>
-        </div>
-
-        @if (selectedTransaction.currency === 'USD') {
-        <!-- Detalles para transacciones USD -->
-        <div class="transfer-type-badge">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
-                  stroke="currentColor" stroke-width="2"/>
-          </svg>
-          <span>{{getTransferType(selectedTransaction)}}</span>
-        </div>
-
-        <div class="detail-amounts">
-          @if (selectedTransaction.currency === 'USD' && selectedTransaction.originalCurrency === 'USD') {
-          <!-- Transferencia directa USD → USD -->
-          <div class="detail-row highlight">
-            <span class="label">Monto Transferido:</span>
-            <span class="value usd">
-              {{selectedTransaction.type === 'income' ? '+' : '-'}}${{formatMoney(selectedTransaction.amount)}} USD
-            </span>
-          </div>
-          
-          @if (selectedTransaction.exchangeRate && selectedTransaction.amountInArs) {
-          <div class="info-note-small">
-            <span>Equivalente aproximado: ${{formatMoney(selectedTransaction.amountInArs)}} ARS</span>
-          </div>
-          }
-          } @else {
-          <!-- Transferencia USD usando conversión a ARS -->
-          <div class="detail-row highlight">
-            <span class="label">Monto en Pesos:</span>
-            <span class="value ars">
-              {{selectedTransaction.type === 'income' ? '+' : '-'}}${{formatMoney(selectedTransaction.amountInArs || selectedTransaction.amount)}} ARS
-            </span>
-          </div>
-          
-          <div class="detail-row">
-            <span class="label">Monto Original (USD):</span>
-            <span class="value usd-secondary">${{formatMoney(selectedTransaction.amount)}} USD</span>
-          </div>
-          
-          @if (selectedTransaction.exchangeRate) {
-          <div class="detail-row">
-            <span class="label">Tipo de Cambio:</span>
-            <span class="value">${{formatMoney(selectedTransaction.exchangeRate)}} ARS/USD</span>
-          </div>
-          }
-          }
-        </div>
-        } @else {
-        <!-- Detalles para transacciones ARS -->
-        <div class="detail-amounts">
-          <div class="detail-row highlight">
-            <span class="label">Monto:</span>
-            <span class="value">
-              {{selectedTransaction.type === 'income' ? '+' : '-'}}${{formatMoney(selectedTransaction.amount)}} ARS
-            </span>
-          </div>
-        </div>
-        }
-
-        <div class="detail-info">
-          @if (selectedTransaction.from) {
-          <div class="info-row">
-            <span class="info-label">Desde:</span>
-            <span class="info-value">{{selectedTransaction.from}}</span>
-          </div>
-          }
-          @if (selectedTransaction.to) {
-          <div class="info-row">
-            <span class="info-label">Para:</span>
-            <span class="info-value">{{selectedTransaction.to}}</span>
-          </div>
-          }
-          @if (selectedTransaction.status) {
-          <div class="info-row">
-            <span class="info-label">Estado:</span>
-            <span class="status-badge" [class]="selectedTransaction.status.toLowerCase()">
-              {{selectedTransaction.status === 'COMPLETED' ? 'Completada' : 'Fallida'}}
-            </span>
-          </div>
-          }
-        </div>
-      </div>
-
-      <button class="primary full-width" (click)="closeTransactionDetail()">Cerrar</button>
-    </div>
-  </div>
-</div>
+<app-receive-usd-modal
+  [alias]="usdAlias || userData.alias"
+  [cvu]="usdCvu || userData.cvu"
+  (closed)="closeReceiveSection()"
+/>
 }
