@@ -10,18 +10,15 @@ import lombok.*;
 @AllArgsConstructor
 @Schema(description = "Respuesta al registrar un nuevo usuario")
 public class RegisterResponse {
-    /**
-     * Fase 8: el resto de la API usa "message"; este DTO expone "mensaje".
-     * El frontend admin ya contempla ambos; unificar el contrato en Fase 8.
-     */
+
     @Schema(description = "Mensaje de la operación de registro", example = "Usuario registrado correctamente")
-    private String mensaje;
+    private String message;
 
     @Schema(description = "Indica si el registro fue exitoso", example = "true")
     private boolean success;
 
-    public RegisterResponse(boolean success, String mensaje) {
+    public RegisterResponse(boolean success, String message) {
         this.success = success;
-        this.mensaje = mensaje;
+        this.message = message;
     }
 }

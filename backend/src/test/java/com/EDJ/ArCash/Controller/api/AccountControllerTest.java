@@ -311,18 +311,16 @@ class AccountControllerTest {
     }
 
     @Test
-    @DisplayName("Tener ya una cuenta en dolares termina en 500 por el catch generico del controller")
-    void abrirSegundaCuentaUsdDevuelve500() throws Exception {
+    @DisplayName("Tener ya una cuenta en dolares termina en 409 (conflicto)")
+    void abrirSegundaCuentaUsdDevuelve409() throws Exception {
         when(accountService.openUsdAccount(any(User.class)))
                 .thenThrow(new IllegalStateException("El usuario ya cuenta con una cuenta en dolares"));
 
-        // El try/catch local se traga la IllegalStateException y la degrada a 500,
-        // cuando semanticamente es un conflicto (409). Anotado en el backlog.
         mockMvc.perform(post("/api/accounts/usd").with(comoUsuarioAutenticado()))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message")
-                        .value("Error al crear cuenta en dólares: El usuario ya cuenta con una cuenta en dolares"));
+                        .value("El usuario ya cuenta con una cuenta en dolares"));
     }
 
     // --- helpers ---

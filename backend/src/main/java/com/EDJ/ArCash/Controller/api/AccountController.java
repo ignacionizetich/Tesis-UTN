@@ -297,7 +297,10 @@ public class AccountController {
                     "accountAlias", usdAccount.getAccountNickname(),
                     "currency", "USD"
             ));
-            
+
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409)
+                    .body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(Map.of("success", false, "message", "Error al crear cuenta en dólares: " + e.getMessage()));

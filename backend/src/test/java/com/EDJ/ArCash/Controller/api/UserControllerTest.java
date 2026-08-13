@@ -51,7 +51,7 @@ class UserControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.mensaje").value("Todos los campos son obligatorios."));
+                .andExpect(jsonPath("$.message").value("Todos los campos son obligatorios."));
 
         verify(userService, never()).insertarUsuario(any(), anyString());
     }
@@ -67,7 +67,7 @@ class UserControllerTest {
                         .content(bodyValido()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.mensaje").value("El email ya se encuentra en uso."));
+                .andExpect(jsonPath("$.message").value("El email ya se encuentra en uso."));
     }
 
     @Test
@@ -80,7 +80,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bodyValido()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensaje").value("El nombre de usuario no está disponible."));
+                .andExpect(jsonPath("$.message").value("El nombre de usuario no está disponible."));
     }
 
     @Test
@@ -93,7 +93,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bodyValido()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensaje").value("El DNI ya está registrado."));
+                .andExpect(jsonPath("$.message").value("El DNI ya está registrado."));
     }
 
     @Test
@@ -108,7 +108,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bodyValido()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensaje").value(
+                .andExpect(jsonPath("$.message").value(
                         "El email ya se encuentra en uso y el nombre de usuario no está disponible."));
     }
 
@@ -125,7 +125,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(bodyValido()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensaje").value(
+                .andExpect(jsonPath("$.message").value(
                         "El email ya se encuentra en uso, el nombre de usuario no está disponible y el DNI ya está registrado."));
     }
 
@@ -139,7 +139,7 @@ class UserControllerTest {
                         .content(bodyValido()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.mensaje").value(
+                .andExpect(jsonPath("$.message").value(
                         "Usuario registrado correctamente. Revisa tu email para activar tu cuenta."));
     }
 

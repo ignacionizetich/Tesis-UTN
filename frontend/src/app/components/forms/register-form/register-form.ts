@@ -133,7 +133,7 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
         this.loading = false;
         console.error('Error en registro:', error);
         
-        const backendMessage = error.error?.message || error.error?.mensaje;
+        const backendMessage = error.error?.message;
         
         if (backendMessage) {
           if (backendMessage.includes("email ya se encuentra en uso") ||

@@ -14,7 +14,7 @@ public class RegisterResponseFactory implements ResponseFactory<RegisterResponse
     public RegisterResponse createSuccessResponse(String message) {
         return RegisterResponse.builder()
                 .success(true)
-                .mensaje(message)
+                .message(message)
                 .build();
     }
 
@@ -22,7 +22,7 @@ public class RegisterResponseFactory implements ResponseFactory<RegisterResponse
     public RegisterResponse createErrorResponse(String message) {
         return RegisterResponse.builder()
                 .success(false)
-                .mensaje(message)
+                .message(message)
                 .build();
     }
 }
