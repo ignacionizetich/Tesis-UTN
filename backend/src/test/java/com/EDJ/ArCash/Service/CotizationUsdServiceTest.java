@@ -87,4 +87,78 @@ class CotizationUsdServiceTest {
 
         assertEquals(1200.50, cotizationUsdService.obtenerCotizacionVenta());
     }
+
+    @Test
+    @DisplayName("Lanza excepcion controlada si la API falla y no hay compra cacheada")
+    void obtenerCotizacionCompraLanzaExcepcionCuandoLaApiFalla() {
+        when(restTemplate.getForEntity(anyString(), eq(ApiUsdResponse.class)))
+                .thenThrow(new RestClientException("proveedor no disponible"));
+
+        assertThrows(ExchangeRateUnavailableException.class,
+                () -> cotizationUsdService.obtenerCotizacionCompra());
+    }
+
+    @Test
+    @DisplayName("Lanza excepcion controlada si la API responde con compra en cero")
+    void obtenerCotizacionCompraLanzaExcepcionCuandoLaCompraEsCero() {
+        ApiUsdResponse respuestaInvalida = ApiUsdResponse.builder().compra(0).venta(950.0).build();
+        when(restTemplate.getForEntity(anyString(), eq(ApiUsdResponse.class)))
+                .thenReturn(ResponseEntity.ok(respuestaInvalida));
+
+        assertThrows(ExchangeRateUnavailableException.class,
+                () -> cotizationUsdService.obtenerCotizacionCompra());
+    }
+
+    @Test
+    @DisplayName("Lanza excepcion controlada si el cuerpo es nulo al pedir compra")
+    void obtenerCotizacionCompraLanzaExcepcionCuandoElCuerpoEsNulo() {
+        when(restTemplate.getForEntity(anyString(), eq(ApiUsdResponse.class)))
+                .thenReturn(new ResponseEntity<>((ApiUsdResponse) null, HttpStatus.OK));
+
+        assertThrows(ExchangeRateUnavailableException.class,
+                () -> cotizationUsdService.obtenerCotizacionCompra());
+    }
+
+    @Test
+    @DisplayName("Devuelve la cotizacion de compra y la cachea para las siguientes consultas")
+    void obtenerCotizacionCompraDevuelveYCacheaElValor() {
+        ApiUsdResponse respuesta = ApiUsdResponse.builder().compra(900.50).build();
+        when(restTemplate.getForEntity(anyString(), eq(ApiUsdResponse.class)))
+                .thenReturn(ResponseEntity.ok(respuesta));
+
+        assertEquals(900.50, cotizationUsdService.obtenerCotizacionCompra());
+        assertEquals(900.50, cotizationUsdService.obtenerCotizacionCompra());
+
+        verify(restTemplate, times(1)).getForEntity(anyString(), eq(ApiUsdResponse.class));
+    }
+
+    @Test
+    @DisplayName("Sigue devolviendo la compra cacheada si la API externa falla despues")
+    void obtenerCotizacionCompraDevuelveElValorCacheadoCuandoLaApiFallaDespues() {
+        ApiUsdResponse respuesta = ApiUsdResponse.builder().compra(1100.25).build();
+        when(restTemplate.getForEntity(anyString(), eq(ApiUsdResponse.class)))
+                .thenReturn(ResponseEntity.ok(respuesta));
+        cotizationUsdService.obtenerCotizacionCompra();
+
+        when(restTemplate.getForEntity(anyString(), eq(ApiUsdResponse.class)))
+                .thenThrow(new RestClientException("proveedor no disponible"));
+
+        assertEquals(1100.25, cotizationUsdService.obtenerCotizacionCompra());
+    }
+
+    @Test
+    @DisplayName("Una sola respuesta cachea compra y venta; un solo GET al proveedor")
+    void unaRespuestaCacheaCompraYVentaConUnSoloGet() {
+        ApiUsdResponse respuesta = ApiUsdResponse.builder()
+                .compra(900.0)
+                .venta(950.0)
+                .build();
+        when(restTemplate.getForEntity(anyString(), eq(ApiUsdResponse.class)))
+                .thenReturn(ResponseEntity.ok(respuesta));
+
+        assertEquals(900.0, cotizationUsdService.obtenerCotizacionCompra());
+        assertEquals(950.0, cotizationUsdService.obtenerCotizacionVenta());
+
+        verify(restTemplate, times(1)).getForEntity(anyString(), eq(ApiUsdResponse.class));
+    }
 }

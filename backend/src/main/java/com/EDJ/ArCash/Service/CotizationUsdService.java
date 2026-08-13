@@ -22,6 +22,7 @@ public class CotizationUsdService {
 
     /** La escribe la tarea programada y la leen los hilos que atienden requests. */
     private volatile Double cachedVenta;
+    private volatile Double cachedCompra;
 
     public CotizationUsdService(
             RestTemplate restTemplate,
@@ -46,6 +47,22 @@ public class CotizationUsdService {
         return cotizacion;
     }
 
+    public double obtenerCotizacionCompra() {
+        Double cotizacion = cachedCompra;
+
+        if (cotizacion == null) {
+            actualizarCotizacion();
+            cotizacion = cachedCompra;
+        }
+
+        if (cotizacion == null) {
+            throw new ExchangeRateUnavailableException(
+                    "No se pudo obtener la cotizacion de compra del dolar desde el proveedor externo.");
+        }
+
+        return cotizacion;
+    }
+
     @Scheduled(fixedRate = INTERVALO_ACTUALIZACION_MS)
     public void actualizarCotizacion() {
         try {
@@ -53,9 +70,22 @@ public class CotizationUsdService {
                     restTemplate.getForEntity(urlProveedor, ApiUsdResponse.class);
             ApiUsdResponse cotizacion = response.getBody();
 
-            if (cotizacion != null && cotizacion.getVenta() > 0) {
+            if (cotizacion == null) {
+                log.warn("Respuesta invalida al actualizar la cotizacion del dolar.");
+                return;
+            }
+
+            boolean actualizoAlgo = false;
+            if (cotizacion.getVenta() > 0) {
                 cachedVenta = cotizacion.getVenta();
-            } else {
+                actualizoAlgo = true;
+            }
+            if (cotizacion.getCompra() > 0) {
+                cachedCompra = cotizacion.getCompra();
+                actualizoAlgo = true;
+            }
+
+            if (!actualizoAlgo) {
                 log.warn("Respuesta invalida al actualizar la cotizacion del dolar.");
             }
         } catch (Exception e) {
