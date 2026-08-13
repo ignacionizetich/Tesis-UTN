@@ -4,9 +4,26 @@ import com.EDJ.ArCash.DTO.AuthDTO.*;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
+import com.EDJ.ArCash.Service.AccountBalanceView;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.AliasChangeResult;
+import com.EDJ.ArCash.Service.DepositResult;
+import com.EDJ.ArCash.Service.QrDataResult;
 import com.EDJ.ArCash.factory.AliasResponseFactory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -67,38 +84,21 @@ public class AccountController {
             @RequestBody AccountRequest accountRequest,
             @AuthenticationPrincipal CustomUserDetails principal) {
 
-        if (accountRequest.getBalance() < 0) {
-            return ResponseEntity.badRequest()
-                    .body(new AccountResponse(false, "El monto a ingresar no puede ser negativo.", accountRequest.getBalance()));
-        }
+        DepositResult resultado = accountService.deposit(
+                id, principal.getUser().getId(), accountRequest.getBalance());
 
-        Long userId = principal.getUser().getId();
-
-        Optional<Account> optionalAccount = accountService.findAccountByID(id);
-
-        if (optionalAccount.isEmpty()) {
-            return ResponseEntity.status(404).body(new AccountResponse(false, "La cuenta no existe.",0));
-        } else {
-            Account account = optionalAccount.get();
-
-            if (account.getUser().getId().equals(userId)) {
-                boolean success = accountService.updateBalance(accountRequest.getBalance(), id);
-                if (!success) {
-                    return ResponseEntity.status(404)
-                            .body(new AccountResponse(false, "No se pudo actualizar el balance. Verifique el ID ingresado.",0));
-                }
-
-                Optional<Account> actualizada = accountService.findAccountByID(id);
-                if (actualizada.isEmpty()) {
-                    return ResponseEntity.status(404)
-                            .body(new AccountResponse(false, "No se pudo actualizar el balance. Verifique el ID ingresado.",0));
-                }
-
-                return ResponseEntity.ok(new AccountResponse(true, "Ingreso de dinero realizado correctamente.", actualizada.get().getBalance()));
-            } else {
-                return ResponseEntity.status(498).body(new AccountResponse(false, "El usuario no es propietario legitimo de la cuenta", 0));
-            }
-        }
+        return switch (resultado.getKind()) {
+            case OK -> ResponseEntity.ok(new AccountResponse(
+                    true, "Ingreso de dinero realizado correctamente.", resultado.getBalance()));
+            case MONTO_NEGATIVO -> ResponseEntity.badRequest().body(new AccountResponse(
+                    false, "El monto a ingresar no puede ser negativo.", resultado.getBalance()));
+            case CUENTA_NO_EXISTE -> ResponseEntity.status(404).body(new AccountResponse(
+                    false, "La cuenta no existe.", 0));
+            case NO_ES_PROPIETARIO -> ResponseEntity.status(498).body(new AccountResponse(
+                    false, "El usuario no es propietario legitimo de la cuenta", 0));
+            case UPDATE_FALLIDO -> ResponseEntity.status(404).body(new AccountResponse(
+                    false, "No se pudo actualizar el balance. Verifique el ID ingresado.", 0));
+        };
     }
 
     @Operation(
@@ -133,22 +133,20 @@ public class AccountController {
     })
     @GetMapping("/{id}/showBalance")
     public ResponseEntity<?> getAccount(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails principal) {
-        Long userId = principal.getUser().getId();
+        Optional<AccountBalanceView> vista =
+                accountService.getOwnedBalance(id, principal.getUser().getId());
 
-        Optional<Account> optionalAccount = accountService.findAccountByID(id);
-        if (optionalAccount.isPresent() && optionalAccount.get().getUser().getId().equals(userId)) {
-            Account account = optionalAccount.get();
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("balance", account.getBalance());
-            response.put("alias", account.getAccountNickname());
-            response.put("cvu", account.getAccountCvu());
-
-            return ResponseEntity.ok(response);
+        if (vista.isEmpty()) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("error", "El usuario no es propietario de la cuenta"));
         }
 
-        return ResponseEntity.status(403)
-                .body(Map.of("error", "El usuario no es propietario de la cuenta"));
+        AccountBalanceView balance = vista.get();
+        Map<String, Object> response = new HashMap<>();
+        response.put("balance", balance.balance());
+        response.put("alias", balance.alias());
+        response.put("cvu", balance.cvu());
+        return ResponseEntity.ok(response);
     }
 
     @Operation(
@@ -225,37 +223,26 @@ public class AccountController {
     })
     @GetMapping("/{id}/qr-data")
     public ResponseEntity<Map<String, Object>> getQrData(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails principal) {
-        Long userId = principal.getUser().getId();
+        QrDataResult resultado = accountService.getQrDataForOwner(id, principal.getUser().getId());
 
-        Optional<Account> optionalAccount = accountService.findAccountByID(id);
-
-        if (optionalAccount.isEmpty()) {
-            return ResponseEntity.status(404).body(Map.of("error", "Cuenta no encontrada"));
-        }
-
-        Account account = optionalAccount.get();
-        if (!account.getUser().getId().equals(userId)) {
-            return ResponseEntity.status(403).body(Map.of("error", "El usuario no es propietario de la cuenta"));
-        }
-
-
-        User user = account.getUser();
-
-        Map<String, Object> qrData = new HashMap<>();
-        qrData.put("walletApp", "ArCashV1");
-        qrData.put("accountId", account.getIdAccount());
-        qrData.put("accountAlias", account.getAccountNickname());
-        qrData.put("receiverName", user.getName() + " " + user.getLastName());
-        qrData.put("dni", user.getDni());
-        qrData.put("email", user.getEmail());
-        if ("ARS".equalsIgnoreCase(account.getAccountType().toString())) {
-            qrData.put("currency", "ARS");
-        } else {
-            qrData.put("currency", account.getAccountType().toString());
-        }
-
-
-        return ResponseEntity.ok(qrData);
+        return switch (resultado.getKind()) {
+            case CUENTA_NO_ENCONTRADA -> ResponseEntity.status(404)
+                    .body(Map.of("error", "Cuenta no encontrada"));
+            case NO_ES_PROPIETARIO -> ResponseEntity.status(403)
+                    .body(Map.of("error", "El usuario no es propietario de la cuenta"));
+            case OK -> {
+                QrDataResult.QrPayload payload = resultado.getPayload();
+                Map<String, Object> qrData = new HashMap<>();
+                qrData.put("walletApp", payload.walletApp());
+                qrData.put("accountId", payload.accountId());
+                qrData.put("accountAlias", payload.accountAlias());
+                qrData.put("receiverName", payload.receiverName());
+                qrData.put("dni", payload.dni());
+                qrData.put("email", payload.email());
+                qrData.put("currency", payload.currency());
+                yield ResponseEntity.ok(qrData);
+            }
+        };
     }
 
 

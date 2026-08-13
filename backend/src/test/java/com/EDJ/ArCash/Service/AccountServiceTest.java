@@ -145,13 +145,13 @@ class AccountServiceTest {
     }
 
     @Test
-    @DisplayName("El servicio no valida el monto: un negativo descuenta saldo")
+    @DisplayName("El primitivo updateBalance no valida el monto: un negativo descuenta saldo")
     void updateBalanceAceptaMontosNegativos() {
         Account cuenta = cuenta(usuario());
         cuenta.setBalance(100.0);
         when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.of(cuenta));
 
-        // La unica barrera contra montos negativos vive hoy en el controller.
+        // La validacion de monto negativo vive en deposit(); este metodo sigue siendo el primitivo.
         assertTrue(accountService.updateBalance(-30.0, ID_CUENTA));
         assertEquals(70.0, cuenta.getBalance());
     }
@@ -162,6 +162,46 @@ class AccountServiceTest {
         when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.empty());
 
         assertFalse(accountService.updateBalance(50.0, ID_CUENTA));
+        verify(accountRepository, never()).save(any());
+    }
+
+    // --- deposit ---
+
+    @Test
+    @DisplayName("deposit rechaza monto negativo sin tocar la base")
+    void depositRechazaMontoNegativo() {
+        DepositResult resultado = accountService.deposit(ID_CUENTA, ID_USUARIO, -1.0);
+
+        assertEquals(DepositResult.Kind.MONTO_NEGATIVO, resultado.getKind());
+        assertEquals(-1.0, resultado.getBalance());
+        verify(accountRepository, never()).findByIdAccount(any());
+    }
+
+    @Test
+    @DisplayName("deposit ok: ownership + suma + saldo fresco")
+    void depositExitosoDevuelveSaldoActualizado() {
+        User propietario = usuario();
+        Account cuenta = cuenta(propietario);
+        cuenta.setBalance(500.0);
+        when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.of(cuenta));
+
+        DepositResult resultado = accountService.deposit(ID_CUENTA, ID_USUARIO, 100.0);
+
+        assertEquals(DepositResult.Kind.OK, resultado.getKind());
+        assertEquals(600.0, resultado.getBalance());
+        assertEquals(600.0, cuenta.getBalance());
+    }
+
+    @Test
+    @DisplayName("deposit sobre cuenta ajena: NO_ES_PROPIETARIO")
+    void depositCuentaAjena() {
+        Account ajena = cuenta(usuario());
+        ajena.getUser().setId(99L);
+        when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.of(ajena));
+
+        DepositResult resultado = accountService.deposit(ID_CUENTA, ID_USUARIO, 100.0);
+
+        assertEquals(DepositResult.Kind.NO_ES_PROPIETARIO, resultado.getKind());
         verify(accountRepository, never()).save(any());
     }
 

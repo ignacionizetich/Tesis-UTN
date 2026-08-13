@@ -5,8 +5,11 @@ import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
+import com.EDJ.ArCash.Service.AccountBalanceView;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.AliasChangeResult;
+import com.EDJ.ArCash.Service.DepositResult;
+import com.EDJ.ArCash.Service.QrDataResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -66,6 +65,9 @@ class AccountControllerTest {
     @Test
     @DisplayName("Ingresar un monto negativo devuelve 400")
     void balanceConMontoNegativoDevuelve400() throws Exception {
+        when(accountService.deposit(ID_CUENTA_ARS, ID_USUARIO, -1.0))
+                .thenReturn(DepositResult.montoNegativo(-1.0));
+
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -79,7 +81,8 @@ class AccountControllerTest {
     @Test
     @DisplayName("Si la cuenta no existe devuelve 404")
     void balanceConCuentaInexistenteDevuelve404() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.empty());
+        when(accountService.deposit(ID_CUENTA_ARS, ID_USUARIO, 100.0))
+                .thenReturn(DepositResult.cuentaNoExiste());
 
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
@@ -92,7 +95,8 @@ class AccountControllerTest {
     @Test
     @DisplayName("Si la cuenta es de otro usuario devuelve 498, no 403")
     void balanceSobreCuentaAjenaDevuelve498() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(99L))));
+        when(accountService.deposit(ID_CUENTA_ARS, ID_USUARIO, 100.0))
+                .thenReturn(DepositResult.noEsPropietario());
 
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
@@ -100,15 +104,13 @@ class AccountControllerTest {
                         .content("{\"balance\":100}"))
                 .andExpect(status().is(498))
                 .andExpect(jsonPath("$.message").value("El usuario no es propietario legitimo de la cuenta"));
-
-        verify(accountService, never()).updateBalance(anyDouble(), anyLong());
     }
 
     @Test
     @DisplayName("Si el service no puede actualizar devuelve 404")
     void balanceQueFallaEnElServiceDevuelve404() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(ID_USUARIO))));
-        when(accountService.updateBalance(100.0, ID_CUENTA_ARS)).thenReturn(false);
+        when(accountService.deposit(ID_CUENTA_ARS, ID_USUARIO, 100.0))
+                .thenReturn(DepositResult.updateFallido());
 
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
@@ -122,14 +124,8 @@ class AccountControllerTest {
     @Test
     @DisplayName("El ingreso exitoso informa el saldo actualizado tras el update")
     void balanceExitosoDevuelveElSaldoActualizado() throws Exception {
-        Account cuentaAntes = cuentaArs(usuario(ID_USUARIO));
-        cuentaAntes.setBalance(500.0);
-        Account cuentaDespues = cuentaArs(usuario(ID_USUARIO));
-        cuentaDespues.setBalance(600.0);
-        when(accountService.findAccountByID(ID_CUENTA_ARS))
-                .thenReturn(Optional.of(cuentaAntes))
-                .thenReturn(Optional.of(cuentaDespues));
-        when(accountService.updateBalance(100.0, ID_CUENTA_ARS)).thenReturn(true);
+        when(accountService.deposit(ID_CUENTA_ARS, ID_USUARIO, 100.0))
+                .thenReturn(DepositResult.ok(600.0));
 
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
@@ -146,9 +142,8 @@ class AccountControllerTest {
     @Test
     @DisplayName("Devuelve balance, alias y CVU de la cuenta propia")
     void showBalanceDevuelveLosDatosDeLaCuenta() throws Exception {
-        Account cuenta = cuentaArs(usuario(ID_USUARIO));
-        cuenta.setBalance(1500.75);
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuenta));
+        when(accountService.getOwnedBalance(ID_CUENTA_ARS, ID_USUARIO))
+                .thenReturn(Optional.of(new AccountBalanceView(1500.75, "MI.CUENTA.AA", "0000200112345678901234")));
 
         mockMvc.perform(get("/api/accounts/{id}/showBalance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado()))
@@ -161,18 +156,12 @@ class AccountControllerTest {
     @Test
     @DisplayName("Sobre una cuenta ajena o inexistente devuelve el mismo 403")
     void showBalanceDeCuentaAjenaDevuelve403() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(99L))));
+        when(accountService.getOwnedBalance(ID_CUENTA_ARS, ID_USUARIO)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/accounts/{id}/showBalance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error").value("El usuario no es propietario de la cuenta"));
-
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/api/accounts/{id}/showBalance", ID_CUENTA_ARS)
-                        .with(comoUsuarioAutenticado()))
-                .andExpect(status().isForbidden());
     }
 
     // --- PUT /{id}/changeAlias ---
@@ -224,7 +213,16 @@ class AccountControllerTest {
     @Test
     @DisplayName("Los datos del QR incluyen el email, que no figura en la documentacion")
     void qrDataDevuelveLosDatosDelReceptor() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(ID_USUARIO))));
+        when(accountService.getQrDataForOwner(ID_CUENTA_ARS, ID_USUARIO))
+                .thenReturn(QrDataResult.ok(new QrDataResult.QrPayload(
+                        "ArCashV1",
+                        ID_CUENTA_ARS,
+                        "MI.CUENTA.AA",
+                        "Ana Gomez",
+                        "12345678",
+                        "ana@test.com",
+                        "ARS"
+                )));
 
         mockMvc.perform(get("/api/accounts/{id}/qr-data", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado()))
@@ -241,14 +239,16 @@ class AccountControllerTest {
     @Test
     @DisplayName("QR de una cuenta inexistente devuelve 404 y de una ajena 403")
     void qrDataDistingueCuentaInexistenteDeAjena() throws Exception {
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.empty());
+        when(accountService.getQrDataForOwner(ID_CUENTA_ARS, ID_USUARIO))
+                .thenReturn(QrDataResult.cuentaNoEncontrada());
 
         mockMvc.perform(get("/api/accounts/{id}/qr-data", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Cuenta no encontrada"));
 
-        when(accountService.findAccountByID(ID_CUENTA_ARS)).thenReturn(Optional.of(cuentaArs(usuario(99L))));
+        when(accountService.getQrDataForOwner(ID_CUENTA_ARS, ID_USUARIO))
+                .thenReturn(QrDataResult.noEsPropietario());
 
         mockMvc.perform(get("/api/accounts/{id}/qr-data", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado()))

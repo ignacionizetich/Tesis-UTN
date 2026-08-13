@@ -79,6 +79,83 @@ public class AccountService {
         return createUsdAccount(user);
     }
 
+    /**
+     * Ingreso de dinero con ownership y relectura de saldo.
+     * updateBalance(boolean) sigue siendo el primitivo de mutacion.
+     */
+    public DepositResult deposit(Long accountId, Long userId, double amount) {
+        if (amount < 0) {
+            return DepositResult.montoNegativo(amount);
+        }
+
+        Optional<Account> optionalAccount = accountRepository.findByIdAccount(accountId);
+        if (optionalAccount.isEmpty()) {
+            return DepositResult.cuentaNoExiste();
+        }
+
+        Account account = optionalAccount.get();
+        if (!account.getUser().getId().equals(userId)) {
+            return DepositResult.noEsPropietario();
+        }
+
+        if (!updateBalance(amount, accountId)) {
+            return DepositResult.updateFallido();
+        }
+
+        Optional<Account> actualizada = accountRepository.findByIdAccount(accountId);
+        if (actualizada.isEmpty()) {
+            return DepositResult.updateFallido();
+        }
+
+        return DepositResult.ok(actualizada.get().getBalance());
+    }
+
+    /**
+     * Saldo de una cuenta propia. Empty si no existe o no es del usuario
+     * (el controller responde el mismo 403 en ambos casos).
+     */
+    public Optional<AccountBalanceView> getOwnedBalance(Long accountId, Long userId) {
+        Optional<Account> optionalAccount = accountRepository.findByIdAccount(accountId);
+        if (optionalAccount.isEmpty()) {
+            return Optional.empty();
+        }
+        Account account = optionalAccount.get();
+        if (!account.getUser().getId().equals(userId)) {
+            return Optional.empty();
+        }
+        return Optional.of(new AccountBalanceView(
+                account.getBalance(),
+                account.getAccountNickname(),
+                account.getAccountCvu()
+        ));
+    }
+
+    public QrDataResult getQrDataForOwner(Long accountId, Long userId) {
+        Optional<Account> optionalAccount = accountRepository.findByIdAccount(accountId);
+        if (optionalAccount.isEmpty()) {
+            return QrDataResult.cuentaNoEncontrada();
+        }
+
+        Account account = optionalAccount.get();
+        if (!account.getUser().getId().equals(userId)) {
+            return QrDataResult.noEsPropietario();
+        }
+
+        User user = account.getUser();
+        String currency = "ARS".equalsIgnoreCase(account.getAccountType().toString())
+                ? "ARS"
+                : account.getAccountType().toString();
+
+        return QrDataResult.ok(new QrDataResult.QrPayload(
+                "ArCashV1",
+                account.getIdAccount(),
+                account.getAccountNickname(),
+                user.getName() + " " + user.getLastName(),
+                user.getDni(),
+                user.getEmail(),
+                currency
+        ));
+    }
 
     public boolean updateBalance(double balanceToAdd, Long id){
         Optional<Account> optionalAccount = accountRepository.findByIdAccount(id);
