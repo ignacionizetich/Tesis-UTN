@@ -4,6 +4,7 @@ import com.EDJ.ArCash.DTO.AuthDTO.LoginRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.LoginResponse;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Imp.Permissions;
+import com.EDJ.ArCash.Models.RefreshToken;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Service.strategy.AuthenticationResult;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,6 +43,7 @@ class AuthServiceTest {
     private AuthenticationStrategy authenticationStrategy;
     private TokenManagementStrategy tokenManagementStrategy;
     private AccountRepository accountRepository;
+    private RefreshTokenCleanupService refreshTokenCleanupService;
     private AuthService authService;
 
     @BeforeEach
@@ -50,6 +53,7 @@ class AuthServiceTest {
         PasswordRecoveryStrategy passwordRecoveryStrategy = mock(PasswordRecoveryStrategy.class);
         LoginResponseFactory loginResponseFactory = new LoginResponseFactoryImpl();
         accountRepository = mock(AccountRepository.class);
+        refreshTokenCleanupService = mock(RefreshTokenCleanupService.class);
 
         authService = new AuthService();
         ReflectionTestUtils.setField(authService, "authenticationStrategy", authenticationStrategy);
@@ -57,6 +61,7 @@ class AuthServiceTest {
         ReflectionTestUtils.setField(authService, "passwordRecoveryStrategy", passwordRecoveryStrategy);
         ReflectionTestUtils.setField(authService, "loginResponseFactory", loginResponseFactory);
         ReflectionTestUtils.setField(authService, "accountRepository", accountRepository);
+        ReflectionTestUtils.setField(authService, "refreshTokenCleanupService", refreshTokenCleanupService);
     }
 
     @Test
@@ -143,6 +148,43 @@ class AuthServiceTest {
 
         assertTrue(authService.isValidSession("token"));
         verify(tokenManagementStrategy).isValidSession("token");
+    }
+
+    @Test
+    @DisplayName("refresh sin cookie: MISSING")
+    void refreshSinCookie() {
+        RefreshAccessResult r = authService.refreshAccessToken(null);
+        assertEquals(RefreshAccessResult.Kind.MISSING, r.getKind());
+        assertEquals("Refresh token requerido", r.getError());
+        verify(refreshTokenCleanupService, never()).getRefreshTokenAndRevokedFalse(any());
+    }
+
+    @Test
+    @DisplayName("refresh token inexistente o expirado: INVALID")
+    void refreshInvalidoOExpirado() {
+        when(refreshTokenCleanupService.getRefreshTokenAndRevokedFalse("ghost")).thenReturn(Optional.empty());
+        assertEquals(RefreshAccessResult.Kind.INVALID, authService.refreshAccessToken("ghost").getKind());
+
+        RefreshToken expired = new RefreshToken();
+        expired.setUser(usuario());
+        expired.setExpiresAt(LocalDateTime.now().minusMinutes(1));
+        when(refreshTokenCleanupService.getRefreshTokenAndRevokedFalse("exp")).thenReturn(Optional.of(expired));
+        assertEquals(RefreshAccessResult.Kind.INVALID, authService.refreshAccessToken("exp").getKind());
+        verify(tokenManagementStrategy, never()).generateAccessToken(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("refresh valido: emite access token")
+    void refreshValidoEmiteAccess() {
+        RefreshToken active = new RefreshToken();
+        active.setUser(usuario());
+        active.setExpiresAt(LocalDateTime.now().plusDays(1));
+        when(refreshTokenCleanupService.getRefreshTokenAndRevokedFalse("ok")).thenReturn(Optional.of(active));
+        when(tokenManagementStrategy.generateAccessToken("5", "USER")).thenReturn("access-nuevo");
+
+        RefreshAccessResult r = authService.refreshAccessToken("ok");
+        assertEquals(RefreshAccessResult.Kind.OK, r.getKind());
+        assertEquals("access-nuevo", r.getAccessToken());
     }
 
     private LoginRequest pedido() {

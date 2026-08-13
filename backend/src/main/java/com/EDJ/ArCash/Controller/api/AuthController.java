@@ -5,13 +5,9 @@ import com.EDJ.ArCash.DTO.AuthDTO.LoginResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.UsernameRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.UsernameResponse;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
-import com.EDJ.ArCash.Models.RefreshToken;
-import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Security.JwtService;
 import com.EDJ.ArCash.Service.AuthService;
-import com.EDJ.ArCash.Service.RefreshTokenCleanupService;
+import com.EDJ.ArCash.Service.RefreshAccessResult;
 import com.EDJ.ArCash.Service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,11 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Optional;
-
-import static org.springframework.web.servlet.function.ServerResponse.noContent;
 
 @RestController
 @RequestMapping(value = "/api/auth", produces = "application/json")
@@ -44,12 +36,6 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private RefreshTokenCleanupService refreshTokenService;
-
-    @Autowired
-    private JwtService jwtService;
 
     @Operation(
             summary = "Iniciar sesión",
@@ -333,16 +319,12 @@ public class AuthController {
     })
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshAccessToken(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
-        if (refreshToken == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Refresh token requerido"));
-        }
-        Optional<RefreshToken> tokenOpt = refreshTokenService.getRefreshTokenAndRevokedFalse(refreshToken);
-        if (tokenOpt.isEmpty() || tokenOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
-            return ResponseEntity.status(401).body(Map.of("error", "Refresh token inválido o expirado"));
-        }
-        User user = tokenOpt.get().getUser();
-        String newAccessToken = jwtService.generateToken(String.valueOf(user.getId()), user.getPermissions().name());
-        return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+        RefreshAccessResult result = authService.refreshAccessToken(refreshToken);
+        return switch (result.getKind()) {
+            case MISSING -> ResponseEntity.badRequest().body(Map.of("error", result.getError()));
+            case INVALID -> ResponseEntity.status(401).body(Map.of("error", result.getError()));
+            case OK -> ResponseEntity.ok(Map.of("accessToken", result.getAccessToken()));
+        };
     }
 
 

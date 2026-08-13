@@ -48,6 +48,9 @@ public class AuthService {
     @Autowired
     private AccountRepository accountRepository;
 
+    @Autowired
+    private RefreshTokenCleanupService refreshTokenCleanupService;
+
     /**
      * Valida credenciales, exige cuenta ARS y recien entonces emite tokens.
      * Sin cuenta ARS la respuesta sigue siendo error "Cuenta no encontrada",
@@ -145,5 +148,26 @@ public class AuthService {
     public boolean resendPasswordRecovery(String email) {
         logger.info("Reenviando recuperación de contraseña para: {}", email);
         return passwordRecoveryStrategy.resendRecoveryLink(email);
+    }
+
+    /**
+     * Emite un nuevo access token a partir de un refresh token (cookie).
+     */
+    public RefreshAccessResult refreshAccessToken(String refreshToken) {
+        if (refreshToken == null) {
+            return RefreshAccessResult.missing();
+        }
+
+        Optional<RefreshToken> tokenOpt = refreshTokenCleanupService.getRefreshTokenAndRevokedFalse(refreshToken);
+        if (tokenOpt.isEmpty() || tokenOpt.get().getExpiresAt().isBefore(java.time.LocalDateTime.now())) {
+            return RefreshAccessResult.invalid();
+        }
+
+        User user = tokenOpt.get().getUser();
+        String newAccessToken = tokenManagementStrategy.generateAccessToken(
+                String.valueOf(user.getId()),
+                user.getPermissions().name()
+        );
+        return RefreshAccessResult.ok(newAccessToken);
     }
 }
