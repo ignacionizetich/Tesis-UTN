@@ -24,15 +24,18 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final EventPublisher eventPublisher;
     private final ArsToUsdConversionService arsToUsdConversionService;
+    private final UsdToArsConversionService usdToArsConversionService;
 
     public TransactionService(AccountRepository accountRepository,
                               TransactionRepository transactionRepository,
                               EventPublisher eventPublisher,
-                              ArsToUsdConversionService arsToUsdConversionService) {
+                              ArsToUsdConversionService arsToUsdConversionService,
+                              UsdToArsConversionService usdToArsConversionService) {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
         this.eventPublisher = eventPublisher;
         this.arsToUsdConversionService = arsToUsdConversionService;
+        this.usdToArsConversionService = usdToArsConversionService;
     }
 
     @Transactional
@@ -281,6 +284,97 @@ public class TransactionService {
                 cuentaArs.getBalance(),
                 cuentaUsd.getBalance()
         );
+    }
+
+    @Transactional
+    public SellUsdResult sellUsd(Long accountUsdId, Long accountArsId, double amountUsd) {
+        Optional<Account> optionalUsd = accountRepository.findByIdAccount(accountUsdId);
+        Optional<Account> optionalArs = accountRepository.findByIdAccount(accountArsId);
+
+        if (optionalUsd.isEmpty() || optionalArs.isEmpty()) {
+            return SellUsdResult.fail("Cuenta no encontrada");
+        }
+
+        Account cuentaUsd = optionalUsd.get();
+        Account cuentaArs = optionalArs.get();
+
+        if (!cuentaUsd.getUser().getId().equals(cuentaArs.getUser().getId())) {
+            persistSellFailed(cuentaUsd, cuentaArs, amountUsd);
+            return SellUsdResult.fail("Las cuentas deben pertenecer al mismo usuario");
+        }
+
+        if (cuentaUsd.getAccountType() != Currency.USD || cuentaArs.getAccountType() != Currency.ARS) {
+            persistSellFailed(cuentaUsd, cuentaArs, amountUsd);
+            return SellUsdResult.fail("Debe vender desde una cuenta en dólares a una cuenta en pesos");
+        }
+
+        UsdDebitPreview preview = usdToArsConversionService.previewDebit(amountUsd);
+
+        if (cuentaUsd.getBalance() < preview.totalDebitado()) {
+            persistSellFailed(cuentaUsd, cuentaArs, amountUsd);
+            return SellUsdResult.fail("Saldo insuficiente. Necesitas $" + String.format("%.2f", preview.totalDebitado()) +
+                    " USD (incluye $" + String.format("%.2f", preview.taxAmount()) + " de comisión)");
+        }
+
+        UsdToArsConversion conversion = usdToArsConversionService.calculate(amountUsd);
+
+        cuentaUsd.setBalance(cuentaUsd.getBalance() - conversion.totalDebitado());
+        cuentaArs.setBalance(cuentaArs.getBalance() + conversion.amountArs());
+
+        Transaction transaction = new Transaction();
+        transaction.setIdOrigin(cuentaUsd);
+        transaction.setIdDestination(cuentaArs);
+        transaction.setBalance(conversion.amountArs());
+        transaction.setOriginalAmount(conversion.amountUsd());
+        transaction.setOriginalCurrency(Currency.USD);
+        transaction.setCurrency(Currency.ARS);
+        transaction.setExchangeRate(conversion.exchangeRate());
+        transaction.setTaxAmount(conversion.taxAmount());
+        transaction.setTaxPercentage(conversion.taxPercentage());
+        transaction.setState("COMPLETED");
+
+        accountRepository.save(cuentaUsd);
+        accountRepository.save(cuentaArs);
+        transactionRepository.save(transaction);
+
+        Event event = new Event(EventType.TRANSACTION_COMPLETED);
+        event.addData("user", cuentaUsd.getUser());
+        event.addData("amount", conversion.amountArs());
+        event.addData("amountUsd", conversion.amountUsd());
+        event.addData("exchangeRate", conversion.exchangeRate());
+        event.addData("taxAmount", conversion.taxAmount());
+        event.addData("taxPercentage", conversion.taxPercentage());
+        event.addData("totalDebitado", conversion.totalDebitado());
+        event.addData("destinationAlias", cuentaArs.getAccountNickname());
+        event.addData("currency", "ARS");
+        event.addData("converted", true);
+        // Fase 8: mismo copy de mail (transferencia/Destinatario) — ahora tambien
+        // sellUsd (USD→ARS). Alcance: conversion propia, buyUsd y sellUsd.
+        eventPublisher.publish(event);
+
+        return SellUsdResult.ok(
+                "Venta de dólares exitosa",
+                conversion.amountUsd(),
+                conversion.amountArs(),
+                conversion.exchangeRate(),
+                conversion.taxAmount(),
+                conversion.taxPercentage(),
+                conversion.totalDebitado(),
+                cuentaArs.getBalance(),
+                cuentaUsd.getBalance()
+        );
+    }
+
+    private void persistSellFailed(Account cuentaUsd, Account cuentaArs, double amountUsd) {
+        Transaction transaction = new Transaction();
+        transaction.setIdOrigin(cuentaUsd);
+        transaction.setIdDestination(cuentaArs);
+        transaction.setBalance(amountUsd);
+        transaction.setState("FAILED");
+        transaction.setCurrency(Currency.USD);
+        transaction.setOriginalAmount(amountUsd);
+        transaction.setOriginalCurrency(Currency.USD);
+        transactionRepository.save(transaction);
     }
 
     public List<TransactionDTO> listaTransacciones(Long id) {

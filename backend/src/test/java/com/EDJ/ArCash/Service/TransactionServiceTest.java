@@ -44,6 +44,12 @@ class TransactionServiceTest {
     private static final double TOTAL_DEBITO = 10_300.0;
     private static final double USD_ESPERADOS = 10.0;
 
+    private static final double MONTO_USD = 100.0;
+    private static final double TASA_COMPRA = 1_000.0;
+    private static final double COMISION_USD = 3.0;
+    private static final double TOTAL_DEBITO_USD = 103.0;
+    private static final double ARS_ESPERADOS = 100_000.0;
+
     private AccountRepository accountRepository;
     private TransactionRepository transactionRepository;
     private EventPublisher eventPublisher;
@@ -57,14 +63,17 @@ class TransactionServiceTest {
         eventPublisher = mock(EventPublisher.class);
         cotizationUsdService = mock(CotizationUsdService.class);
         TaxService taxService = new TaxService(cotizationUsdService);
-        ArsToUsdConversionService conversionService =
+        ArsToUsdConversionService arsToUsdConversionService =
                 new ArsToUsdConversionService(taxService, cotizationUsdService);
+        UsdToArsConversionService usdToArsConversionService =
+                new UsdToArsConversionService(taxService, cotizationUsdService);
 
         transactionService = new TransactionService(
                 accountRepository,
                 transactionRepository,
                 eventPublisher,
-                conversionService
+                arsToUsdConversionService,
+                usdToArsConversionService
         );
 
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -297,6 +306,125 @@ class TransactionServiceTest {
         verify(transactionRepository, never()).save(any());
         verify(eventPublisher, never()).publish(any());
         verify(cotizationUsdService, never()).obtenerCotizacionVenta();
+    }
+
+    @Test
+    @DisplayName("S1 sellUsd ok: 3%+compra, result rico, COMPLETED, publica evento, usa compra no venta")
+    void sellUsdExitosoPublicaEvento() {
+        Account usd = cuenta(ID_USD, Currency.USD, ID_USUARIO, 200.0);
+        Account ars = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 1_000.0);
+        when(accountRepository.findByIdAccount(ID_USD)).thenReturn(Optional.of(usd));
+        when(accountRepository.findByIdAccount(ID_ARS)).thenReturn(Optional.of(ars));
+        when(cotizationUsdService.obtenerCotizacionCompra()).thenReturn(TASA_COMPRA);
+
+        SellUsdResult result = transactionService.sellUsd(ID_USD, ID_ARS, MONTO_USD);
+
+        assertTrue(result.isSuccess());
+        assertEquals(MONTO_USD, result.getAmountUsd(), DELTA);
+        assertEquals(ARS_ESPERADOS, result.getAmountArs(), DELTA);
+        assertEquals(TASA_COMPRA, result.getExchangeRate(), DELTA);
+        assertEquals(COMISION_USD, result.getTaxAmount(), DELTA);
+        assertEquals(3.0, result.getTaxPercentage(), DELTA);
+        assertEquals(TOTAL_DEBITO_USD, result.getTotalDebitado(), DELTA);
+        assertEquals(200.0 - TOTAL_DEBITO_USD, result.getNewBalanceUsd(), DELTA);
+        assertEquals(1_000.0 + ARS_ESPERADOS, result.getNewBalanceArs(), DELTA);
+        assertEquals(200.0 - TOTAL_DEBITO_USD, usd.getBalance(), DELTA);
+        assertEquals(1_000.0 + ARS_ESPERADOS, ars.getBalance(), DELTA);
+
+        ArgumentCaptor<Transaction> txnCaptor = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(txnCaptor.capture());
+        assertEquals("COMPLETED", txnCaptor.getValue().getState());
+        assertEquals(ARS_ESPERADOS, txnCaptor.getValue().getBalance(), DELTA);
+
+        ArgumentCaptor<Event> eventoCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventPublisher).publish(eventoCaptor.capture());
+        Event evento = eventoCaptor.getValue();
+        assertEquals(EventType.TRANSACTION_COMPLETED, evento.getEventType());
+        assertEquals(true, evento.getData("converted"));
+        assertEquals(ARS_ESPERADOS, (Double) evento.getData("amount"), DELTA);
+        assertEquals(MONTO_USD, (Double) evento.getData("amountUsd"), DELTA);
+        assertEquals(TASA_COMPRA, (Double) evento.getData("exchangeRate"), DELTA);
+        assertEquals("ARS", evento.getData("currency"));
+        assertEquals("ALIAS." + ID_ARS, evento.getData("destinationAlias"));
+
+        verify(cotizationUsdService).obtenerCotizacionCompra();
+        verify(cotizationUsdService, never()).obtenerCotizacionVenta();
+    }
+
+    @Test
+    @DisplayName("S2 sellUsd ownership: FAILED, mensaje 7.3.2, sin saldos ni cotizacion")
+    void sellUsdCuentasDeDistintoUsuario() {
+        Account usd = cuenta(ID_USD, Currency.USD, ID_USUARIO, 200.0);
+        Account arsAjena = cuenta(ID_ARS, Currency.ARS, ID_OTRO, 1_000.0);
+        when(accountRepository.findByIdAccount(ID_USD)).thenReturn(Optional.of(usd));
+        when(accountRepository.findByIdAccount(ID_ARS)).thenReturn(Optional.of(arsAjena));
+
+        SellUsdResult result = transactionService.sellUsd(ID_USD, ID_ARS, MONTO_USD);
+
+        assertFalse(result.isSuccess());
+        assertEquals("Las cuentas deben pertenecer al mismo usuario", result.getMessage());
+        assertEquals(200.0, usd.getBalance(), DELTA);
+        assertEquals(1_000.0, arsAjena.getBalance(), DELTA);
+
+        ArgumentCaptor<Transaction> txnCaptor = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(txnCaptor.capture());
+        assertEquals("FAILED", txnCaptor.getValue().getState());
+        verify(accountRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
+        verify(cotizationUsdService, never()).obtenerCotizacionCompra();
+        verify(cotizationUsdService, never()).obtenerCotizacionVenta();
+    }
+
+    @Test
+    @DisplayName("S3 sellUsd saldo insuficiente: FAILED y NO consulta cotizacion")
+    void sellUsdSaldoInsuficienteSinCotizacion() {
+        Account usd = cuenta(ID_USD, Currency.USD, ID_USUARIO, 50.0);
+        Account ars = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 1_000.0);
+        when(accountRepository.findByIdAccount(ID_USD)).thenReturn(Optional.of(usd));
+        when(accountRepository.findByIdAccount(ID_ARS)).thenReturn(Optional.of(ars));
+
+        SellUsdResult result = transactionService.sellUsd(ID_USD, ID_ARS, MONTO_USD);
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.getMessage().contains("Saldo insuficiente"));
+        assertEquals(50.0, usd.getBalance(), DELTA);
+
+        ArgumentCaptor<Transaction> txnCaptor = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(txnCaptor.capture());
+        assertEquals("FAILED", txnCaptor.getValue().getState());
+        verify(eventPublisher, never()).publish(any());
+        verify(cotizationUsdService, never()).obtenerCotizacionCompra();
+        verify(cotizationUsdService, never()).obtenerCotizacionVenta();
+    }
+
+    @Test
+    @DisplayName("S4 sellUsd cuenta no encontrada o tipo invalido: fail; tipo invalido persiste FAILED")
+    void sellUsdCuentaNoEncontradaOTipoInvalido() {
+        when(accountRepository.findByIdAccount(ID_USD)).thenReturn(Optional.empty());
+        when(accountRepository.findByIdAccount(ID_ARS)).thenReturn(Optional.empty());
+
+        SellUsdResult noEncontrada = transactionService.sellUsd(ID_USD, ID_ARS, MONTO_USD);
+
+        assertFalse(noEncontrada.isSuccess());
+        assertEquals("Cuenta no encontrada", noEncontrada.getMessage());
+        verify(transactionRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
+
+        Account origenArs = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 20_000.0);
+        Account destinoUsd = cuenta(ID_USD, Currency.USD, ID_USUARIO, 50.0);
+        when(accountRepository.findByIdAccount(ID_ARS)).thenReturn(Optional.of(origenArs));
+        when(accountRepository.findByIdAccount(ID_USD)).thenReturn(Optional.of(destinoUsd));
+
+        SellUsdResult tipoInvalido = transactionService.sellUsd(ID_ARS, ID_USD, MONTO_USD);
+
+        assertFalse(tipoInvalido.isSuccess());
+        assertEquals("Debe vender desde una cuenta en dólares a una cuenta en pesos", tipoInvalido.getMessage());
+
+        ArgumentCaptor<Transaction> txnCaptor = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(txnCaptor.capture());
+        assertEquals("FAILED", txnCaptor.getValue().getState());
+        verify(eventPublisher, never()).publish(any());
+        verify(cotizationUsdService, never()).obtenerCotizacionCompra();
     }
 
     private Account cuenta(long id, Currency tipo, long userId, double balance) {
