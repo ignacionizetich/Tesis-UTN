@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -141,8 +140,7 @@ class ApiAdminControllerCreateAdminTest {
     @Test
     @DisplayName("500: mensaje generico y SIN clave detalle (aunque la causa tenga texto de DB)")
     void error500SinDetalle() throws Exception {
-        doThrow(new RuntimeException("Duplicate entry for key users.UK22orgon25a45jt87hvbmknks2"))
-                .when(adminService).createAdmin(any());
+        when(adminService.createAdmin(any())).thenReturn(AdminCreateResult.error());
 
         mockMvc.perform(post("/api/admin/users/create-admin")
                         .header("Authorization", "Bearer " + adminAccessToken)

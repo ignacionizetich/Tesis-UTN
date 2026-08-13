@@ -84,35 +84,7 @@ public class AdminService {
      */
     @Transactional
     public AdminCreateResult createAdmin(AdminRequest adminRequest) {
-        if (existsByUsername(adminRequest.getUsername())) {
-            return AdminCreateResult.conflict("username", "nombre de usuario no está disponible");
-        }
-        if (existsByEmail(adminRequest.getEmail())) {
-            return AdminCreateResult.conflict("email", "email ya se encuentra en uso");
-        }
-        if (existsByDni(adminRequest.getDni())) {
-            return AdminCreateResult.conflict("dni", "DNI ya está registrado");
-        }
-
-        User user = new User();
-        user.setName(capitalizePersonName(adminRequest.getName()));
-        user.setLastName(capitalizePersonName(adminRequest.getLastName()));
-        user.setPermissions(Permissions.ADMIN);
-        user.setDni(adminRequest.getDni());
-        user.setEmail(adminRequest.getEmail());
-        user.setAlias(adminRequest.getUsername());
-        user.setEnabled(true);
-        user.setActive(true);
-        user.setCredentials(new Credentials(
-                user,
-                user.getAlias(),
-                passwordEncoder.encode(adminRequest.getPassword())
-        ));
-
         try {
-            cargarAdmin(user);
-            return AdminCreateResult.success();
-        } catch (DataIntegrityViolationException e) {
             if (existsByUsername(adminRequest.getUsername())) {
                 return AdminCreateResult.conflict("username", "nombre de usuario no está disponible");
             }
@@ -122,7 +94,39 @@ public class AdminService {
             if (existsByDni(adminRequest.getDni())) {
                 return AdminCreateResult.conflict("dni", "DNI ya está registrado");
             }
-            return AdminCreateResult.conflictGeneric();
+
+            User user = new User();
+            user.setName(capitalizePersonName(adminRequest.getName()));
+            user.setLastName(capitalizePersonName(adminRequest.getLastName()));
+            user.setPermissions(Permissions.ADMIN);
+            user.setDni(adminRequest.getDni());
+            user.setEmail(adminRequest.getEmail());
+            user.setAlias(adminRequest.getUsername());
+            user.setEnabled(true);
+            user.setActive(true);
+            user.setCredentials(new Credentials(
+                    user,
+                    user.getAlias(),
+                    passwordEncoder.encode(adminRequest.getPassword())
+            ));
+
+            try {
+                cargarAdmin(user);
+                return AdminCreateResult.success();
+            } catch (DataIntegrityViolationException e) {
+                if (existsByUsername(adminRequest.getUsername())) {
+                    return AdminCreateResult.conflict("username", "nombre de usuario no está disponible");
+                }
+                if (existsByEmail(adminRequest.getEmail())) {
+                    return AdminCreateResult.conflict("email", "email ya se encuentra en uso");
+                }
+                if (existsByDni(adminRequest.getDni())) {
+                    return AdminCreateResult.conflict("dni", "DNI ya está registrado");
+                }
+                return AdminCreateResult.conflictGeneric();
+            }
+        } catch (Exception e) {
+            return AdminCreateResult.error();
         }
     }
 

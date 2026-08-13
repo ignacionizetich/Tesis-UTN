@@ -7,7 +7,8 @@ public final class AdminCreateResult {
 
     public enum Kind {
         SUCCESS,
-        CONFLICT
+        CONFLICT,
+        ERROR
     }
 
     private final Kind kind;
@@ -31,6 +32,10 @@ public final class AdminCreateResult {
     /** Conflicto de carrera / constraint sin campo mapeable. */
     public static AdminCreateResult conflictGeneric() {
         return new AdminCreateResult(Kind.CONFLICT, "Error de duplicación en la base de datos", null);
+    }
+
+    public static AdminCreateResult error() {
+        return new AdminCreateResult(Kind.ERROR, "Error interno del servidor", null);
     }
 
     public Kind getKind() {

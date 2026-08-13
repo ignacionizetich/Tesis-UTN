@@ -116,24 +116,22 @@ public class ApiAdminController {
     )
     @PostMapping("/users/create-admin")
     public ResponseEntity<?> createAdminUser(@RequestBody AdminRequest adminRequest) {
-        try {
-            AdminCreateResult resultado = adminService.createAdmin(adminRequest);
+        AdminCreateResult resultado = adminService.createAdmin(adminRequest);
 
-            if (resultado.isSuccess()) {
-                return ResponseEntity.ok("Usuario administrador creado correctamente");
+        return switch (resultado.getKind()) {
+            case SUCCESS -> ResponseEntity.ok("Usuario administrador creado correctamente");
+            case CONFLICT -> {
+                Map<String, String> body = new HashMap<>();
+                body.put("mensaje", resultado.getMensaje());
+                if (resultado.getCampo() != null) {
+                    body.put("campo", resultado.getCampo());
+                }
+                yield ResponseEntity.status(409).body(body);
             }
-
-            Map<String, String> body = new HashMap<>();
-            body.put("mensaje", resultado.getMensaje());
-            if (resultado.getCampo() != null) {
-                body.put("campo", resultado.getCampo());
-            }
-            return ResponseEntity.status(409).body(body);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of(
-                    "mensaje", "Error interno del servidor"
+            case ERROR -> ResponseEntity.status(500).body(Map.of(
+                    "mensaje", resultado.getMensaje()
             ));
-        }
+        };
     }
 
     @Operation(
