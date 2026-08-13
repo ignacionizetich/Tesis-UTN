@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { SessionStore } from '../../core/session/session.store';
 import { UserDataStore } from '../user-data-store/user-data.store';
 import { TransactionHistoryStore } from '../transaction-history-store/transaction-history.store';
+import { logger } from '../../shared/utils/logger';
 
 export interface AccountSearchResult {
   idaccount: string;
@@ -48,7 +49,7 @@ export class TransferApi {
       }
       return response;
     } catch (error: unknown) {
-      console.error('Error buscando cuenta:', error);
+      logger.error('Error buscando cuenta:', error);
       if (error instanceof HttpErrorResponse) {
         if (error.status === 404) {
           throw new Error('Cuenta no encontrada');
@@ -78,7 +79,7 @@ export class TransferApi {
       this.userDataStore.load(true).subscribe();
       return response;
     } catch (error) {
-      console.error('Error ingresando dinero:', error);
+      logger.error('Error ingresando dinero:', error);
       this.userDataStore.load(true).subscribe();
       throw error;
     }
@@ -103,15 +104,15 @@ export class TransferApi {
       this.userDataStore.load(true).subscribe();
       this.transactionHistoryStore
         .load()
-        .catch((err) => console.error('Error recargando tx después de transferir:', err));
+        .catch((err) => logger.error('Error recargando tx después de transferir:', err));
       return response;
     } catch (error) {
-      console.error('Error realizando transferencia:', error);
+      logger.error('Error realizando transferencia:', error);
       this.userDataStore.load(true).subscribe();
       this.transactionHistoryStore
         .load()
         .catch((err) =>
-          console.error('Error recargando tx después de transferir (fallida):', err)
+          logger.error('Error recargando tx después de transferir (fallida):', err)
         );
       throw error;
     }

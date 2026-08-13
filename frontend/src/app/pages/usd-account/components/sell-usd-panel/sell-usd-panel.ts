@@ -11,6 +11,7 @@ import { ToastService } from '../../../../services/toast/toast.service';
 import { formatMoney } from '../../../../shared/utils/money-format';
 import { errorMessage } from '../../../../shared/utils/error-message';
 import { UsdTradeSuccess } from '../buy-usd-panel/buy-usd-panel';
+import { logger } from '../../../../shared/utils/logger';
 
 @Component({
   selector: 'app-sell-usd-panel',
@@ -91,7 +92,7 @@ export class SellUsdPanelComponent {
         this.toast.show(response?.message || 'Error en la venta', 'error');
       }
     } catch (error: unknown) {
-      console.error('Error vendiendo USD:', error);
+      logger.error('Error vendiendo USD:', error);
       this.toast.show(errorMessage(error, 'Error al vender dólares'), 'error');
     } finally {
       this.isSellingUsd = false;

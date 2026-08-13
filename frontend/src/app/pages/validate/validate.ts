@@ -8,6 +8,7 @@ import { ResendNavigationService } from '../../services/resend-navigation/resend
 import { ResendService } from '../../services/resend/resend.service';
 import { Subscription } from 'rxjs';
 import { maskEmail } from '../../shared/utils/email-mask';
+import { logger } from '../../shared/utils/logger';
 
 @Component({
   selector: 'app-validate',
@@ -70,7 +71,7 @@ export class ValidateComponent implements OnInit, OnDestroy {
         }
       },
       error: (error: any) => {
-        console.error('Error validating token:', error);
+        logger.error('Error validating token:', error);
         
         // Si es un error 404 o de token inválido, redirigir a 404
         if (error.status === 404 || error.status === 400) {
@@ -145,7 +146,7 @@ export class ValidateComponent implements OnInit, OnDestroy {
         this.isResending = false;
       },
       error: (error) => {
-        console.error('Error al reenviar:', error);
+        logger.error('Error al reenviar:', error);
         
         if (error.status === 429) {
           this.toast.show('Demasiados intentos: Espera un momento antes de solicitar otro reenvío.', 'warning');

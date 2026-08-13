@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { TransferApi } from '../../../../services/transfer-api/transfer.api';
 import { ToastService } from '../../../../services/toast/toast.service';
 import { ModalService } from '../../../../services/modal/modal.service';
+import { logger } from '../../../../shared/utils/logger';
 
 @Component({
   selector: 'app-deposit-modal',
@@ -47,7 +48,7 @@ export class DepositModalComponent {
       this.success.emit(amount);
       this.closed.emit();
     } catch (error) {
-      console.error('Error ingresando dinero:', error);
+      logger.error('Error ingresando dinero:', error);
       this.toast.show('Error al ingresar dinero', 'error');
     } finally {
       this.isIngresandoDinero = false;

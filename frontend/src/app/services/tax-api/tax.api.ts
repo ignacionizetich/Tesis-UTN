@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { logger } from '../../shared/utils/logger';
 
 export interface TaxCalculationResult {
   montoOriginal: number;
@@ -32,7 +33,7 @@ export class TaxApi {
         totalFinal: response.totalFinal,
       };
     } catch (error) {
-      console.error('Error calculando impuestos ARS:', error);
+      logger.error('Error calculando impuestos ARS:', error);
       throw error;
     }
   }
@@ -52,7 +53,7 @@ export class TaxApi {
         totalFinal: response.totalFinal,
       };
     } catch (error) {
-      console.error('Error calculando impuestos USD:', error);
+      logger.error('Error calculando impuestos USD:', error);
       throw error;
     }
   }

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CacheData, CacheConfig, CacheValidation } from '../../models/cache.interface';
+import { logger } from '../../shared/utils/logger';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,7 @@ export class CacheService {
       localStorage.setItem(config.key, JSON.stringify(data));
       localStorage.setItem(config.expiryKey, expiry.toString());
     } catch (error) {
-      console.warn(`Error guardando cache ${config.key}:`, error);
+      logger.warn(`Error guardando cache ${config.key}:`, error);
     }
   }
 

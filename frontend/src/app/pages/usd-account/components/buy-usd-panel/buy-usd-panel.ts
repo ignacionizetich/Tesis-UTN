@@ -10,6 +10,7 @@ import { AccountService } from '../../../../services/account/account.service';
 import { ToastService } from '../../../../services/toast/toast.service';
 import { formatMoney } from '../../../../shared/utils/money-format';
 import { errorMessage } from '../../../../shared/utils/error-message';
+import { logger } from '../../../../shared/utils/logger';
 
 export interface UsdTradeSuccess {
   newBalanceArs: number;
@@ -97,7 +98,7 @@ export class BuyUsdPanelComponent {
         this.toast.show(response?.message || 'Error en la compra', 'error');
       }
     } catch (error: unknown) {
-      console.error('Error comprando USD:', error);
+      logger.error('Error comprando USD:', error);
       this.toast.show(errorMessage(error, 'Error al comprar dólares'), 'error');
     } finally {
       this.isBuyingUsd = false;

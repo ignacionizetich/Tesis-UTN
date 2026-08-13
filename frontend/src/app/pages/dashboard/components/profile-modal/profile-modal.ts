@@ -12,6 +12,7 @@ import UserData from '../../../../models/user-data';
 import { UserDataStore } from '../../../../services/user-data-store/user-data.store';
 import { ToastService } from '../../../../services/toast/toast.service';
 import { ModalService } from '../../../../services/modal/modal.service';
+import { logger } from '../../../../shared/utils/logger';
 
 @Component({
   selector: 'app-profile-modal',
@@ -90,7 +91,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
       );
       this.editingUsername = false;
     } catch (error) {
-      console.error('Error updating username:', error);
+      logger.error('Error updating username:', error);
       this.toast.show('Error al actualizar el nombre de usuario', 'error');
     }
   }
@@ -119,7 +120,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
       this.toast.show('Alias actualizado correctamente', 'success');
       this.editingAlias = false;
     } catch (error) {
-      console.error('Error updating alias:', error);
+      logger.error('Error updating alias:', error);
       this.toast.show('Error al actualizar el alias', 'error');
     }
   }

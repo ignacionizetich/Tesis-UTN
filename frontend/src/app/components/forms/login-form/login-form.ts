@@ -6,6 +6,7 @@ import { AuthService } from '../../../services/auth/auth.service';
 import { ToastService } from '../../../services/toast/toast.service';
 import { CacheService } from '../../../services/cache/cache.service';
 import { ResendNavigationService } from '../../../services/resend-navigation/resend-navigation.service';
+import { logger } from '../../../shared/utils/logger';
 
 @Component({
   selector: 'app-login-form',
@@ -48,7 +49,7 @@ export class LoginFormComponent implements OnInit {
     try {
       this.cacheService.clearCachesByPrefix('arcash_');
     } catch (error) {
-      console.error('Error limpiando cachés residuales:', error);
+      logger.error('Error limpiando cachés residuales:', error);
     }
   }
 
@@ -75,7 +76,7 @@ export class LoginFormComponent implements OnInit {
         },
         error: (error) => {
           this.isLoading = false;
-          console.error('Error en login:', error);
+          logger.error('Error en login:', error);
 
           if (error.status === 401) {
             this.toast.show('Nombre de usuario y/o contraseña incorrecta', 'error');

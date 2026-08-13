@@ -16,6 +16,7 @@ import {
   strongPasswordValidator,
 } from '../../../shared/validators/auth.validators';
 import { maskEmail } from '../../../shared/utils/email-mask';
+import { logger } from '../../../shared/utils/logger';
 
 @Component({
   selector: 'app-register-form',
@@ -107,7 +108,7 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.loading = false;
-        console.error('Error en registro:', error);
+        logger.error('Error en registro:', error);
         
         const backendMessage = error.error?.message;
         
@@ -176,7 +177,7 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
         this.startResendCooldown();
       },
       error: (error) => {
-        console.error('Error al reenviar:', error);
+        logger.error('Error al reenviar:', error);
         
         if (error.status === 429) {
           this.toast.show('Demasiados intentos: Espera un momento antes de solicitar otro reenvío.', 'warning');

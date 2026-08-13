@@ -18,6 +18,7 @@ import { TransferFlowService } from '../../../../services/transfer-flow/transfer
 import { FavoriteContact } from '../../../../models/favorite-contact';
 import { TransferData } from '../../../../models/transfer.interface';
 import { errorMessage } from '../../../../shared/utils/error-message';
+import { logger } from '../../../../shared/utils/logger';
 
 export type TransferCompletedData = TransferData & { idaccount: string | number };
 
@@ -201,7 +202,7 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
       this.closeAddFavoriteModal();
       this.transferFlowFinished.emit();
     } catch (error: unknown) {
-      console.error('Error agregando a favoritos:', error);
+      logger.error('Error agregando a favoritos:', error);
       this.toast.show(errorMessage(error, 'Error al agregar el contacto a favoritos'), 'error');
     } finally {
       this.isAddingFavorite = false;
@@ -252,7 +253,7 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
       this.toast.show('Contacto actualizado correctamente', 'success');
       this.closeEditFavoriteModal();
     } catch (error: unknown) {
-      console.error('Error updating favorite contact:', error);
+      logger.error('Error updating favorite contact:', error);
       this.toast.show(errorMessage(error, 'Error al actualizar el contacto'), 'error');
     } finally {
       this.isUpdatingFavorite = false;
@@ -287,7 +288,7 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
       this.toast.show('Contacto eliminado de favoritos', 'success');
       this.closeDeleteFavoriteModal();
     } catch (error: unknown) {
-      console.error('Error eliminando favorito:', error);
+      logger.error('Error eliminando favorito:', error);
       this.toast.show(errorMessage(error, 'Error al eliminar el contacto'), 'error');
     } finally {
       this.isDeletingFavorite = false;

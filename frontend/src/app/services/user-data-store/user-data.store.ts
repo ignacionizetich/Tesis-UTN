@@ -5,6 +5,7 @@ import { tap, catchError } from 'rxjs/operators';
 import UserData from '../../models/user-data';
 import { environment } from '../../../environments/environment';
 import { SessionStore } from '../../core/session/session.store';
+import { logger } from '../../shared/utils/logger';
 
 /**
  * Estado + API de perfil de usuario autenticado (userData$).
@@ -40,7 +41,7 @@ export class UserDataStore {
     const jwt = this.sessionStore.getAccessToken();
 
     if (!accountId || !jwt) {
-      console.error('>>> UserDataStore.load: No hay sesión válida (falta accountId o JWT).');
+      logger.error('>>> UserDataStore.load: No hay sesión válida (falta accountId o JWT).');
       if (this.userDataSubject.getValue() !== null) {
         this.userDataSubject.next(null);
         this.persist(null);
@@ -84,13 +85,13 @@ export class UserDataStore {
             this.userDataSubject.next(userData);
             this.persist(userData);
           } else {
-            console.warn('>>> UserDataStore.load: Respuesta del backend vacía.');
+            logger.warn('>>> UserDataStore.load: Respuesta del backend vacía.');
             this.userDataSubject.next(null);
             this.persist(null);
           }
         }),
         catchError((error) => {
-          console.error('>>> UserDataStore.load: ERROR en GET /user/data:', error);
+          logger.error('>>> UserDataStore.load: ERROR en GET /user/data:', error);
           this.userDataSubject.next(null);
           this.persist(null);
           return of(null);
@@ -109,7 +110,7 @@ export class UserDataStore {
       );
       this.load(true).subscribe();
     } catch (error) {
-      console.error('Error updating alias:', error);
+      logger.error('Error updating alias:', error);
       throw error;
     }
   }
@@ -125,7 +126,7 @@ export class UserDataStore {
       this.load(true).subscribe();
       return response;
     } catch (error) {
-      console.error('Error updating username:', error);
+      logger.error('Error updating username:', error);
       throw error;
     }
   }
@@ -140,7 +141,7 @@ export class UserDataStore {
       )) as any;
       return response?.status === 'ACTIVE';
     } catch (error) {
-      console.error('Error verificando sesión:', error);
+      logger.error('Error verificando sesión:', error);
       return false;
     }
   }
@@ -166,7 +167,7 @@ export class UserDataStore {
         this.userDataSubject.next(userData);
       }
     } catch (error) {
-      console.error('>>> UserDataStore.hydrateFromSession: ERROR:', error);
+      logger.error('>>> UserDataStore.hydrateFromSession: ERROR:', error);
       this.sessionStore.setUserData(null);
       if (this.userDataSubject.getValue() !== null) {
         this.userDataSubject.next(null);
@@ -178,7 +179,7 @@ export class UserDataStore {
     try {
       this.sessionStore.setUserData(userData);
     } catch (error) {
-      console.error('>>> UserDataStore.persist: ERROR:', error);
+      logger.error('>>> UserDataStore.persist: ERROR:', error);
     }
   }
 }

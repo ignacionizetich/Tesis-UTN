@@ -4,6 +4,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { SessionStore } from '../session/session.store';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError, BehaviorSubject, filter, take, Observable } from 'rxjs';
+import { logger } from '../../shared/utils/logger';
 
 // Variables globales para el estado de refresh
 let isRefreshing = false;
@@ -123,10 +124,10 @@ function handleAccessTokenExpired(
 function handleFullLogout(authService: AuthService, router: Router): void {
   authService.logoutUser().subscribe({
     next: () => {
-      console.log('Logout exitoso en backend');
+      logger.debug('Logout exitoso en backend');
     },
     error: (err) => {
-      console.warn('Error al hacer logout en backend:', err);
+      logger.warn('Error al hacer logout en backend:', err);
     },
     complete: () => {
       authService.clearLocalSession();

@@ -11,6 +11,7 @@ import { SessionStore } from '../../../../core/session/session.store';
 import { UserResponse } from '../../../../models/admin.interface';
 import { AuthenticatedInfoComponent } from '../../../../components/ui/authenticated-info/authenticated-info';
 import { UserStatusConfirmModalComponent } from '../user-status-confirm-modal/user-status-confirm-modal';
+import { logger } from '../../../../shared/utils/logger';
 
 @Component({
   selector: 'app-users-list',
@@ -42,7 +43,7 @@ export class UsersListComponent implements OnInit {
   ngOnInit(): void {
     this.currentUserId = this.sessionStore.getCurrentUserIdHint();
     if (this.currentUserId <= 0) {
-      console.warn('No se pudo obtener el ID del usuario actual desde SessionStore');
+      logger.warn('No se pudo obtener el ID del usuario actual desde SessionStore');
     }
     this.loadUsers();
   }
@@ -75,7 +76,7 @@ export class UsersListComponent implements OnInit {
         this.isLoadingUsers = false;
       },
       error: (error) => {
-        console.error('Error al cargar usuarios:', error);
+        logger.error('Error al cargar usuarios:', error);
         this.toast.show('Error al cargar usuarios', 'error');
         this.isLoadingUsers = false;
 
@@ -142,7 +143,7 @@ export class UsersListComponent implements OnInit {
         this.resetUserModal();
       },
       error: (error) => {
-        console.error(`Error al ${action} usuario:`, error);
+        logger.error(`Error al ${action} usuario:`, error);
         this.toast.show(`Error al ${action} usuario`, 'error');
         this.loadingUserAction = null;
         this.closeConfirmModal();

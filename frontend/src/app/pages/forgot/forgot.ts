@@ -7,6 +7,7 @@ import { BackButtonComponent } from '../../components/ui/back-button/back-button
 import { BrandLogoComponent } from '../../components/ui/brand-logo/brand-logo';
 import { ForgotPasswordFormComponent } from '../../components/forms/forgot-password-form/forgot-password-form';
 import { GlobalFooterComponent } from '../../components/ui/global-footer/global-footer';
+import { logger } from '../../shared/utils/logger';
 
 @Component({
   selector: 'app-forgot',
@@ -26,6 +27,6 @@ import { GlobalFooterComponent } from '../../components/ui/global-footer/global-
 export class ForgotComponent  {
   
   onEmailSent(){
-    console.log("Correo reenviado correctamente!")
+    logger.debug("Correo reenviado correctamente!")
   }
 }

@@ -20,6 +20,7 @@ import {
   strongPasswordValidator,
 } from '../../../../shared/validators/auth.validators';
 import { maskEmail } from '../../../../shared/utils/email-mask';
+import { logger } from '../../../../shared/utils/logger';
 
 @Component({
   selector: 'app-create-admin-form',
@@ -144,7 +145,7 @@ export class CreateAdminFormComponent implements OnInit {
       },
       error: (error) => {
         this.loading = false;
-        console.error('Error en creación de admin:', error);
+        logger.error('Error en creación de admin:', error);
         this.handleCreateError(error, adminRequest);
       },
     });

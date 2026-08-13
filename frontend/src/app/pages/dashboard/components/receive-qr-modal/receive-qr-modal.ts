@@ -10,6 +10,7 @@ import qrData from '../../../../models/qrData';
 import { QrApi } from '../../../../services/qr-api/qr.api';
 import { SessionStore } from '../../../../core/session/session.store';
 import { ModalService } from '../../../../services/modal/modal.service';
+import { logger } from '../../../../shared/utils/logger';
 
 @Component({
   selector: 'app-receive-qr-modal',
@@ -35,7 +36,7 @@ export class ReceiveQrModalComponent implements OnInit {
   ngOnInit(): void {
     const accountId = this.sessionStore.getAccountId();
     if (!accountId) {
-      console.error('No se encontro el ID de la cuenta en la sesión.');
+      logger.error('No se encontro el ID de la cuenta en la sesión.');
       this.close();
       return;
     }
@@ -50,7 +51,7 @@ export class ReceiveQrModalComponent implements OnInit {
         this.isLoadingQr = false;
       },
       error: (err) => {
-        console.error('Error al obtener los datos del QR', err);
+        logger.error('Error al obtener los datos del QR', err);
         this.isLoadingQr = false;
         this.close();
       },

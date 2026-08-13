@@ -5,6 +5,7 @@ import { AuthService } from '../../../services/auth/auth.service';
 import { ResendService } from '../../../services/resend/resend.service';
 import { ToastService } from '../../../services/toast/toast.service';
 import { maskEmail } from '../../../shared/utils/email-mask';
+import { logger } from '../../../shared/utils/logger';
 
 
 
@@ -76,7 +77,7 @@ export class ForgotPasswordFormComponent implements OnInit, OnDestroy {
         }, 4000);
       },
       error: (error: any) => {
-        console.error('Error en recuperación:', error);
+        logger.error('Error en recuperación:', error);
         
         // Diferentes tipos de errores con colores específicos
         if (error.status === 401) {
@@ -127,7 +128,7 @@ export class ForgotPasswordFormComponent implements OnInit, OnDestroy {
         this.startResendCooldown();
       },
       error: (error) => {
-        console.error('Error al reenviar:', error);
+        logger.error('Error al reenviar:', error);
         
         if (error.status === 429) {
           this.showToast('Demasiados intentos: Espera un momento antes de solicitar otro reenvío.', 'warning');

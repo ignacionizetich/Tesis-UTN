@@ -20,6 +20,7 @@ import { TransferData } from '../../../../models/transfer.interface';
 import { UserAccount } from '../../../../services/account/account.service';
 import { errorMessage } from '../../../../shared/utils/error-message';
 import qrData from '../../../../models/qrData';
+import { logger } from '../../../../shared/utils/logger';
 
 /** Solo se usa el balance en el wizard; usd-account pasa un view parcial. */
 export type TransferSourceAccount = Pick<UserAccount, 'balance'> | UserAccount;
@@ -114,7 +115,7 @@ export class TransferWizardComponent implements OnInit {
       );
       this.transferStep = 2;
     } catch (error: unknown) {
-      console.error('Error buscando cuenta:', error);
+      logger.error('Error buscando cuenta:', error);
       const message =
         error instanceof TransferFlowError
           ? error.code === 'SELF_TRANSFER' && !this.showPostTransferFavorite
@@ -218,7 +219,7 @@ export class TransferWizardComponent implements OnInit {
         this.close();
       }
     } catch (error: unknown) {
-      console.error('Error realizando transferencia:', error);
+      logger.error('Error realizando transferencia:', error);
       this.balanceDecreasingChange.emit(false);
       const message =
         error instanceof TransferFlowError
@@ -251,7 +252,7 @@ export class TransferWizardComponent implements OnInit {
   }
 
   handleScanError(error: Error): void {
-    console.error('Error con el escáner:', error);
+    logger.error('Error con el escáner:', error);
     this.toast.show('Error al iniciar la cámara', 'error');
   }
 
@@ -295,7 +296,7 @@ export class TransferWizardComponent implements OnInit {
           throw new Error('QR no válido para ArCash');
         }
       } catch (error) {
-        console.error('Error al procesar QR:', error);
+        logger.error('Error al procesar QR:', error);
         this.toast.show('El código QR no es válido', 'error');
       } finally {
         this.isBuscandoCuenta = false;

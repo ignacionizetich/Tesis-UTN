@@ -5,6 +5,7 @@ import { TransactionHistoryStore } from '../transaction-history-store/transactio
 import { FavoriteService } from '../favorite/favorite.service';
 import { TransactionService } from '../transaction/transaction.service';
 import { CacheService } from '../cache/cache.service';
+import { logger } from '../../shared/utils/logger';
 
 /**
  * Limpieza unificada de sesión + caches en memoria y localStorage.
@@ -30,7 +31,7 @@ export class SessionCleanupService {
       this.favoriteService.invalidateCache();
       this.transactionService.invalidateCache();
     } catch (error) {
-      console.error('Error invalidando caches de dominio:', error);
+      logger.error('Error invalidando caches de dominio:', error);
     }
     this.cacheService.clearAllArCashCaches();
   }

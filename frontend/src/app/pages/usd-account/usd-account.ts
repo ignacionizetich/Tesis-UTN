@@ -22,6 +22,7 @@ import { TransferWizardComponent } from '../dashboard/components/transfer-wizard
 import UserData from '../../models/user-data';
 import { formatMoney as formatMoneyShared } from '../../shared/utils/money-format';
 import { errorMessage } from '../../shared/utils/error-message';
+import { logger } from '../../shared/utils/logger';
 
 @Component({
   selector: 'app-usd-account',
@@ -127,7 +128,7 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
         this.toast.show(response?.message || 'Error al crear cuenta en dólares', 'error');
       }
     } catch (error: unknown) {
-      console.error('Error creando cuenta USD:', error);
+      logger.error('Error creando cuenta USD:', error);
       this.toast.show(errorMessage(error, 'Error al crear cuenta en dólares'), 'error');
     } finally {
       this.isCreatingUsdAccount = false;
@@ -216,7 +217,7 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Error verificando cuenta USD:', error);
+        logger.error('Error verificando cuenta USD:', error);
         this.hasUsdAccount = false;
       },
     });
@@ -259,7 +260,7 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
       ],
       {
         onError: (err) => {
-          console.error('>>> Polling: Error durante la actualización de datos USD:', err);
+          logger.error('>>> Polling: Error durante la actualización de datos USD:', err);
         },
       }
     );

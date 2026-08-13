@@ -1,5 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { logger } from '../shared/utils/logger';
 
 /**
  * Guard que protege la ruta /resend para que no sea accesible directamente desde la URL.
@@ -29,7 +30,7 @@ export const resendGuard: CanActivateFn = () => {
   const hasResendAccess = sessionStorage.getItem('resendAccess') === 'true';
   
   if (!isInternalNavigation && !isValidReferrer && !hasResendAccess) {
-    console.warn('Intento de acceso directo a /resend bloqueado. Redirigiendo a home.');
+    logger.warn('Intento de acceso directo a /resend bloqueado. Redirigiendo a home.');
     router.navigate(['/home']);
     return false;
   }

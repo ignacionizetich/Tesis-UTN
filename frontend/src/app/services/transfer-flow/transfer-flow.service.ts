@@ -4,6 +4,7 @@ import { UserDataStore } from '../user-data-store/user-data.store';
 import { FavoriteService } from '../favorite/favorite.service';
 import { TransferData } from '../../models/transfer.interface';
 import { errorMessage } from '../../shared/utils/error-message';
+import { logger } from '../../shared/utils/logger';
 
 export type TransferFlowErrorCode =
   | 'EMPTY_INPUT'
@@ -130,7 +131,7 @@ export class TransferFlowService {
         .getFavoriteContacts()
         .some((fav) => fav.accountCbu === cvu);
     } catch (error) {
-      console.error('Error verificando favoritos:', error);
+      logger.error('Error verificando favoritos:', error);
       return false;
     }
   }

@@ -7,6 +7,7 @@ import { BackButtonComponent } from '../../components/ui/back-button/back-button
 import { BrandLogoComponent } from '../../components/ui/brand-logo/brand-logo';
 import { RegisterFormComponent } from '../../components/forms/register-form/register-form';
 import { GlobalFooterComponent } from '../../components/ui/global-footer/global-footer';
+import { logger } from '../../shared/utils/logger';
 
 @Component({
   selector: 'app-register',
@@ -25,6 +26,6 @@ import { GlobalFooterComponent } from '../../components/ui/global-footer/global-
 export class RegisterComponent {
   
   onRegisterSuccess(email: string): void {
-    console.log('Usuario registrado exitosamente:', email);
+    logger.debug('Usuario registrado exitosamente:', email);
   }
 }

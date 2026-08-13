@@ -14,6 +14,7 @@ import {
   formatDateTimeDetailed,
 } from '../../../../shared/utils/date-format';
 import Transaction from '../../../../models/transaction';
+import { logger } from '../../../../shared/utils/logger';
 
 @Component({
   selector: 'app-transactions-panel',
@@ -145,7 +146,7 @@ export class TransactionsPanelComponent implements OnInit, OnDestroy {
       this.updateDisplayedTransactions();
       this.modalService.openModal('allTransactions');
     } catch (error) {
-      console.error('Error cargando todas las transacciones:', error);
+      logger.error('Error cargando todas las transacciones:', error);
       this.toast.show('Error al cargar las transacciones', 'error');
     }
   }
@@ -163,7 +164,7 @@ export class TransactionsPanelComponent implements OnInit, OnDestroy {
       this.transactionService.loadMoreTransactions();
       this.updateDisplayedTransactionsFromService();
     } catch (error) {
-      console.error('Error cargando más transacciones:', error);
+      logger.error('Error cargando más transacciones:', error);
       this.toast.show('Error al cargar más transacciones', 'error');
       this.currentTransactionPage--;
     } finally {

@@ -37,6 +37,7 @@ import {
 import { TransactionsPanelComponent } from './components/transactions-panel/transactions-panel';
 
 import UserData from '../../models/user-data';
+import { logger } from '../../shared/utils/logger';
 
 @Component({
   selector: 'app-dashboard',
@@ -114,11 +115,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.userDataStore.load(true).subscribe({
       next: (data) => {
         if (!data) {
-          console.error('>>> Dashboard ngOnInit: loadUserData inicial devolvió null.');
+          logger.error('>>> Dashboard ngOnInit: loadUserData inicial devolvió null.');
         }
       },
       error: (err) =>
-        console.error('>>> Dashboard ngOnInit: ERROR crítico en loadUserData inicial:', err),
+        logger.error('>>> Dashboard ngOnInit: ERROR crítico en loadUserData inicial:', err),
     });
 
     this.initializeServices();
@@ -150,7 +151,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       ],
       {
         onError: (err) => {
-          console.error('>>> Polling: Error durante la actualización de datos:', err);
+          logger.error('>>> Polling: Error durante la actualización de datos:', err);
         },
       }
     );
@@ -173,7 +174,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.loadUserAccounts(),
       ]);
     } catch (error) {
-      console.error('Error inicializando services:', error);
+      logger.error('Error inicializando services:', error);
     }
   }
 
@@ -219,7 +220,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.usdAccount = this.userAccounts.find((acc) => acc.currency === 'USD') || null;
       this.cdr.detectChanges();
     } catch (error) {
-      console.error('Error cargando cuentas del usuario:', error);
+      logger.error('Error cargando cuentas del usuario:', error);
     }
   }
 
@@ -230,7 +231,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.transactionHistoryStore.load(),
       ]);
     } catch (error) {
-      console.error('❌ Error cargando datos:', error);
+      logger.error('❌ Error cargando datos:', error);
     }
   }
 
@@ -259,7 +260,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       await this.adminService.checkAccess().toPromise();
       this.router.navigate(['/admin']);
     } catch (error: unknown) {
-      console.error('Error al verificar acceso de admin:', error);
+      logger.error('Error al verificar acceso de admin:', error);
       const status = error && typeof error === 'object' && 'status' in error
         ? (error as { status?: number }).status
         : undefined;
@@ -429,7 +430,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       await navigator.clipboard.writeText(text);
       this.toast.show(`${type} copiado al portapapeles`, 'success');
     } catch (error) {
-      console.error('Error copying to clipboard:', error);
+      logger.error('Error copying to clipboard:', error);
       this.toast.show(`No se pudo copiar el ${type}`, 'error');
     }
   }

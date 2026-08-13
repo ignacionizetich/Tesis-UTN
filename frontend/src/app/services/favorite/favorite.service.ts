@@ -14,6 +14,7 @@ import {
 import { SessionStore } from '../../core/session/session.store';
 import { environment } from '../../../environments/environment';
 import { httpStatus } from '../../shared/utils/error-message';
+import { logger } from '../../shared/utils/logger';
 
 /**
  * Favoritos: HTTP + caché local + estado en memoria.
@@ -57,7 +58,7 @@ export class FavoriteService {
       this.cacheService.setCache(this.cacheConfig, favorites);
       this.favoriteContactsSubject.next(favorites);
     } catch (error) {
-      console.error('Error cargando contactos favoritos:', error);
+      logger.error('Error cargando contactos favoritos:', error);
       throw error;
     }
   }
@@ -67,7 +68,7 @@ export class FavoriteService {
       const favorites = await this.fetchFavoriteContactsOrderedByUsage();
       this.favoriteContactsSubject.next(favorites);
     } catch (error) {
-      console.error('Error cargando contactos favoritos ordenados:', error);
+      logger.error('Error cargando contactos favoritos ordenados:', error);
       throw error;
     }
   }
@@ -93,7 +94,7 @@ export class FavoriteService {
     try {
       success = await this.postFavoriteContact(accountId, alias, description);
     } catch (error: unknown) {
-      console.error('Error agregando a favoritos:', error);
+      logger.error('Error agregando a favoritos:', error);
       throw new Error(this.mapAddFavoriteError(error));
     }
 
@@ -112,7 +113,7 @@ export class FavoriteService {
     try {
       success = await this.putFavoriteContact(id, alias, description);
     } catch (error) {
-      console.error('Error actualizando contacto:', error);
+      logger.error('Error actualizando contacto:', error);
       throw new Error('Error al actualizar contacto');
     }
 
@@ -129,7 +130,7 @@ export class FavoriteService {
     try {
       success = await this.deleteFavoriteContact(id);
     } catch (error) {
-      console.error('Error eliminando contacto favorito:', error);
+      logger.error('Error eliminando contacto favorito:', error);
       throw new Error('Error al eliminar contacto');
     }
 
@@ -192,7 +193,7 @@ export class FavoriteService {
       );
       return response?.favorites || [];
     } catch (error) {
-      console.error('Error obteniendo favoritos:', error);
+      logger.error('Error obteniendo favoritos:', error);
       throw error;
     }
   }
@@ -205,7 +206,7 @@ export class FavoriteService {
       );
       return response?.favorites || [];
     } catch (error) {
-      console.error('Error obteniendo favoritos ordenados:', error);
+      logger.error('Error obteniendo favoritos ordenados:', error);
       throw error;
     }
   }
@@ -237,7 +238,7 @@ export class FavoriteService {
       );
     } catch (error: unknown) {
       if (error instanceof HttpErrorResponse) {
-        console.error('>>> Error DETALLADO agregando favorito:', {
+        logger.debug('Error HTTP agregando favorito:', {
           status: error.status,
           statusText: error.statusText,
           error: error.error,
@@ -271,7 +272,7 @@ export class FavoriteService {
       );
       return response?.status === 'SUCCESS';
     } catch (error) {
-      console.error('Error actualizando favorito:', error);
+      logger.error('Error actualizando favorito:', error);
       throw error;
     }
   }
@@ -284,7 +285,7 @@ export class FavoriteService {
       );
       return response?.status === 'SUCCESS';
     } catch (error) {
-      console.error('Error eliminando favorito:', error);
+      logger.error('Error eliminando favorito:', error);
       throw error;
     }
   }

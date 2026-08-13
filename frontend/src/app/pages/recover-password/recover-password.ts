@@ -10,6 +10,7 @@ import { ThemeToggleComponent } from "../../components/ui/theme-toggle/theme-tog
 import { passwordMatchValidator, strongPasswordValidator } from '../../shared/validators/auth.validators';
 import { BrandLogoComponent } from "../../components/ui/brand-logo/brand-logo";
 import { GlobalFooterComponent } from '../../components/ui/global-footer/global-footer';
+import { logger } from '../../shared/utils/logger';
 
 @Component({
   selector: 'app-recover-password',
@@ -65,7 +66,7 @@ export class RecoverPasswordComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isValidatingToken = false;
-          console.error('Error validating token:', error);
+          logger.error('Error validating token:', error);
           // Error del servidor o token inválido - redirigir a 404
           this.router.navigate(['/404']);
         }
@@ -129,7 +130,7 @@ private initializeForm(): void {
       },
       error: (error) => {
         this.isLoading = false;
-        console.error('Error resetting password:', error);
+        logger.error('Error resetting password:', error);
         this.error = error.error?.message || 'Error al restablecer la contraseña. Inténtalo de nuevo.';
       }
     });

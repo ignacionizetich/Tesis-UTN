@@ -9,6 +9,7 @@ import { TaxApi, TaxCalculationResult } from '../../../../services/tax-api/tax.a
 import { ToastService } from '../../../../services/toast/toast.service';
 import { ModalService } from '../../../../services/modal/modal.service';
 import { formatMoney } from '../../../../shared/utils/money-format';
+import { logger } from '../../../../shared/utils/logger';
 
 export interface TaxResultView {
   currency: 'ARS' | 'USD';
@@ -73,7 +74,7 @@ export class TaxModalComponent {
         precioDolar: data.precioDolar,
       };
     } catch (error) {
-      console.error('Error calculando impuestos:', error);
+      logger.error('Error calculando impuestos:', error);
       this.toast.show('Error al calcular impuestos', 'error');
     }
   }

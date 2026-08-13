@@ -7,6 +7,7 @@ import { CacheConfig } from '../../models/cache.interface';
 import { PaginationConfig } from '../../models/common.interface';
 import { formatCurrencyArs } from '../../shared/utils/money-format';
 import { formatDateTime, formatDateTimeDetailed } from '../../shared/utils/date-format';
+import { logger } from '../../shared/utils/logger';
 
 /**
  * Capa de UI sobre TransactionHistoryStore:
@@ -79,7 +80,7 @@ export class TransactionService {
         this.cacheService.setCache(this.cacheConfig, transactions);
       }
     } catch (error) {
-      console.error('Error cargando transacciones:', error);
+      logger.error('Error cargando transacciones:', error);
       throw error;
     }
   }
