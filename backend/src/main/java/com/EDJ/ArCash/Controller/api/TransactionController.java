@@ -1,5 +1,6 @@
 package com.EDJ.ArCash.Controller.api;
 
+import com.EDJ.ArCash.DTO.AuthDTO.AccountSearchResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.BuyUsdRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.BuyUsdResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.SellUsdRequest;
@@ -117,15 +118,18 @@ public class TransactionController {
 
         if (account.isPresent()) {
             Account acc = account.get();
-            Map<String, Object> result = new HashMap<>();
-            result.put("idaccount", acc.getIdAccount());
-            result.put("alias", acc.getAccountNickname());
-            result.put("cvu", acc.getAccountCvu());
-            result.put("user", Map.of(
-                    "nombre", acc.getUser().getName(),
-                    "apellido", acc.getUser().getLastName(),
-                    "dni", acc.getUser().getDni()
-            ));
+            AccountSearchResponse.UserSummary user = new AccountSearchResponse.UserSummary(
+                    acc.getUser().getName(),
+                    acc.getUser().getLastName(),
+                    acc.getUser().getDni()
+            );
+            AccountSearchResponse result = new AccountSearchResponse(
+                    acc.getIdAccount(),
+                    acc.getAccountNickname(),
+                    acc.getAccountCvu(),
+                    acc.getAccountType() != null ? acc.getAccountType().name() : null,
+                    user
+            );
             return ResponseEntity.ok(result);
         } else {
             return ResponseEntity.status(404).body(Map.of("error", "Cuenta no encontrada."));

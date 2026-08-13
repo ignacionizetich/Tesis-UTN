@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
@@ -20,11 +21,12 @@ import java.util.Map;
 
 /**
  * Endpoints de administracion.
- * La autorizacion ROLE_ADMIN la aplica SecurityConfig sobre /api/admin/**.
- * Evaluar @EnableMethodSecurity / @PreAuthorize en Fase 8 (hoy no esta activo).
+ * Defensa en profundidad: SecurityConfig (/api/admin/** → ROLE_ADMIN)
+ * y @PreAuthorize a nivel de clase (method security habilitado).
  */
 @RestController
 @RequestMapping(value = "/api/admin")
+@PreAuthorize("hasRole('ADMIN')")
 public class ApiAdminController {
 
     @Autowired

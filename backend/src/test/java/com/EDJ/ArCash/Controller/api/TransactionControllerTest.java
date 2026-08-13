@@ -33,6 +33,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -272,11 +273,56 @@ class TransactionControllerTest {
         );
     }
 
+    @Test
+    @DisplayName("Search por alias: DTO tipado con currency y user anidado")
+    void searchPorAliasDevuelveDtoTipado() throws Exception {
+        User titular = usuario(ID_USUARIO);
+        Account ars = cuentaArs(titular);
+        when(accountService.encontrarCuentaPorAlias("MI.CUENTA.AA")).thenReturn(Optional.of(ars));
+
+        mockMvc.perform(get("/api/transactions/search/{input}", "MI.CUENTA.AA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idaccount").value(ID_CUENTA_ARS))
+                .andExpect(jsonPath("$.alias").value("MI.CUENTA.AA"))
+                .andExpect(jsonPath("$.cvu").value("0000200112345678901234"))
+                .andExpect(jsonPath("$.currency").value("ARS"))
+                .andExpect(jsonPath("$.user.nombre").value("Ana"))
+                .andExpect(jsonPath("$.user.apellido").value("Gomez"))
+                .andExpect(jsonPath("$.user.dni").value("30111222"));
+    }
+
+    @Test
+    @DisplayName("Search por CVU si no hay alias: currency USD")
+    void searchPorCvuCuandoNoHayAlias() throws Exception {
+        User titular = usuario(ID_USUARIO);
+        Account usd = cuentaUsd(titular);
+        when(accountService.encontrarCuentaPorAlias("0000200199999999999999")).thenReturn(Optional.empty());
+        when(accountService.encontrarCuentaPorCvu("0000200199999999999999")).thenReturn(Optional.of(usd));
+
+        mockMvc.perform(get("/api/transactions/search/{input}", "0000200199999999999999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idaccount").value(ID_CUENTA_USD))
+                .andExpect(jsonPath("$.currency").value("USD"))
+                .andExpect(jsonPath("$.alias").value("MI.CUENTA.USD"));
+    }
+
+    @Test
+    @DisplayName("Search sin resultado: 404")
+    void searchSinResultado404() throws Exception {
+        when(accountService.encontrarCuentaPorAlias("ghost")).thenReturn(Optional.empty());
+        when(accountService.encontrarCuentaPorCvu("ghost")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/transactions/search/{input}", "ghost"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Cuenta no encontrada."));
+    }
+
     private User usuario(long id) {
         User user = new User();
         user.setId(id);
         user.setName("Ana");
         user.setLastName("Gomez");
+        user.setDni("30111222");
         user.setPermissions(Permissions.USER);
         user.setCredentials(new Credentials(user, "ana.gomez", "irrelevante"));
         return user;

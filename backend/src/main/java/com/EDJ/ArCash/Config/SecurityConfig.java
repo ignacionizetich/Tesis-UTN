@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -20,6 +21,7 @@ import java.util.Arrays;
 import org.springframework.http.HttpMethod;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -127,7 +129,7 @@ public class SecurityConfig {
 
                 ).permitAll() // <-- Fin de rutas públicas
 
-                // 3. Rutas de Admin (unica defensa hoy; evaluar @EnableMethodSecurity en Fase 8)
+                // 3. Rutas de Admin (URL matcher + @PreAuthorize en ApiAdminController)
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
                 // 4. Todo lo demás
