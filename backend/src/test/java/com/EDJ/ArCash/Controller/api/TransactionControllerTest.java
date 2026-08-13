@@ -8,6 +8,7 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.BuyUsdResult;
+import com.EDJ.ArCash.Service.SellUsdResult;
 import com.EDJ.ArCash.Service.TransactionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Contrato HTTP de buy-usd. addFilters=false permite ejercer la rama
+ * Contrato HTTP de buy-usd y sell-usd. addFilters=false permite ejercer la rama
  * principal==null (inalcanzable en produccion tras anyRequest().authenticated()).
  */
 @SpringBootTest
@@ -146,6 +147,88 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.amountUsd").doesNotExist());
     }
 
+    @Test
+    @DisplayName("Vender dolares sin principal devuelve 401 (rama preservada / filters off)")
+    void venderDolaresSinTokenDevuelve401() throws Exception {
+        TestSecurityContextHolder.clearContext();
+        SecurityContextHolder.clearContext();
+
+        mockMvc.perform(post("/api/transactions/{usd}/sell-usd/{ars}", ID_CUENTA_USD, ID_CUENTA_ARS)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountUsd\":100}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Token no proporcionado o inválido"));
+    }
+
+    @Test
+    @DisplayName("Vender dolares con cuenta USD inexistente devuelve 404")
+    void venderDolaresConCuentaInexistenteDevuelve404() throws Exception {
+        when(accountService.findAccountByID(ID_CUENTA_USD)).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/transactions/{usd}/sell-usd/{ars}", ID_CUENTA_USD, ID_CUENTA_ARS)
+                        .with(comoUsuarioAutenticado())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountUsd\":100}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Cuenta en dólares no encontrada"));
+    }
+
+    @Test
+    @DisplayName("Vender dolares desde una cuenta ajena devuelve 403")
+    void venderDolaresDesdeCuentaAjenaDevuelve403() throws Exception {
+        when(accountService.findAccountByID(ID_CUENTA_USD)).thenReturn(Optional.of(cuentaUsd(usuario(99L))));
+
+        mockMvc.perform(post("/api/transactions/{usd}/sell-usd/{ars}", ID_CUENTA_USD, ID_CUENTA_ARS)
+                        .with(comoUsuarioAutenticado())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountUsd\":100}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("No tiene permiso para operar esta cuenta"));
+
+        verify(transactionService, never()).sellUsd(anyLong(), anyLong(), anyDouble());
+    }
+
+    @Test
+    @DisplayName("La venta exitosa devuelve el detalle completo de la conversion")
+    void venderDolaresDevuelveElDetalleDeLaOperacion() throws Exception {
+        when(accountService.findAccountByID(ID_CUENTA_USD)).thenReturn(Optional.of(cuentaUsd(usuario(ID_USUARIO))));
+        when(transactionService.sellUsd(ID_CUENTA_USD, ID_CUENTA_ARS, 100.0)).thenReturn(ventaExitosa());
+
+        mockMvc.perform(post("/api/transactions/{usd}/sell-usd/{ars}", ID_CUENTA_USD, ID_CUENTA_ARS)
+                        .with(comoUsuarioAutenticado())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountUsd\":100}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Venta de dólares exitosa"))
+                .andExpect(jsonPath("$.amountUsd").value(100.0))
+                .andExpect(jsonPath("$.amountArs").value(100000.0))
+                .andExpect(jsonPath("$.exchangeRate").value(1000.0))
+                .andExpect(jsonPath("$.taxAmount").value(3.0))
+                .andExpect(jsonPath("$.taxPercentage").value(3.0))
+                .andExpect(jsonPath("$.totalDebitado").value(103.0))
+                .andExpect(jsonPath("$.newBalanceArs").value(101000.0))
+                .andExpect(jsonPath("$.newBalanceUsd").value(97.0));
+    }
+
+    @Test
+    @DisplayName("Si la venta falla se devuelve el mapa minimo del service con 400")
+    void venderDolaresQueFallaDevuelve400ConElMapaDelService() throws Exception {
+        when(accountService.findAccountByID(ID_CUENTA_USD)).thenReturn(Optional.of(cuentaUsd(usuario(ID_USUARIO))));
+        when(transactionService.sellUsd(ID_CUENTA_USD, ID_CUENTA_ARS, 100.0))
+                .thenReturn(SellUsdResult.fail("Saldo insuficiente"));
+
+        mockMvc.perform(post("/api/transactions/{usd}/sell-usd/{ars}", ID_CUENTA_USD, ID_CUENTA_ARS)
+                        .with(comoUsuarioAutenticado())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amountUsd\":100}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Saldo insuficiente"))
+                .andExpect(jsonPath("$.amountArs").doesNotExist());
+    }
+
     /**
      * Con addFilters=false hay que publicar el principal en SecurityContextHolder
      * a mano: el filtro de test de Spring Security no corre.
@@ -175,6 +258,20 @@ class TransactionControllerTest {
         );
     }
 
+    private SellUsdResult ventaExitosa() {
+        return SellUsdResult.ok(
+                "Venta de dólares exitosa",
+                100.0,
+                100000.0,
+                1000.0,
+                3.0,
+                3.0,
+                103.0,
+                101000.0,
+                97.0
+        );
+    }
+
     private User usuario(long id) {
         User user = new User();
         user.setId(id);
@@ -192,6 +289,16 @@ class TransactionControllerTest {
         account.setAccountType(Currency.ARS);
         account.setAccountNickname("MI.CUENTA.AA");
         account.setAccountCvu("0000200112345678901234");
+        return account;
+    }
+
+    private Account cuentaUsd(User propietario) {
+        Account account = new Account();
+        account.setIdAccount(ID_CUENTA_USD);
+        account.setUser(propietario);
+        account.setAccountType(Currency.USD);
+        account.setAccountNickname("MI.CUENTA.USD");
+        account.setAccountCvu("0000200199999999999999");
         return account;
     }
 }

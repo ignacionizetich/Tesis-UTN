@@ -2,6 +2,8 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.AuthDTO.BuyUsdRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.BuyUsdResponse;
+import com.EDJ.ArCash.DTO.AuthDTO.SellUsdRequest;
+import com.EDJ.ArCash.DTO.AuthDTO.SellUsdResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TransactionDTO;
 import com.EDJ.ArCash.DTO.AuthDTO.TransactionResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TranscationRequest;
@@ -11,6 +13,7 @@ import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.AccountService;
 import com.EDJ.ArCash.Service.BuyUsdResult;
 import com.EDJ.ArCash.Service.FavoriteContactService;
+import com.EDJ.ArCash.Service.SellUsdResult;
 import com.EDJ.ArCash.Service.TransactionService;
 import com.EDJ.ArCash.Service.TransferOperationResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -205,6 +208,88 @@ public class TransactionController {
                     result.getMessage(),
                     result.getAmountArs(),
                     result.getAmountUsd(),
+                    result.getExchangeRate(),
+                    result.getTaxAmount(),
+                    result.getTaxPercentage(),
+                    result.getTotalDebitado(),
+                    result.getNewBalanceArs(),
+                    result.getNewBalanceUsd()
+            ));
+        } else {
+            return ResponseEntity.status(400).body(result.toErrorMap());
+        }
+    }
+
+    @Operation(
+            summary = "Vender dólares",
+            description = "Permite vender dólares a una cuenta en pesos. La conversión usa la cotización de compra oficial del momento."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Venta realizada exitosamente",
+                    content = @Content(schema = @Schema(implementation = SellUsdResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Datos inválidos o saldo insuficiente",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"success\": false, \"message\": \"Saldo insuficiente\"}")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Usuario no autenticado"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Cuenta no encontrada"
+            )
+    })
+    @PostMapping("/{accountUsdId}/sell-usd/{accountArsId}")
+    public ResponseEntity<?> sellUsd(
+            @Parameter(description = "ID de la cuenta en dólares (origen)", required = true)
+            @PathVariable Long accountUsdId,
+            @Parameter(description = "ID de la cuenta en pesos (destino)", required = true)
+            @PathVariable Long accountArsId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Monto en dólares a convertir",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = SellUsdRequest.class))
+            )
+            @RequestBody SellUsdRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+
+        // Inalcanzable en produccion: SecurityConfig.anyRequest().authenticated().
+        // Se preserva para tests con addFilters=false (mismo criterio Fase 4).
+        if (principal == null) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("success", false, "message", "Token no proporcionado o inválido"));
+        }
+
+        Long userId = principal.getUser().getId();
+
+        Optional<Account> accountUsdOpt = accountService.findAccountByID(accountUsdId);
+        if (accountUsdOpt.isEmpty()) {
+            return ResponseEntity.status(404)
+                    .body(Map.of("success", false, "message", "Cuenta en dólares no encontrada"));
+        }
+
+        Account accountUsd = accountUsdOpt.get();
+        if (!accountUsd.getUser().getId().equals(userId)) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("success", false, "message", "No tiene permiso para operar esta cuenta"));
+        }
+
+        SellUsdResult result = transactionService.sellUsd(accountUsdId, accountArsId, request.getAmountUsd());
+
+        if (result.isSuccess()) {
+            return ResponseEntity.ok(new SellUsdResponse(
+                    true,
+                    result.getMessage(),
+                    result.getAmountUsd(),
+                    result.getAmountArs(),
                     result.getExchangeRate(),
                     result.getTaxAmount(),
                     result.getTaxPercentage(),

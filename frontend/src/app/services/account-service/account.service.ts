@@ -98,7 +98,7 @@ export class AccountService {
   sellUsd(accountUsdId: string, accountArsId: string, amountUsd: number): Observable<SellUsdResponse> {
     const request: SellUsdRequest = { amountUsd };
     return this.http.post<SellUsdResponse>(
-      `${this.baseUrl}/accounts/${accountUsdId}/sell-usd/${accountArsId}`,
+      `${this.baseUrl}/transactions/${accountUsdId}/sell-usd/${accountArsId}`,
       request
     );
   }
