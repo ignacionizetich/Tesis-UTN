@@ -2,7 +2,6 @@ import {
   Component,
   OnDestroy,
   OnInit,
-  ViewEncapsulation,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -22,7 +21,6 @@ import Transaction from '../../../../models/transaction';
   imports: [CommonModule],
   templateUrl: './transactions-panel.html',
   styleUrls: ['../../styles/modals-shared.css', '../../styles/transactions.css'],
-  encapsulation: ViewEncapsulation.None,
 })
 export class TransactionsPanelComponent implements OnInit, OnDestroy {
   currentModal: string | null = null;

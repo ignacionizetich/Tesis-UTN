@@ -3,7 +3,6 @@ import {
   EventEmitter,
   OnInit,
   Output,
-  ViewEncapsulation,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { QRCodeComponent } from 'angularx-qrcode';
@@ -18,7 +17,6 @@ import { ModalService } from '../../../../services/modal-service/modal-service';
   imports: [CommonModule, QRCodeComponent],
   templateUrl: './receive-qr-modal.html',
   styleUrls: ['../../styles/modals-shared.css', '../../styles/receive-qr.css'],
-  encapsulation: ViewEncapsulation.None,
 })
 export class ReceiveQrModalComponent implements OnInit {
   isLoadingQr = true;

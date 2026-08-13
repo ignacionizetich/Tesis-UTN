@@ -4,7 +4,6 @@ import {
   Input,
   OnInit,
   Output,
-  ViewEncapsulation,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -35,7 +34,6 @@ export interface TransferWizardSeed {
     '../../currency-selector.css',
     '../../styles/transfer-wizard.css',
   ],
-  encapsulation: ViewEncapsulation.None,
 })
 export class TransferWizardComponent implements OnInit {
   @Input() arsAccount: any = null;

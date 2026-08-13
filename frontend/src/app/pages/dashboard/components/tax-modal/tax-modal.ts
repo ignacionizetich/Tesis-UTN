@@ -2,7 +2,6 @@ import {
   Component,
   EventEmitter,
   Output,
-  ViewEncapsulation,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,7 +25,6 @@ export interface TaxResultView {
   imports: [CommonModule, FormsModule],
   templateUrl: './tax-modal.html',
   styleUrls: ['../../styles/modals-shared.css'],
-  encapsulation: ViewEncapsulation.None,
 })
 export class TaxModalComponent {
   showTaxForm = false;

@@ -3,7 +3,6 @@ import {
   EventEmitter,
   Input,
   Output,
-  ViewEncapsulation,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -13,7 +12,6 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   templateUrl: './alias-modal.html',
   styleUrls: ['../../styles/modals-shared.css'],
-  encapsulation: ViewEncapsulation.None,
 })
 export class AliasModalComponent {
   @Input() alias = '';

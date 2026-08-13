@@ -5,7 +5,6 @@ import {
   OnDestroy,
   OnInit,
   Output,
-  ViewEncapsulation,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -23,7 +22,6 @@ import { TransferFlowService } from '../../../../services/transfer-flow/transfer
   imports: [CommonModule, FormsModule],
   templateUrl: './favorites-modals.html',
   styleUrls: ['../../styles/modals-shared.css', '../../styles/favorites.css'],
-  encapsulation: ViewEncapsulation.None,
 })
 export class FavoritesModalsComponent implements OnInit, OnDestroy {
   @Input() transferCompletedData: any = null;

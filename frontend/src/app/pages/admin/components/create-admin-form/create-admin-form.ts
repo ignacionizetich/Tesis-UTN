@@ -3,7 +3,6 @@ import {
   EventEmitter,
   OnInit,
   Output,
-  ViewEncapsulation,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -28,7 +27,6 @@ import { maskEmail } from '../../../../shared/utils/email-mask';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './create-admin-form.html',
   styleUrls: ['../../admin.css'],
-  encapsulation: ViewEncapsulation.None,
 })
 export class CreateAdminFormComponent implements OnInit {
   @Output() goToUsers = new EventEmitter<void>();

@@ -3,7 +3,6 @@ import {
   EventEmitter,
   Input,
   Output,
-  ViewEncapsulation,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +14,6 @@ import { formatMoney } from '../../../../shared/utils/money-format';
   imports: [CommonModule, FormsModule],
   templateUrl: './buy-usd-panel.html',
   styleUrls: ['../../styles/usd-modals.css'],
-  encapsulation: ViewEncapsulation.None,
 })
 export class BuyUsdPanelComponent {
   @Input() arsBalance = 0;

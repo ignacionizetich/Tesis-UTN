@@ -2,7 +2,6 @@ import {
   Component,
   EventEmitter,
   Output,
-  ViewEncapsulation,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +15,6 @@ import { ModalService } from '../../../../services/modal-service/modal-service';
   imports: [CommonModule, FormsModule],
   templateUrl: './deposit-modal.html',
   styleUrls: ['../../styles/modals-shared.css'],
-  encapsulation: ViewEncapsulation.None,
 })
 export class DepositModalComponent {
   montoIngresar: number | null = null;
