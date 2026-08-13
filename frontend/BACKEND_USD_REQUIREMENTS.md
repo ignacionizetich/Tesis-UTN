@@ -234,7 +234,7 @@ SI cuenta_origen.currency === "ARS" Y cuenta_destino.currency === "ARS":
 
 ## 4. Compra de Dólares
 
-### POST `/accounts/{accountArsId}/buy-usd/{accountUsdId}`
+### POST `/transactions/{accountArsId}/buy-usd/{accountUsdId}`
 
 **Request:**
 ```json
@@ -267,7 +267,7 @@ SI cuenta_origen.currency === "ARS" Y cuenta_destino.currency === "ARS":
 
 ## 5. Venta de Dólares
 
-### POST `/accounts/{accountUsdId}/sell-usd/{accountArsId}`
+### POST `/transactions/{accountUsdId}/sell-usd/{accountArsId}`
 
 **Request:**
 ```json
@@ -284,13 +284,18 @@ SI cuenta_origen.currency === "ARS" Y cuenta_destino.currency === "ARS":
   "amountUsd": 10.00,
   "amountArs": 11000.00,
   "exchangeRate": 1100.00,
+  "taxAmount": 0.30,
+  "taxPercentage": 3,
+  "totalDebitado": 10.30,
   "newBalanceUsd": 105.00,
   "newBalanceArs": 42850.00
 }
 ```
 
 **Importante:**
-- ✅ Retornar el `exchangeRate` usado para la conversión
+- ✅ La comisión es del **3%** sobre el monto en USD (débito = base × 1.03)
+- ✅ El crédito ARS usa solo la base × cotización de **compra** (la comisión no se convierte)
+- ✅ Retornar el `exchangeRate` (compra) usado para la conversión
 
 ---
 
@@ -453,7 +458,7 @@ function transferir(fromAccountId, toAccountAliasOrCVU, amount, description) {
 
 ### Usuario compra $10 USD con $11,330 ARS (3% comisión):
 
-1. **Request:** POST `/accounts/ars_123/buy-usd/usd_456`
+1. **Request:** POST `/transactions/ars_123/buy-usd/usd_456`
    ```json
    { "amountArs": 11330 }
    ```
