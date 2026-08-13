@@ -17,6 +17,12 @@ import { UserDataStore } from '../../../../services/user-data-store/user-data.st
 import { TransactionService } from '../../../../services/transaction-service/transaction.service';
 import { ModalService } from '../../../../services/modal-service/modal.service';
 import { TransferData } from '../../../../models/transfer.interface';
+import { UserAccount } from '../../../../services/account-service/account.service';
+import { errorMessage } from '../../../../shared/utils/error-message';
+import qrData from '../../../../models/qrData';
+
+/** Solo se usa el balance en el wizard; usd-account pasa un view parcial. */
+export type TransferSourceAccount = Pick<UserAccount, 'balance'> | UserAccount;
 
 export interface TransferWizardSeed {
   destination?: TransferData | null;
@@ -36,8 +42,8 @@ export interface TransferWizardSeed {
   ],
 })
 export class TransferWizardComponent implements OnInit {
-  @Input() arsAccount: any = null;
-  @Input() usdAccount: any = null;
+  @Input() arsAccount: TransferSourceAccount | null = null;
+  @Input() usdAccount: TransferSourceAccount | null = null;
   /** IDs propias a rechazar (usd-account). Default: perfil actual. */
   @Input() ownAccountIds: Array<string | number | null | undefined> | null = null;
   @Input() showQrScan = true;
@@ -59,7 +65,7 @@ export class TransferWizardComponent implements OnInit {
   isScanning = false;
   hasPermission: boolean | null = null;
   destinatarioInput = '';
-  cuentaDestinoData: any = null;
+  cuentaDestinoData: TransferData | null = null;
   transferCurrency: 'ARS' | 'USD' = 'ARS';
   montoTransfer: number | null = null;
   isTransfiriendo = false;
@@ -107,14 +113,14 @@ export class TransferWizardComponent implements OnInit {
         }
       );
       this.transferStep = 2;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error buscando cuenta:', error);
       const message =
         error instanceof TransferFlowError
           ? error.code === 'SELF_TRANSFER' && !this.showPostTransferFavorite
             ? 'No puedes transferir a tu misma cuenta'
             : error.message
-          : error?.message || 'Cuenta no encontrada';
+          : errorMessage(error, 'Cuenta no encontrada');
       this.toast.show(message, 'error');
     } finally {
       this.isBuscandoCuenta = false;
@@ -160,7 +166,7 @@ export class TransferWizardComponent implements OnInit {
         this.getSelectedAccountBalance(),
         fundsCurrency
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof TransferFlowError) {
         const message =
           !this.showPostTransferFavorite && error.code === 'INSUFFICIENT_FUNDS'
@@ -178,6 +184,11 @@ export class TransferWizardComponent implements OnInit {
     this.isTransfiriendo = true;
 
     try {
+      if (!this.cuentaDestinoData) {
+        this.toast.show('Destinatario no seleccionado', 'error');
+        return;
+      }
+
       const result = await this.transferFlow.executeTransfer({
         destination: this.cuentaDestinoData,
         amount: this.montoTransfer,
@@ -206,13 +217,13 @@ export class TransferWizardComponent implements OnInit {
         this.toast.show('Transferencia realizada con éxito', 'success');
         this.close();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error realizando transferencia:', error);
       this.balanceDecreasingChange.emit(false);
       const message =
         error instanceof TransferFlowError
           ? error.message
-          : 'Error al realizar la transferencia';
+          : errorMessage(error, 'Error al realizar la transferencia');
       this.toast.show(message, 'error');
       if (!(error instanceof TransferFlowError) || error.code === 'TRANSFER_FAILED') {
         this.userDataStore.load(true).subscribe();
@@ -250,12 +261,12 @@ export class TransferWizardComponent implements OnInit {
 
     setTimeout(() => {
       try {
-        const qrData = JSON.parse(resultString);
+        const qrDataPayload = JSON.parse(resultString) as qrData;
 
-        if (qrData && qrData.walletApp === 'ArCashV1') {
+        if (qrDataPayload && qrDataPayload.walletApp === 'ArCashV1') {
           try {
             this.transferFlow.assertNotSelf(
-              qrData.accountId,
+              qrDataPayload.accountId,
               this.ownAccountIds ?? undefined
             );
           } catch {
@@ -267,16 +278,17 @@ export class TransferWizardComponent implements OnInit {
             return;
           }
 
+          const nameParts = (qrDataPayload.receiverName || '').trim().split(/\s+/);
           this.cuentaDestinoData = {
-            alias: qrData.accountAlias,
+            alias: qrDataPayload.accountAlias,
             cvu: 'Obtenido por QR',
+            currency: qrDataPayload.currency === 'USD' ? 'USD' : 'ARS',
             user: {
-              nombre: qrData.receiverName.split(' ')[0],
-              apellido: qrData.receiverName.split(' ').slice(1).join(' '),
-              dni: qrData.dni,
-              email: qrData.email,
+              nombre: nameParts[0] || '',
+              apellido: nameParts.slice(1).join(' ') || '',
+              dni: qrDataPayload.dni,
             },
-            idaccount: qrData.accountId,
+            idaccount: qrDataPayload.accountId,
           };
           this.transferStep = 2;
         } else {

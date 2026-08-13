@@ -1,11 +1,19 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, lastValueFrom } from 'rxjs';
 import { CacheService } from '../cache-service/cache.service';
 import { CacheConfig } from '../../models/cache.interface';
 import { TransferData } from '../../models/transfer.interface';
+import {
+  AddFavoriteContactRequest,
+  FavoriteContact,
+  FavoriteListResponse,
+  FavoriteMutationResponse,
+  UpdateFavoriteContactRequest,
+} from '../../models/favorite-contact';
 import { SessionStore } from '../../core/session/session.store';
 import { environment } from '../../../environments/environment';
+import { httpStatus } from '../../shared/utils/error-message';
 
 /**
  * Favoritos: HTTP + caché local + estado en memoria.
@@ -17,10 +25,10 @@ import { environment } from '../../../environments/environment';
 export class FavoriteService {
   private readonly baseUrl = environment.apiUrl;
 
-  private favoriteContactsSubject = new BehaviorSubject<any[]>([]);
+  private favoriteContactsSubject = new BehaviorSubject<FavoriteContact[]>([]);
   public favoriteContacts$ = this.favoriteContactsSubject.asObservable();
 
-  private selectedFavoriteSubject = new BehaviorSubject<any | null>(null);
+  private selectedFavoriteSubject = new BehaviorSubject<FavoriteContact | null>(null);
   public selectedFavorite$ = this.selectedFavoriteSubject.asObservable();
 
   private readonly cacheConfig: CacheConfig = {
@@ -38,7 +46,7 @@ export class FavoriteService {
   async loadFavoriteContacts(forceReload: boolean = false): Promise<void> {
     try {
       if (!forceReload) {
-        const cachedData = this.cacheService.getCache<any[]>(this.cacheConfig);
+        const cachedData = this.cacheService.getCache<FavoriteContact[]>(this.cacheConfig);
         if (cachedData) {
           this.favoriteContactsSubject.next(cachedData);
           return;
@@ -64,15 +72,15 @@ export class FavoriteService {
     }
   }
 
-  getFavoriteContacts(): any[] {
+  getFavoriteContacts(): FavoriteContact[] {
     return this.favoriteContactsSubject.value;
   }
 
-  selectFavorite(favorite: any): void {
+  selectFavorite(favorite: FavoriteContact): void {
     this.selectedFavoriteSubject.next(favorite);
   }
 
-  getSelectedFavorite(): any | null {
+  getSelectedFavorite(): FavoriteContact | null {
     return this.selectedFavoriteSubject.value;
   }
 
@@ -84,7 +92,7 @@ export class FavoriteService {
     let success: boolean;
     try {
       success = await this.postFavoriteContact(accountId, alias, description);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error agregando a favoritos:', error);
       throw new Error(this.mapAddFavoriteError(error));
     }
@@ -137,14 +145,15 @@ export class FavoriteService {
     this.cacheService.clearCache(this.cacheConfig);
   }
 
-  createTransferDataFromFavorite(favorite: any): TransferData {
+  createTransferDataFromFavorite(favorite: FavoriteContact): TransferData {
+    const parts = (favorite.accountOwnerName || '').trim().split(/\s+/);
     return {
       idaccount: favorite.accountCbu,
       alias: favorite.accountAlias,
       cvu: favorite.accountCbu,
       user: {
-        nombre: favorite.accountOwnerName.split(' ')[0] || 'Usuario',
-        apellido: favorite.accountOwnerName.split(' ').slice(1).join(' ') || '',
+        nombre: parts[0] || 'Usuario',
+        apellido: parts.slice(1).join(' ') || '',
         dni: '',
       },
       isFromFavorite: true,
@@ -152,29 +161,35 @@ export class FavoriteService {
     };
   }
 
-  private mapAddFavoriteError(error: any): string {
-    if (error?.status === 400) {
-      if (error.error?.message) {
-        return error.error.message;
+  private mapAddFavoriteError(error: unknown): string {
+    const status = httpStatus(error);
+    if (status === 400) {
+      if (error instanceof HttpErrorResponse) {
+        const msg = error.error?.message;
+        if (typeof msg === 'string' && msg.trim()) {
+          return msg;
+        }
       }
       return 'Datos inválidos. Verifica que el contacto no esté ya en favoritos o que el ID de cuenta sea válido.';
     }
-    if (error?.status === 401) {
+    if (status === 401) {
       return 'Sesión expirada. Por favor inicia sesión nuevamente.';
     }
-    if (error?.status === 404) {
+    if (status === 404) {
       return 'Cuenta no encontrada.';
     }
-    if (error?.status === 500) {
+    if (status === 500) {
       return 'Error del servidor. Intenta nuevamente.';
     }
     return 'Error al agregar contacto a favoritos';
   }
 
-  private async fetchFavoriteContacts(): Promise<any[]> {
+  private async fetchFavoriteContacts(): Promise<FavoriteContact[]> {
     this.requireToken();
     try {
-      const response = await lastValueFrom(this.http.get<any>(`${this.baseUrl}/favorites/list`));
+      const response = await lastValueFrom(
+        this.http.get<FavoriteListResponse>(`${this.baseUrl}/favorites/list`)
+      );
       return response?.favorites || [];
     } catch (error) {
       console.error('Error obteniendo favoritos:', error);
@@ -182,11 +197,11 @@ export class FavoriteService {
     }
   }
 
-  private async fetchFavoriteContactsOrderedByUsage(): Promise<any[]> {
+  private async fetchFavoriteContactsOrderedByUsage(): Promise<FavoriteContact[]> {
     this.requireToken();
     try {
       const response = await lastValueFrom(
-        this.http.get<any>(`${this.baseUrl}/favorites/list/recent`)
+        this.http.get<FavoriteListResponse>(`${this.baseUrl}/favorites/list/recent`)
       );
       return response?.favorites || [];
     } catch (error) {
@@ -201,15 +216,17 @@ export class FavoriteService {
     description?: string
   ): Promise<boolean> {
     this.requireToken();
-    try {
-      const body = {
-        accountId,
-        contactAlias,
-        description: description || '',
-      };
+    const body: AddFavoriteContactRequest = {
+      accountId,
+      contactAlias,
+      description: description || '',
+    };
 
+    try {
       const response = await lastValueFrom(
-        this.http.post<any>(`${this.baseUrl}/favorites/add`, body, { observe: 'response' })
+        this.http.post<FavoriteMutationResponse>(`${this.baseUrl}/favorites/add`, body, {
+          observe: 'response',
+        })
       );
 
       return (
@@ -218,15 +235,14 @@ export class FavoriteService {
         response.body?.status === 'SUCCESS' ||
         response.body?.success === true
       );
-    } catch (error: any) {
-      console.error('>>> Error DETALLADO agregando favorito:', {
-        status: error.status,
-        statusText: error.statusText,
-        error: error.error,
-        url: error.url,
-      });
-      if (error.error?.message) {
-        console.error('>>> Mensaje del backend:', error.error.message);
+    } catch (error: unknown) {
+      if (error instanceof HttpErrorResponse) {
+        console.error('>>> Error DETALLADO agregando favorito:', {
+          status: error.status,
+          statusText: error.statusText,
+          error: error.error,
+          url: error.url,
+        });
       }
       throw error;
     }
@@ -239,7 +255,7 @@ export class FavoriteService {
   ): Promise<boolean> {
     this.requireToken();
     try {
-      const body: any = {};
+      const body: UpdateFavoriteContactRequest = {};
       if (contactAlias) {
         body.contactAlias = contactAlias;
       }
@@ -248,7 +264,10 @@ export class FavoriteService {
       }
 
       const response = await lastValueFrom(
-        this.http.put<any>(`${this.baseUrl}/favorites/update/${contactId}`, body)
+        this.http.put<FavoriteMutationResponse>(
+          `${this.baseUrl}/favorites/update/${contactId}`,
+          body
+        )
       );
       return response?.status === 'SUCCESS';
     } catch (error) {
@@ -261,7 +280,7 @@ export class FavoriteService {
     this.requireToken();
     try {
       const response = await lastValueFrom(
-        this.http.delete<any>(`${this.baseUrl}/favorites/${favoriteId}`)
+        this.http.delete<FavoriteMutationResponse>(`${this.baseUrl}/favorites/${favoriteId}`)
       );
       return response?.status === 'SUCCESS';
     } catch (error) {

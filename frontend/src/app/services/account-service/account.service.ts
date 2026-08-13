@@ -58,6 +58,13 @@ export interface UserAccountsResponse {
   accounts: UserAccount[];
 }
 
+export interface OpenUsdAccountResponse {
+  success: boolean;
+  message?: string;
+  accountId?: string | number;
+  accountAlias?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -73,10 +80,10 @@ export class AccountService {
   /**
    * Abre una cuenta en dólares para el usuario autenticado
    */
-  openUsdAccount(): Observable<any> {
-    return this.http.post(`${this.baseUrl}/accounts/usd`, {})
+  openUsdAccount(): Observable<OpenUsdAccountResponse> {
+    return this.http.post<OpenUsdAccountResponse>(`${this.baseUrl}/accounts/usd`, {})
       .pipe(
-        tap((response: any) => {
+        tap((response) => {
           if (response.success) {
             this.accountCreatedSubject.next(true);
           }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SessionStore } from '../../core/session/session.store';
@@ -15,6 +15,7 @@ export interface AccountSearchResult {
     nombre: string;
     apellido: string;
     dni: string;
+    email?: string;
   };
 }
 
@@ -46,16 +47,20 @@ export class TransferApi {
         throw new Error('Cuenta no encontrada');
       }
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error buscando cuenta:', error);
-      if (error.status === 404) {
-        throw new Error('Cuenta no encontrada');
+      if (error instanceof HttpErrorResponse) {
+        if (error.status === 404) {
+          throw new Error('Cuenta no encontrada');
+        }
+        if (error.status === 401) {
+          throw new Error('Sesión expirada');
+        }
       }
-      if (error.status === 401) {
-        throw new Error('Sesión expirada');
-      }
-      if (error.message === 'Cuenta no encontrada' || error.message === 'Sesión expirada') {
-        throw error;
+      if (error instanceof Error) {
+        if (error.message === 'Cuenta no encontrada' || error.message === 'Sesión expirada') {
+          throw error;
+        }
       }
       throw new Error('Error al buscar la cuenta');
     }

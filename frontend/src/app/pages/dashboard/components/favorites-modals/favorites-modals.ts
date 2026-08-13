@@ -15,6 +15,11 @@ import { ToastService } from '../../../../services/toast-service/toast.service';
 import { TransferApi } from '../../../../services/transfer-api/transfer.api';
 import { UserDataStore } from '../../../../services/user-data-store/user-data.store';
 import { TransferFlowService } from '../../../../services/transfer-flow/transfer-flow.service';
+import { FavoriteContact } from '../../../../models/favorite-contact';
+import { TransferData } from '../../../../models/transfer.interface';
+import { errorMessage } from '../../../../shared/utils/error-message';
+
+export type TransferCompletedData = TransferData & { idaccount: string | number };
 
 @Component({
   selector: 'app-favorites-modals',
@@ -24,20 +29,20 @@ import { TransferFlowService } from '../../../../services/transfer-flow/transfer
   styleUrls: ['../../styles/modals-shared.css', '../../styles/favorites.css'],
 })
 export class FavoritesModalsComponent implements OnInit, OnDestroy {
-  @Input() transferCompletedData: any = null;
+  @Input() transferCompletedData: TransferCompletedData | null = null;
 
-  @Output() transferRequested = new EventEmitter<any>();
+  @Output() transferRequested = new EventEmitter<FavoriteContact>();
   @Output() transferFlowFinished = new EventEmitter<void>();
 
   currentModal: string | null = null;
-  favoriteContacts: any[] = [];
-  selectedFavoriteContact: any = null;
+  favoriteContacts: FavoriteContact[] = [];
+  selectedFavoriteContact: FavoriteContact | null = null;
   favoriteContactAlias = '';
   favoriteContactDescription = '';
   isUpdatingFavorite = false;
   isAddingFavorite = false;
   isDeletingFavorite = false;
-  favoriteToDelete: any = null;
+  favoriteToDelete: FavoriteContact | null = null;
 
   private subscriptions: Subscription[] = [];
 
@@ -68,7 +73,7 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach((s) => s.unsubscribe());
   }
 
-  trackFavorite(index: number, favorite: any): string {
+  trackFavorite(index: number, favorite: FavoriteContact): string {
     return `${index}_${favorite.id}_${favorite.contactAlias}`;
   }
 
@@ -92,7 +97,7 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
     this.modalService.closeModal();
   }
 
-  openFavoriteDetailsModal(favorite: any): void {
+  openFavoriteDetailsModal(favorite: FavoriteContact): void {
     this.favoriteService.selectFavorite(favorite);
     this.modalService.openModal('favoriteDetails');
   }
@@ -107,7 +112,7 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
     this.modalService.openModal('favorites');
   }
 
-  transferToFavorite(favorite: any): void {
+  transferToFavorite(favorite: FavoriteContact): void {
     this.transferRequested.emit(favorite);
   }
 
@@ -143,11 +148,12 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
       }
 
       let accountId: number;
+      const rawId = this.transferCompletedData.idaccount;
 
-      if (typeof this.transferCompletedData.idaccount === 'number') {
-        accountId = this.transferCompletedData.idaccount;
+      if (typeof rawId === 'number') {
+        accountId = rawId;
       } else {
-        accountId = parseInt(this.transferCompletedData.idaccount.toString(), 10);
+        accountId = parseInt(String(rawId), 10);
 
         if (isNaN(accountId)) {
           const searchTerm =
@@ -169,7 +175,7 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
 
       const isAlreadyFavorite = await this.transferFlow.isFavorite(
         accountId,
-        this.transferCompletedData?.cvu
+        this.transferCompletedData.cvu
       );
 
       const currentUser = this.userDataStore.getCurrent();
@@ -194,9 +200,9 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
       this.toast.show('Contacto agregado a favoritos', 'success');
       this.closeAddFavoriteModal();
       this.transferFlowFinished.emit();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error agregando a favoritos:', error);
-      this.toast.show(error?.message || 'Error al agregar el contacto a favoritos', 'error');
+      this.toast.show(errorMessage(error, 'Error al agregar el contacto a favoritos'), 'error');
     } finally {
       this.isAddingFavorite = false;
     }
@@ -208,7 +214,7 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
     this.transferFlowFinished.emit();
   }
 
-  openEditFavoriteModal(favorite: any): void {
+  openEditFavoriteModal(favorite: FavoriteContact): void {
     this.favoriteService.selectFavorite(favorite);
     this.favoriteContactAlias = favorite.contactAlias;
     this.favoriteContactDescription = favorite.description || '';
@@ -245,15 +251,15 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
 
       this.toast.show('Contacto actualizado correctamente', 'success');
       this.closeEditFavoriteModal();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating favorite contact:', error);
-      this.toast.show(error?.message || 'Error al actualizar el contacto', 'error');
+      this.toast.show(errorMessage(error, 'Error al actualizar el contacto'), 'error');
     } finally {
       this.isUpdatingFavorite = false;
     }
   }
 
-  openDeleteFavoriteModal(favorite: any): void {
+  openDeleteFavoriteModal(favorite: FavoriteContact): void {
     this.favoriteToDelete = favorite;
     this.isDeletingFavorite = false;
     this.modalService.openModal('deleteFavorite');
@@ -280,9 +286,9 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
 
       this.toast.show('Contacto eliminado de favoritos', 'success');
       this.closeDeleteFavoriteModal();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error eliminando favorito:', error);
-      this.toast.show(error?.message || 'Error al eliminar el contacto', 'error');
+      this.toast.show(errorMessage(error, 'Error al eliminar el contacto'), 'error');
     } finally {
       this.isDeletingFavorite = false;
     }

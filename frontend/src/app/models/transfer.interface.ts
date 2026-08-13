@@ -2,10 +2,12 @@ export interface TransferData {
   idaccount: string | number;
   alias: string;
   cvu: string;
+  currency?: 'ARS' | 'USD';
   user: {
     nombre: string;
     apellido: string;
     dni: string;
+    email?: string;
   };
   isFromFavorite?: boolean;
   favoriteId?: number;

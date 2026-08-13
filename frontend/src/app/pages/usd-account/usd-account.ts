@@ -22,6 +22,7 @@ import Transaction from '../../models/transaction';
 import UserData from '../../models/user-data';
 import { formatMoney as formatMoneyShared } from '../../shared/utils/money-format';
 import { formatDateTime } from '../../shared/utils/date-format';
+import { errorMessage } from '../../shared/utils/error-message';
 
 @Component({
   selector: 'app-usd-account',
@@ -154,18 +155,18 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
     try {
       const response = await this.accountService.openUsdAccount().toPromise();
 
-      if (response.success) {
+      if (response?.success) {
         this.toast.show('Cuenta en dólares creada exitosamente', 'success');
-        this.usdAccountId = response.accountId;
+        this.usdAccountId = String(response.accountId ?? '');
         this.hasUsdAccount = true;
         this.usdBalance = 0;
         this.checkUsdAccount();
       } else {
-        this.toast.show(response.message || 'Error al crear cuenta en dólares', 'error');
+        this.toast.show(response?.message || 'Error al crear cuenta en dólares', 'error');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creando cuenta USD:', error);
-      this.toast.show(error.error?.message || 'Error al crear cuenta en dólares', 'error');
+      this.toast.show(errorMessage(error, 'Error al crear cuenta en dólares'), 'error');
     } finally {
       this.isCreatingUsdAccount = false;
     }

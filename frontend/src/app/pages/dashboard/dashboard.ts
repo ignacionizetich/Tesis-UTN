@@ -13,10 +13,13 @@ import { ModalService } from '../../services/modal-service/modal.service';
 import { TransactionService } from '../../services/transaction-service/transaction.service';
 import { FavoriteService } from '../../services/favorite-service/favorite.service';
 import { AdminService } from '../../services/admin-service/admin.service';
-import { AccountService } from '../../services/account-service/account.service';
+import { AccountService, UserAccount } from '../../services/account-service/account.service';
 import { SessionStore } from '../../core/session/session.store';
 import { AccountPollingCoordinator } from '../../services/account-polling/account-polling.coordinator';
 import { formatMoney as formatMoneyShared } from '../../shared/utils/money-format';
+import { errorMessage } from '../../shared/utils/error-message';
+import { FavoriteContact } from '../../models/favorite-contact';
+import { TransferData } from '../../models/transfer.interface';
 
 import { DepositModalComponent } from './components/deposit-modal/deposit-modal';
 import {
@@ -27,7 +30,10 @@ import { AliasModalComponent } from './components/alias-modal/alias-modal';
 import { TaxModalComponent } from './components/tax-modal/tax-modal';
 import { ProfileModalComponent } from './components/profile-modal/profile-modal';
 import { ReceiveQrModalComponent } from './components/receive-qr-modal/receive-qr-modal';
-import { FavoritesModalsComponent } from './components/favorites-modals/favorites-modals';
+import {
+  FavoritesModalsComponent,
+  TransferCompletedData,
+} from './components/favorites-modals/favorites-modals';
 import { TransactionsPanelComponent } from './components/transactions-panel/transactions-panel';
 
 import UserData from '../../models/user-data';
@@ -72,12 +78,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   currentModal: string | null = null;
 
-  transferCompletedData: any = null;
+  transferCompletedData: TransferCompletedData | null = null;
   transferSeed: TransferWizardSeed | null = null;
 
-  userAccounts: any[] = [];
-  arsAccount: any = null;
-  usdAccount: any = null;
+  userAccounts: UserAccount[] = [];
+  arsAccount: UserAccount | null = null;
+  usdAccount: UserAccount | null = null;
 
   isBalanceUpdating = false;
   isBalanceDecreasing = false;
@@ -252,20 +258,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     try {
       await this.adminService.checkAccess().toPromise();
       this.router.navigate(['/admin']);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error al verificar acceso de admin:', error);
-      if (error.status === 403 || error.status === 401) {
+      const status = error && typeof error === 'object' && 'status' in error
+        ? (error as { status?: number }).status
+        : undefined;
+      if (status === 403 || status === 401) {
         this.toast.show(
           'No tienes permisos para acceder al panel de administración',
           'error'
         );
-      } else if (error.status === 0) {
+      } else if (status === 0) {
         this.toast.show(
           'No se puede conectar con el servidor. Verifica que el backend esté ejecutándose.',
           'error'
         );
       } else {
-        this.toast.show('Error del servidor. Intenta más tarde.', 'error');
+        this.toast.show(errorMessage(error, 'Error del servidor. Intenta más tarde.'), 'error');
       }
     } finally {
       this.isLoading = false;
@@ -310,7 +319,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.isBalanceDecreasing = false;
   }
 
-  onTransferCompleted(data: any): void {
+  onTransferCompleted(data: TransferCompletedData): void {
     this.transferCompletedData = data;
   }
 
@@ -320,7 +329,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.openModal('favoriteDetails');
   }
 
-  onFavoriteTransferRequested(favorite: any): void {
+  onFavoriteTransferRequested(favorite: FavoriteContact): void {
     this.transferSeed = {
       destination: this.favoriteService.createTransferDataFromFavorite(favorite),
       step: 3,

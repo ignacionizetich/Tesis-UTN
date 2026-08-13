@@ -3,6 +3,7 @@ import { TransferApi, AccountSearchResult } from '../transfer-api/transfer.api';
 import { UserDataStore } from '../user-data-store/user-data.store';
 import { FavoriteService } from '../favorite-service/favorite.service';
 import { TransferData } from '../../models/transfer.interface';
+import { errorMessage } from '../../shared/utils/error-message';
 
 export type TransferFlowErrorCode =
   | 'EMPTY_INPUT'
@@ -72,10 +73,10 @@ export class TransferFlowService {
     let account: AccountSearchResult;
     try {
       account = await this.transferApi.buscarCuenta(trimmed);
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new TransferFlowError(
         'SEARCH_FAILED',
-        error?.message || 'Cuenta no encontrada'
+        errorMessage(error, 'Cuenta no encontrada')
       );
     }
 
@@ -85,6 +86,7 @@ export class TransferFlowService {
       idaccount: account.idaccount,
       alias: account.alias,
       cvu: account.cvu,
+      currency: account.currency,
       user: account.user,
       isFromFavorite: false,
     };
@@ -118,18 +120,15 @@ export class TransferFlowService {
     }
   }
 
-  async isFavorite(accountId: number, cvu?: string): Promise<boolean> {
+  async isFavorite(_accountId: number, cvu?: string): Promise<boolean> {
     try {
       await this.favoriteService.loadFavoriteContacts();
-      return this.favoriteService.getFavoriteContacts().some((fav) => {
-        if (fav.favoriteAccount && fav.favoriteAccount.idAccount === accountId) {
-          return true;
-        }
-        if (fav.accountCbu && cvu && fav.accountCbu === cvu) {
-          return true;
-        }
+      if (!cvu) {
         return false;
-      });
+      }
+      return this.favoriteService
+        .getFavoriteContacts()
+        .some((fav) => fav.accountCbu === cvu);
     } catch (error) {
       console.error('Error verificando favoritos:', error);
       return false;
@@ -219,10 +218,10 @@ export class TransferFlowService {
         params.amount!,
         params.currency
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new TransferFlowError(
         'TRANSFER_FAILED',
-        error?.message || 'Error al realizar la transferencia'
+        errorMessage(error, 'Error al realizar la transferencia')
       );
     }
 

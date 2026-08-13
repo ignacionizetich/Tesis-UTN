@@ -1,15 +1,27 @@
-export default interface FavoriteContact {
+/** Contacto favorito (DTO backend FavoriteContactResponse). */
+export interface FavoriteContact {
   id: number;
   contactAlias: string;
-  description?: string;
+  description?: string | null;
   creationDate: string;
-  lastUsed?: string;
+  lastUsed?: string | null;
   active: boolean;
-  accountOwnerName: string;      // Nombre del dueño de la cuenta favorita
-  accountOwnerAlias: string;     // Alias del dueño de la cuenta favorita
-  accountCbu: String;            // CBU de la cuenta favorita
-  accountAlias: string;          // Alias de la cuenta favorita
+  accountOwnerName: string;
+  accountOwnerAlias: string;
+  accountCbu: string;
+  accountAlias: string;
   accountType: string;
+}
+
+export interface FavoriteListResponse {
+  status: string;
+  favorites: FavoriteContact[];
+}
+
+export interface FavoriteMutationResponse {
+  status: string;
+  message?: string;
+  success?: boolean;
 }
 
 export interface AddFavoriteContactRequest {
@@ -22,3 +34,6 @@ export interface UpdateFavoriteContactRequest {
   contactAlias?: string;
   description?: string;
 }
+
+/** @deprecated Prefer FavoriteContact */
+export default FavoriteContact;
