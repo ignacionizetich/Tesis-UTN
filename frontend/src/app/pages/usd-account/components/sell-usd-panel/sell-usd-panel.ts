@@ -6,8 +6,8 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AccountService } from '../../../../services/account-service/account.service';
-import { ToastService } from '../../../../services/toast-service/toast.service';
+import { AccountService } from '../../../../services/account/account.service';
+import { ToastService } from '../../../../services/toast/toast.service';
 import { formatMoney } from '../../../../shared/utils/money-format';
 import { errorMessage } from '../../../../shared/utils/error-message';
 import { UsdTradeSuccess } from '../buy-usd-panel/buy-usd-panel';

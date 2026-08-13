@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { SessionStore } from '../../core/session/session.store';
 import { UserDataStore } from '../user-data-store/user-data.store';
 import { TransactionHistoryStore } from '../transaction-history-store/transaction-history.store';
-import { FavoriteService } from '../favorite-service/favorite.service';
-import { TransactionService } from '../transaction-service/transaction.service';
-import { CacheService } from '../cache-service/cache.service';
+import { FavoriteService } from '../favorite/favorite.service';
+import { TransactionService } from '../transaction/transaction.service';
+import { CacheService } from '../cache/cache.service';
 
 /**
  * Limpieza unificada de sesión + caches en memoria y localStorage.

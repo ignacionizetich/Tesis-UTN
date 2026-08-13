@@ -6,8 +6,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaxApi, TaxCalculationResult } from '../../../../services/tax-api/tax.api';
-import { ToastService } from '../../../../services/toast-service/toast.service';
-import { ModalService } from '../../../../services/modal-service/modal.service';
+import { ToastService } from '../../../../services/toast/toast.service';
+import { ModalService } from '../../../../services/modal/modal.service';
 import { formatMoney } from '../../../../shared/utils/money-format';
 
 export interface TaxResultView {

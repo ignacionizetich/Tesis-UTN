@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import Transaction from '../../../../models/transaction';
-import { TransactionService } from '../../../../services/transaction-service/transaction.service';
+import { TransactionService } from '../../../../services/transaction/transaction.service';
 import { formatMoney } from '../../../../shared/utils/money-format';
 import { formatDateTime } from '../../../../shared/utils/date-format';
 

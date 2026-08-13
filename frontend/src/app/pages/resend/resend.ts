@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ResendService } from '../../services/resend-service/resend.service';
-import { ToastService } from '../../services/toast-service/toast.service';
+import { ResendService } from '../../services/resend/resend.service';
+import { ToastService } from '../../services/toast/toast.service';
 
 // Importar componentes
 import { ThemeToggleComponent } from '../../components/ui/theme-toggle/theme-toggle';

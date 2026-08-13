@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../../services/auth-service/auth.service';
-import { ResendService } from '../../../services/resend-service/resend.service';
-import { ToastService } from '../../../services/toast-service/toast.service';
+import { AuthService } from '../../../services/auth/auth.service';
+import { ResendService } from '../../../services/resend/resend.service';
+import { ToastService } from '../../../services/toast/toast.service';
 import { maskEmail } from '../../../shared/utils/email-mask';
 
 

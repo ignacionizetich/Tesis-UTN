@@ -5,9 +5,9 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { TransactionService } from '../../../../services/transaction-service/transaction.service';
-import { ModalService } from '../../../../services/modal-service/modal.service';
-import { ToastService } from '../../../../services/toast-service/toast.service';
+import { TransactionService } from '../../../../services/transaction/transaction.service';
+import { ModalService } from '../../../../services/modal/modal.service';
+import { ToastService } from '../../../../services/toast/toast.service';
 import { formatMoney as formatMoneyShared } from '../../../../shared/utils/money-format';
 import {
   formatDateTime,

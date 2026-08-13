@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, lastValueFrom } from 'rxjs';
-import { CacheService } from '../cache-service/cache.service';
+import { CacheService } from '../cache/cache.service';
 import { CacheConfig } from '../../models/cache.interface';
 import { TransferData } from '../../models/transfer.interface';
 import {

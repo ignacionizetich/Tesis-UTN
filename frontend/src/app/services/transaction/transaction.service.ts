@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import Transaction from '../../models/transaction';
 import { TransactionHistoryStore } from '../transaction-history-store/transaction-history.store';
-import { CacheService } from '../cache-service/cache.service';
+import { CacheService } from '../cache/cache.service';
 import { CacheConfig } from '../../models/cache.interface';
 import { PaginationConfig } from '../../models/common.interface';
 import { formatCurrencyArs } from '../../shared/utils/money-format';

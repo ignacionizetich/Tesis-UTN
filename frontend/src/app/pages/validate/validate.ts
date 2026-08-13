@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ThemeService } from '../../services/theme-service/theme.service';
-import { ToastService } from '../../services/toast-service/toast.service';
-import { ValidationService, type ValidationResponse } from '../../services/validation-service/validation.service';
+import { ThemeService } from '../../services/theme/theme.service';
+import { ToastService } from '../../services/toast/toast.service';
+import { ValidationService, type ValidationResponse } from '../../services/validation/validation.service';
 import { ResendNavigationService } from '../../services/resend-navigation/resend-navigation.service';
-import { ResendService } from '../../services/resend-service/resend.service';
+import { ResendService } from '../../services/resend/resend.service';
 import { Subscription } from 'rxjs';
 import { maskEmail } from '../../shared/utils/email-mask';
 

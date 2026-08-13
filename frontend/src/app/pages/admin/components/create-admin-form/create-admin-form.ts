@@ -11,8 +11,8 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { AdminService } from '../../../../services/admin-service/admin.service';
-import { ToastService } from '../../../../services/toast-service/toast.service';
+import { AdminService } from '../../../../services/admin/admin.service';
+import { ToastService } from '../../../../services/toast/toast.service';
 import { AdminRequest } from '../../../../models/admin.interface';
 import {
   emailMatchValidator,

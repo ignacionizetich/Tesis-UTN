@@ -6,8 +6,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransferApi } from '../../../../services/transfer-api/transfer.api';
-import { ToastService } from '../../../../services/toast-service/toast.service';
-import { ModalService } from '../../../../services/modal-service/modal.service';
+import { ToastService } from '../../../../services/toast/toast.service';
+import { ModalService } from '../../../../services/modal/modal.service';
 
 @Component({
   selector: 'app-deposit-modal',

@@ -5,8 +5,8 @@ import {
   Output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AdminService } from '../../../../services/admin-service/admin.service';
-import { ToastService } from '../../../../services/toast-service/toast.service';
+import { AdminService } from '../../../../services/admin/admin.service';
+import { ToastService } from '../../../../services/toast/toast.service';
 import { SessionStore } from '../../../../core/session/session.store';
 import { UserResponse } from '../../../../models/admin.interface';
 import { AuthenticatedInfoComponent } from '../../../../components/ui/authenticated-info/authenticated-info';

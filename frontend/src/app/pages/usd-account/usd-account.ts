@@ -4,10 +4,10 @@ import { Router } from '@angular/router';
 import { Subscription, of, from } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
-import { AccountService } from '../../services/account-service/account.service';
+import { AccountService } from '../../services/account/account.service';
 import { UserDataStore } from '../../services/user-data-store/user-data.store';
-import { ToastService } from '../../services/toast-service/toast.service';
-import { TransactionService } from '../../services/transaction-service/transaction.service';
+import { ToastService } from '../../services/toast/toast.service';
+import { TransactionService } from '../../services/transaction/transaction.service';
 import { AccountPollingCoordinator } from '../../services/account-polling/account-polling.coordinator';
 
 import {

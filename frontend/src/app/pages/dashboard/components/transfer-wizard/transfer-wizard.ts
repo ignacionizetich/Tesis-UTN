@@ -12,12 +12,12 @@ import {
   TransferFlowService,
   TransferFlowError,
 } from '../../../../services/transfer-flow/transfer-flow.service';
-import { ToastService } from '../../../../services/toast-service/toast.service';
+import { ToastService } from '../../../../services/toast/toast.service';
 import { UserDataStore } from '../../../../services/user-data-store/user-data.store';
-import { TransactionService } from '../../../../services/transaction-service/transaction.service';
-import { ModalService } from '../../../../services/modal-service/modal.service';
+import { TransactionService } from '../../../../services/transaction/transaction.service';
+import { ModalService } from '../../../../services/modal/modal.service';
 import { TransferData } from '../../../../models/transfer.interface';
-import { UserAccount } from '../../../../services/account-service/account.service';
+import { UserAccount } from '../../../../services/account/account.service';
 import { errorMessage } from '../../../../shared/utils/error-message';
 import qrData from '../../../../models/qrData';
 

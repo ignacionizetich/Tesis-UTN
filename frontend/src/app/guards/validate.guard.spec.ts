@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { validateGuard } from './validate.guard';
-import { ValidationService } from '../services/validation-service/validation.service';
+import { ValidationService } from '../services/validation/validation.service';
 import { of, throwError } from 'rxjs';
 
 describe('ValidateGuard', () => {
