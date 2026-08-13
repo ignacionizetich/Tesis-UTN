@@ -22,7 +22,7 @@ export type TransferCompletedData = TransferData & { idaccount: string | number 
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './add-favorite-modal.html',
-  styleUrls: ['../../../../styles/modals-shared.css', '../../../../styles/favorites.css'],
+  styleUrls: ['./add-favorite-modal.css'],
 })
 export class AddFavoriteModalComponent {
   @Input() transferCompletedData: TransferCompletedData | null = null;
@@ -43,8 +43,42 @@ export class AddFavoriteModalComponent {
     private transferFlow: TransferFlowService
   ) {}
 
+  get recipientName(): string {
+    const data = this.transferCompletedData;
+    if (!data) {
+      return '';
+    }
+    const name = `${data.user?.nombre || ''} ${data.user?.apellido || ''}`.trim();
+    return name || data.alias || 'Contacto';
+  }
+
+  get recipientAlias(): string {
+    return this.transferCompletedData?.alias || '';
+  }
+
+  get recipientInitials(): string {
+    const data = this.transferCompletedData;
+    if (!data?.user) {
+      return (this.recipientAlias.charAt(0) || '?').toUpperCase();
+    }
+    const a = (data.user.nombre || '?').charAt(0);
+    const b = (data.user.apellido || '').charAt(0);
+    return `${a}${b}`.toUpperCase();
+  }
+
+  get canSave(): boolean {
+    return !!this.favoriteContactAlias.trim() && !this.isAddingFavorite;
+  }
+
+  close(): void {
+    if (this.isAddingFavorite) {
+      return;
+    }
+    this.closed.emit();
+  }
+
   onBackdrop(event: MouseEvent): void {
-    if ((event.target as HTMLElement).classList.contains('modal')) {
+    if ((event.target as HTMLElement).classList.contains('add-fav-modal')) {
       this.backdropClick.emit(event);
     }
   }
@@ -56,7 +90,7 @@ export class AddFavoriteModalComponent {
 
   async save(): Promise<void> {
     if (!this.favoriteContactAlias.trim()) {
-      this.toast.show('Por favor ingresa un nombre para el contacto', 'error');
+      this.toast.show('Por favor ingresá un nombre para el contacto', 'error');
       return;
     }
 

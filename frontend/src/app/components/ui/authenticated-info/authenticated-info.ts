@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UserResponse } from '../../../models/admin.interface';
+import { formatDni as formatDniAr } from '../../../shared/utils/dni-format';
 
 @Component({
   selector: 'app-authenticated-info',
@@ -8,7 +9,7 @@ import { UserResponse } from '../../../models/admin.interface';
   imports: [CommonModule],
   templateUrl: './authenticated-info.html',
   styleUrls: ['./authenticated-info.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush // ← ESTO ES CLAVE PARA PERFORMANCE
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthenticatedInfoComponent {
   @Input() user: UserResponse | null = null;
@@ -16,7 +17,15 @@ export class AuthenticatedInfoComponent {
   @Output() closeModal = new EventEmitter<void>();
   @Output() toggleUserStatus = new EventEmitter<UserResponse>();
 
-  // Remover ngOnChanges si no es esencial para reducir procesamiento
+  formatDni(dni: string | number | null | undefined): string {
+    return formatDniAr(dni);
+  }
+
+  initials(user: UserResponse): string {
+    const a = (user.name || '').trim().charAt(0);
+    const b = (user.lastName || '').trim().charAt(0);
+    return `${a}${b}`.toUpperCase() || '?';
+  }
 
   onCloseModal(): void {
     this.closeModal.emit();
@@ -30,13 +39,8 @@ export class AuthenticatedInfoComponent {
 
   onBackdropClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    if (target.classList.contains('modal')) {
+    if (target.classList.contains('user-detail-modal')) {
       this.onCloseModal();
     }
-  }
-
-  // TrackBy function para optimizar *ngFor si llegas a usar listas
-  trackByUserId(index: number, user: UserResponse): number {
-    return user.id;
   }
 }

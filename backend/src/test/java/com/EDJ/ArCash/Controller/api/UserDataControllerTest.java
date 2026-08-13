@@ -4,8 +4,8 @@ import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Service.UserDataView;
-import com.EDJ.ArCash.Service.UserService;
+import com.EDJ.ArCash.Service.result.UserDataView;
+import com.EDJ.ArCash.Service.interfaces.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +27,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Caracterizacion HTTP de GET /api/user/data.
- * Documenta el mapeo username=User.alias y alias=Account.nickname.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

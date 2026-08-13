@@ -11,24 +11,15 @@ import { logger } from '../../shared/utils/logger';
 
 /**
  * Capa de UI sobre TransactionHistoryStore:
- * - localStorage cache (TTL)
+ * - localStorage cache (TTL) por cuenta
  * - recent / displayed streams
  * - paginación client-side
- * - helpers de formato para templates
- *
- * HTTP y mapeo de DTOs viven solo en TransactionHistoryStore.
- * Las páginas deben inyectar TransactionService (no el store),
- * salvo casos de invalidación/clear de sesión.
  */
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root',
 })
 export class TransactionService {
-  private readonly cacheConfig: CacheConfig = {
-    key: 'arcash_transactions_cache',
-    expiryKey: 'arcash_transactions_cache_expiry',
-    duration: 5 * 60 * 1000 // 5 minutos
-  };
+  private readonly cacheDuration = 5 * 60 * 1000;
 
   private recentTransactionsSubject = new BehaviorSubject<Transaction[]>([]);
   public recentTransactions$ = this.recentTransactionsSubject.asObservable();
@@ -36,16 +27,17 @@ export class TransactionService {
   private allTransactionsSubject = new BehaviorSubject<Transaction[]>([]);
   public allTransactions$ = this.allTransactionsSubject.asObservable();
 
-  // Paginación optimizada
   private pagination: PaginationConfig = {
     page: 0,
     size: 20,
     totalPages: 0,
-    hasMore: false
+    hasMore: false,
   };
-  
+
   private displayedTransactionsSubject = new BehaviorSubject<Transaction[]>([]);
   public displayedTransactions$ = this.displayedTransactionsSubject.asObservable();
+
+  private activeAccountId: string | null = null;
 
   constructor(
     private transactionHistoryStore: TransactionHistoryStore,
@@ -55,29 +47,53 @@ export class TransactionService {
   }
 
   private initializeSubscriptions(): void {
-    this.transactionHistoryStore.transactions$.subscribe(transactions => {
+    this.transactionHistoryStore.transactions$.subscribe((transactions) => {
       this.allTransactionsSubject.next(transactions);
-      this.recentTransactionsSubject.next(transactions.slice(0, 3));
+      this.recentTransactionsSubject.next(transactions.slice(0, 5));
       this.resetPagination();
     });
   }
 
-  async loadAllTransactions(forceReload: boolean = false): Promise<void> {
+  private cacheConfigFor(accountId: string): CacheConfig {
+    return {
+      key: `arcash_transactions_cache_${accountId}`,
+      expiryKey: `arcash_transactions_cache_expiry_${accountId}`,
+      duration: this.cacheDuration,
+    };
+  }
+
+  async loadAllTransactions(
+    forceReload: boolean = false,
+    accountId?: string | null
+  ): Promise<void> {
+    const resolvedId = accountId || this.activeAccountId;
+    if (!resolvedId) {
+      this.allTransactionsSubject.next([]);
+      this.recentTransactionsSubject.next([]);
+      this.resetPagination();
+      return;
+    }
+
+    this.activeAccountId = resolvedId;
+
     try {
       if (!forceReload) {
-        const cachedTransactions = this.cacheService.getCache<Transaction[]>(this.cacheConfig);
-        if (cachedTransactions) {
-          this.allTransactionsSubject.next(cachedTransactions);
-          this.recentTransactionsSubject.next(cachedTransactions.slice(0, 3));
+        const cached = this.cacheService.getCache<Transaction[]>(
+          this.cacheConfigFor(resolvedId)
+        );
+        if (cached) {
+          this.allTransactionsSubject.next(cached);
+          this.recentTransactionsSubject.next(cached.slice(0, 5));
           this.resetPagination();
           return;
         }
       }
-      await this.transactionHistoryStore.load();
-      
+
+      await this.transactionHistoryStore.load(resolvedId);
+
       const transactions = this.allTransactionsSubject.value;
       if (transactions.length > 0) {
-        this.cacheService.setCache(this.cacheConfig, transactions);
+        this.cacheService.setCache(this.cacheConfigFor(resolvedId), transactions);
       }
     } catch (error) {
       logger.error('Error cargando transacciones:', error);
@@ -85,7 +101,6 @@ export class TransactionService {
     }
   }
 
-  // Métodos de acceso a datos
   getRecentTransactions(): Transaction[] {
     return this.recentTransactionsSubject.value;
   }
@@ -98,7 +113,6 @@ export class TransactionService {
     return this.displayedTransactionsSubject.value;
   }
 
-  // Paginación optimizada
   resetPagination(): void {
     this.pagination.page = 0;
     this.updatePagination();
@@ -108,13 +122,13 @@ export class TransactionService {
   loadMoreTransactions(): void {
     const allTransactions = this.allTransactionsSubject.value;
     this.updatePagination();
-    
+
     if (this.pagination.hasMore) {
       this.pagination.page++;
       const startIndex = this.pagination.page * this.pagination.size;
       const endIndex = startIndex + this.pagination.size;
       const newTransactions = allTransactions.slice(startIndex, endIndex);
-      
+
       const currentDisplayed = this.displayedTransactionsSubject.value;
       this.displayedTransactionsSubject.next([...currentDisplayed, ...newTransactions]);
       this.updatePagination();
@@ -127,7 +141,9 @@ export class TransactionService {
 
   private updatePagination(): void {
     const allTransactions = this.allTransactionsSubject.value;
-    this.pagination.totalPages = Math.ceil(allTransactions.length / this.pagination.size);
+    this.pagination.totalPages = Math.ceil(
+      allTransactions.length / this.pagination.size
+    );
     this.pagination.hasMore = this.pagination.page < this.pagination.totalPages - 1;
   }
 
@@ -135,10 +151,11 @@ export class TransactionService {
     const allTransactions = this.allTransactionsSubject.value;
     const startIndex = this.pagination.page * this.pagination.size;
     const endIndex = startIndex + this.pagination.size;
-    this.displayedTransactionsSubject.next(allTransactions.slice(startIndex, endIndex));
+    this.displayedTransactionsSubject.next(
+      allTransactions.slice(startIndex, endIndex)
+    );
   }
 
-  // Métodos de formateo (delegados a shared utils)
   formatAmount(amount: number): string {
     return formatCurrencyArs(amount);
   }
@@ -156,8 +173,10 @@ export class TransactionService {
     return transaction.type === 'income' ? 'monto positivo' : 'monto negativo';
   }
 
-  // Cache management
-  invalidateCache(): void {
-    this.cacheService.clearCache(this.cacheConfig);
+  invalidateCache(accountId?: string | null): void {
+    const id = accountId || this.activeAccountId;
+    if (id) {
+      this.cacheService.clearCache(this.cacheConfigFor(id));
+    }
   }
 }

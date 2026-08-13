@@ -1,10 +1,12 @@
+/* FAB legacy (otras pantallas auth aún no migradas) */
+.back-fab,
 #back-button {
   position: fixed;
   top: 20px;
   left: 20px;
   z-index: 1000;
-  background: var(--surface-color);
-  border: 2px solid var(--border-color);
+  background: var(--surface);
+  border: 1px solid var(--border-color);
   border-radius: 50%;
   width: 50px;
   height: 50px;
@@ -12,30 +14,54 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-soft);
+  color: var(--text-accent);
 }
 
+.back-fab:hover,
 #back-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
-}
-
-#back-button:hover .back-circle {
-  stroke: var(--text-accent);
-}
-
-#back-button:hover .back-arrow {
-    stroke: var(--text-accent);
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--text-accent) 40%, var(--border-color));
 }
 
 .back-circle {
   stroke: var(--text-accent);
   fill: none;
-  transition: all 0.3s ease;
 }
 
 .back-arrow {
   stroke: var(--text-accent);
-  transition: all 0.3s ease;
+}
+
+/* Enlace inline bajo el pitch (register / login) */
+.back-inline {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 1.75rem;
+  padding: 0.35rem 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--text-secondary) !important;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s ease;
+}
+
+.back-inline:hover {
+  color: var(--text-accent) !important;
+  transform: none !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.back-inline svg {
+  flex-shrink: 0;
 }

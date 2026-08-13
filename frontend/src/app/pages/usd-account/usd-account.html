@@ -175,6 +175,7 @@
   [exchangeRate]="currentExchangeRate"
   (closed)="closeBuyUsdSection()"
   (success)="onTradeSuccess($event)"
+  (quoteLoaded)="currentExchangeRate = $event"
 />
 }
 

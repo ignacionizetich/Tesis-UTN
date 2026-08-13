@@ -1,10 +1,14 @@
 package com.EDJ.ArCash.Controller.api;
 
-
+import com.EDJ.ArCash.DTO.AuthDTO.AdminMetricsResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.AdminRequest;
+import com.EDJ.ArCash.DTO.AuthDTO.LoanRatesResponse;
+import com.EDJ.ArCash.DTO.AuthDTO.LoanRatesUpdateRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.UserResponse;
-import com.EDJ.ArCash.Service.AdminCreateResult;
-import com.EDJ.ArCash.Service.AdminService;
+import com.EDJ.ArCash.Service.result.AdminCreateResult;
+import com.EDJ.ArCash.Service.interfaces.AdminService;
+import com.EDJ.ArCash.Service.interfaces.LoanRateConfigService;
+import com.EDJ.ArCash.Service.interfaces.MetricsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,11 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Endpoints de administracion.
- * Defensa en profundidad: SecurityConfig (/api/admin/** → ROLE_ADMIN)
- * y @PreAuthorize a nivel de clase (method security habilitado).
- */
 @RestController
 @RequestMapping(value = "/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
@@ -31,6 +30,47 @@ public class ApiAdminController {
 
     @Autowired
     private AdminService adminService;
+
+    @Autowired
+    private MetricsService metricsService;
+
+    @Autowired
+    private LoanRateConfigService loanRateConfigService;
+
+    @Operation(
+            summary = "Métricas del sistema",
+            description = "Devuelve KPIs y series para el panel de administración."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Métricas generadas"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado")
+    })
+    @GetMapping("/metrics")
+    public ResponseEntity<AdminMetricsResponse> getMetrics() {
+        return ResponseEntity.ok(metricsService.collect());
+    }
+
+    @Operation(
+            summary = "Obtener tasas de préstamos",
+            description = "Devuelve las tasas mensuales configuradas por cantidad de cuotas."
+    )
+    @GetMapping("/loan-rates")
+    public ResponseEntity<LoanRatesResponse> getLoanRates() {
+        return ResponseEntity.ok(loanRateConfigService.listRates());
+    }
+
+    @Operation(
+            summary = "Actualizar tasas de préstamos",
+            description = "Actualiza las tasas mensuales por plazo (3, 6 y 12 cuotas)."
+    )
+    @PutMapping("/loan-rates")
+    public ResponseEntity<?> updateLoanRates(@RequestBody LoanRatesUpdateRequest request) {
+        try {
+            return ResponseEntity.ok(loanRateConfigService.updateRates(request));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", ex.getMessage()));
+        }
+    }
 
     @Operation(
             summary = "Obtener todos los usuarios autenticados",

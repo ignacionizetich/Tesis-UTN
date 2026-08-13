@@ -1,0 +1,76 @@
+<div class="card-pin-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="card-pin-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="card-pin-title"
+    (click)="$event.stopPropagation()">
+
+    <button type="button" class="card-pin-modal__close" (click)="closed.emit()" aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="card-pin-modal__header">
+      <div class="card-pin-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2" />
+          <path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" stroke-width="2" />
+        </svg>
+      </div>
+      <div>
+        <h2 id="card-pin-title">
+          {{ pinConfigured ? 'Ingresá tu PIN' : 'Creá tu PIN' }}
+        </h2>
+        <p>
+          @if (pinConfigured) {
+          Para ver la prepaga {{ cardLabel }}
+          } @else {
+          6 dígitos para proteger todas tus tarjetas
+          }
+        </p>
+      </div>
+    </header>
+
+    <form class="card-pin-form" (ngSubmit)="submit()">
+      <label class="card-pin-label" for="card-pin-input">PIN</label>
+      <div class="card-pin-field">
+        <input
+          id="card-pin-input"
+          type="password"
+          inputmode="numeric"
+          maxlength="6"
+          pattern="[0-9]*"
+          [(ngModel)]="pin"
+          name="pin"
+          autocomplete="one-time-code"
+          [disabled]="submitting"
+        />
+      </div>
+
+      @if (!pinConfigured) {
+      <label class="card-pin-label" for="card-pin-confirm">Confirmá el PIN</label>
+      <div class="card-pin-field">
+        <input
+          id="card-pin-confirm"
+          type="password"
+          inputmode="numeric"
+          maxlength="6"
+          pattern="[0-9]*"
+          [(ngModel)]="confirmPin"
+          name="confirmPin"
+          [disabled]="submitting"
+        />
+      </div>
+      }
+
+      <div class="card-pin-actions">
+        <button type="button" class="card-pin-btn card-pin-btn--ghost" (click)="closed.emit()" [disabled]="submitting">
+          Cancelar
+        </button>
+        <button type="submit" class="card-pin-btn card-pin-btn--primary" [disabled]="!canSubmit">
+          {{ submitting ? 'Validando...' : pinConfigured ? 'Desbloquear' : 'Crear PIN' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,34 +1,149 @@
 <app-theme-toggle></app-theme-toggle>
 
-<main class="main-container">
-
-    <header class="brand-identity">
+<div class="home">
+  <!-- Hero: una composición — marca + mensaje + CTA + ancla visual -->
+  <section class="home-hero" aria-labelledby="home-hero-title">
+    <div class="home-hero__content">
+      <header class="brand-identity">
+        <!-- Forma y tipografía de marca intactas; solo color vía tokens -->
         <svg class="brand-mark" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M60 20 L100 40 V80 L60 100 L20 80 V40 Z" class="vault-shape" />
-            <circle cx="60" cy="60" r="18" class="security-core" />
-            <path d="M60 42 L60 78 M48 60 L72 60" class="access-cross" />
+          <path d="M60 20 L100 40 V80 L60 100 L20 80 V40 Z" class="vault-shape" />
+          <circle cx="60" cy="60" r="18" class="security-core" />
+          <path d="M60 42 L60 78 M48 60 L72 60" class="access-cross" />
         </svg>
 
         <div class="brand-typography">
-            <h1>
-                <span class="brand-name">AR</span>
-                <span class="brand-name-sub">Cash</span>
-            </h1>
-            <p class="brand-tagline">BEST VIRTUAL WALLET</p>
+          <h1 class="brand-wordmark">
+            <span class="brand-name">AR</span><span class="brand-name-sub">Cash</span>
+          </h1>
+          <p class="brand-tagline">BEST VIRTUAL WALLET</p>
         </div>
-    </header>
+      </header>
 
-    <nav class="access-interface">
-        <button type="button" class="access-btn primary" (click)="goTo('login')">
-            <span>Login</span>
-            <svg width="15" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke-width="2" stroke-linecap="round" />
-            </svg>
+      <h2 id="home-hero-title" class="home-hero__headline">
+        Tu dinero, simple y bajo control
+      </h2>
+      <p class="home-hero__lead">
+        Billetera virtual para enviar, recibir y administrar pesos y dólares desde un solo lugar.
+      </p>
+
+      <nav class="home-hero__actions" aria-label="Acceso">
+        <button type="button" class="home-btn home-btn--primary" (click)="goTo('login')">
+          Ingresar
         </button>
-        <button type="button" class="access-btn secondary" (click)="goTo('register')">
-            <span>Sign in</span>
+        <button type="button" class="home-btn home-btn--ghost" (click)="goTo('register')">
+          Crear cuenta
         </button>
-    </nav>
+      </nav>
+    </div>
 
+    <div class="home-hero__visual">
+      <div
+        class="wallet-preview"
+        [class.wallet-preview--usd]="previewCurrency === 'USD'"
+      >
+        <div class="wallet-preview__glow" aria-hidden="true"></div>
+        <div class="wallet-preview__card">
+          <div class="wallet-preview__top">
+            <span class="wallet-preview__label">Saldo disponible</span>
+            <button
+              type="button"
+              class="wallet-preview__chip"
+              (click)="togglePreviewCurrency()"
+              [attr.aria-label]="'Cambiar a ' + otherCurrency"
+              [attr.title]="'Ver saldo en ' + otherCurrency"
+            >
+              {{ previewCurrency }}
+            </button>
+          </div>
+          <p class="wallet-preview__amount">{{ previewAmount }}</p>
+          <div class="wallet-preview__row">
+            <span>Alias</span>
+            <strong>arcash.demo</strong>
+          </div>
+          <div class="wallet-preview__actions" aria-hidden="true">
+            <span>Enviar</span>
+            <span>Recibir</span>
+            <span>{{ otherCurrency }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-</main>
+  <!-- Producto -->
+  <section id="home-product-title" class="home-section" aria-labelledby="home-product-heading">
+    <div class="home-section__intro">
+      <p class="home-eyebrow">Qué es Arcash</p>
+      <h2 id="home-product-heading" class="home-section__title">
+        Una billetera pensada para el día a día
+      </h2>
+      <p class="home-section__text">
+        Arcash concentra lo esencial de una cuenta digital: transferencias con alias o CVU,
+        cobro con QR, cuenta en dólares y seguimiento claro de tus movimientos.
+      </p>
+    </div>
+  </section>
+
+  <section class="home-features" aria-label="Beneficios">
+    <article class="home-feature">
+      <div class="home-feature__icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path d="M21 12H3M16 17l5-5-5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3>Transferí al instante</h3>
+      <p>Enviá pesos o dólares con alias, CVU o desde tus contactos favoritos.</p>
+    </article>
+
+    <article class="home-feature">
+      <div class="home-feature__icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01M8 16h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3>Cobrás con QR</h3>
+      <p>Mostrá tu código y recibí pagos sin compartir datos bancarios a mano.</p>
+    </article>
+
+    <article class="home-feature">
+      <div class="home-feature__icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3>Pesos y dólares</h3>
+      <p>Administrá ambas monedas, comprá o vendé USD y seguí tu saldo en tiempo real.</p>
+    </article>
+  </section>
+
+  <section class="home-trust" aria-labelledby="home-trust-title">
+    <div class="home-trust__copy">
+      <p class="home-eyebrow">Tranquilidad</p>
+      <h2 id="home-trust-title" class="home-section__title">Diseñada para que confíes</h2>
+      <p class="home-section__text">
+        Sesión protegida, historial claro y controles simples. Menos ruido visual,
+        más foco en lo que importa: tu plata.
+      </p>
+    </div>
+    <ul class="home-trust__list">
+      <li>Historial de movimientos siempre a mano</li>
+      <li>Favoritos para transferir más rápido</li>
+      <li>Modo claro y oscuro según tu preferencia</li>
+    </ul>
+  </section>
+
+  <section class="home-cta" aria-labelledby="home-cta-title">
+    <h2 id="home-cta-title">Empezá en minutos</h2>
+    <p>Creá tu cuenta o ingresá si ya sos parte de Arcash.</p>
+    <div class="home-cta__actions">
+      <button type="button" class="home-btn home-btn--primary" (click)="goTo('register')">
+        Crear cuenta gratis
+      </button>
+      <button type="button" class="home-btn home-btn--ghost" (click)="goTo('login')">
+        Ya tengo cuenta
+      </button>
+    </div>
+  </section>
+</div>

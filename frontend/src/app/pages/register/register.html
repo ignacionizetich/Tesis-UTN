@@ -1,17 +1,33 @@
 <app-theme-toggle></app-theme-toggle>
-<app-back-button></app-back-button>
 
-<main class="main auth-shell">
-    
-    <aside class="left-panel">
-        <app-brand-logo></app-brand-logo>
+<div class="register-page">
+  <main class="register-page__main">
+    <aside class="register-page__aside" aria-label="Marca Arcash">
+      <app-brand-logo></app-brand-logo>
+      <div class="register-page__pitch">
+        <h2>Creá tu billetera en minutos</h2>
+        <p>
+          Una cuenta digital para transferir, cobrar con QR y manejar pesos y dólares
+          con una experiencia simple.
+        </p>
+        <ul class="register-page__perks">
+          <li>Sin complicaciones innecesarias</li>
+          <li>Validación por email para más seguridad</li>
+          <li>Listo para usar apenas actives tu cuenta</li>
+        </ul>
+
+        <app-back-button
+          variant="inline"
+          explicitRoute="/"
+          label="Volver a la pantalla de inicio"
+        ></app-back-button>
+      </div>
     </aside>
 
-    <div class="right-panel">
-        <app-register-form (registerSuccess)="onRegisterSuccess($event)"></app-register-form>
-    </div>
-</main>
+    <section class="register-page__form-wrap" aria-label="Formulario de registro">
+      <app-register-form (registerSuccess)="onRegisterSuccess($event)"></app-register-form>
+    </section>
+  </main>
 
-<footer>
-    <app-global-footer></app-global-footer>
-</footer>
+  <app-footer></app-footer>
+</div>

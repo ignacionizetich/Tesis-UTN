@@ -2,8 +2,8 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.AuthDTO.TaxPesosResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TaxUsdResponse;
-import com.EDJ.ArCash.Service.TaxCalculationResult;
-import com.EDJ.ArCash.Service.TaxService;
+import com.EDJ.ArCash.Service.result.TaxCalculationResult;
+import com.EDJ.ArCash.Service.interfaces.TaxService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

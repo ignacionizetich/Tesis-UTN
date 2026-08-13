@@ -1,4 +1,6 @@
 package com.EDJ.ArCash.Service;
+import com.EDJ.ArCash.Service.interfaces.FavoriteContactService;
+import com.EDJ.ArCash.Service.impl.FavoriteContactServiceImpl;
 
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.FavoriteContact;
@@ -29,10 +31,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-/**
- * Tests de caracterizacion: describen el comportamiento ACTUAL del servicio,
- * incluidas las decisiones discutibles, para poder refactorizar con red.
- */
 @ExtendWith(MockitoExtension.class)
 class FavoriteContactServiceTest {
 
@@ -51,7 +49,7 @@ class FavoriteContactServiceTest {
     private AccountRepository accountRepository;
 
     @InjectMocks
-    private FavoriteContactService favoriteContactService;
+    private FavoriteContactServiceImpl favoriteContactService;
 
     @Captor
     private ArgumentCaptor<FavoriteContact> contactoGuardado;

@@ -55,6 +55,7 @@ public class SecurityConfig {
                 "Accept",             // Estándar
                 "Origin",             // Estándar
                 "X-Requested-With",   // Común
+                "X-Card-Unlock",      // Unlock de prepaga virtual
                 // Headers de caché (por si los usas o alguna librería los añade)
                 "Cache-Control",
                 "Pragma",

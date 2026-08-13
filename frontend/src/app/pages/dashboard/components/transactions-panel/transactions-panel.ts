@@ -1,7 +1,10 @@
 import {
   Component,
+  Input,
+  OnChanges,
   OnDestroy,
   OnInit,
+  SimpleChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -15,36 +18,46 @@ import {
 } from '../../../../shared/utils/date-format';
 import Transaction from '../../../../models/transaction';
 import { logger } from '../../../../shared/utils/logger';
+import { ReceiptPdfService } from '../../../../services/receipt-pdf/receipt-pdf.service';
 
 @Component({
   selector: 'app-transactions-panel',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './transactions-panel.html',
-  styleUrls: ['../../styles/modals-shared.css', '../../styles/transactions.css'],
+  styleUrls: ['./transactions-panel.css'],
 })
-export class TransactionsPanelComponent implements OnInit, OnDestroy {
+export class TransactionsPanelComponent implements OnInit, OnChanges, OnDestroy {
+  /** Cuenta activa según el toggle ARS/USD del dashboard. */
+  @Input() accountId: string | null = null;
+  @Input() currency: 'ARS' | 'USD' = 'ARS';
+
   currentModal: string | null = null;
   recentTransactions: Transaction[] = [];
   allTransactions: Transaction[] = [];
   displayedTransactions: Transaction[] = [];
   selectedTransaction: Transaction | null = null;
+  receiptBusy = false;
 
   transactionPageSize = 20;
   currentTransactionPage = 0;
   isLoadingMoreTransactions = false;
   hasLoadedAllTransactions = false;
   hasMoreTransactions = false;
+  isLoadingList = false;
 
   private isInAllTransactionsModal = false;
   private forceKeepTransactions = false;
+  private detailOpenedFromAll = false;
   private hiddenTransactionIds = new Set<number>();
   private subscriptions: Subscription[] = [];
+  private lastLoadedAccountId: string | null = null;
 
   constructor(
     private transactionService: TransactionService,
     private modalService: ModalService,
-    private toast: ToastService
+    private toast: ToastService,
+    private receiptPdf: ReceiptPdfService
   ) {}
 
   ngOnInit(): void {
@@ -72,13 +85,20 @@ export class TransactionsPanelComponent implements OnInit, OnDestroy {
         }
       })
     );
+
+    void this.reloadForAccount(false);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['accountId'] && !changes['accountId'].firstChange) {
+      void this.reloadForAccount(true);
+    }
   }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach((s) => s.unsubscribe());
   }
 
-  /** Usado por el polling del dashboard para no pisar la lista paginada. */
   get isViewingAllTransactions(): boolean {
     return this.isInAllTransactionsModal;
   }
@@ -99,22 +119,124 @@ export class TransactionsPanelComponent implements OnInit, OnDestroy {
     return formatDateTimeDetailed(date);
   }
 
+  amountLabel(tx: Transaction): string {
+    const sign = tx.type === 'income' ? '+' : '-';
+    const code = tx.currency || this.currency;
+    return `${sign}$${this.formatAmount(tx.amount)} ${code}`;
+  }
+
+  initials(tx: Transaction): string {
+    if (tx.kind === 'loan_credit') return 'PR';
+    if (tx.kind === 'loan_payment') return 'CU';
+    const source =
+      tx.kind === 'transfer'
+        ? tx.counterpartyName || tx.description
+        : tx.kind === 'buy_usd'
+          ? 'CD'
+          : tx.kind === 'sell_usd'
+            ? 'VD'
+            : '?';
+    const parts = source.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+    }
+    return source.slice(0, 2).toUpperCase();
+  }
+
+  iconClass(tx: Transaction): string {
+    if (tx.kind === 'buy_usd') return 'buy';
+    if (tx.kind === 'sell_usd') return 'sell';
+    if (tx.kind === 'loan_credit') return 'loan-in';
+    if (tx.kind === 'loan_payment') return 'loan-out';
+    return tx.type;
+  }
+
   getTransactionOrigin(transaction: Transaction): string {
+    if (transaction.kind === 'loan_credit') return 'Arcash Préstamos';
+    if (transaction.kind === 'loan_payment') return 'Tu cuenta';
+    if (transaction.kind === 'buy_usd' || transaction.kind === 'sell_usd') {
+      return transaction.from || 'Tu cuenta';
+    }
     if (transaction.type === 'income') {
-      return transaction.from || 'Cuenta externa';
+      return transaction.counterpartyName || transaction.from || 'Cuenta externa';
     }
     return 'Tu cuenta';
   }
 
   getTransactionDestination(transaction: Transaction): string {
+    if (transaction.kind === 'loan_credit') return 'Tu cuenta';
+    if (transaction.kind === 'loan_payment') return 'Arcash Préstamos';
+    if (transaction.kind === 'buy_usd' || transaction.kind === 'sell_usd') {
+      return transaction.to || 'Tu cuenta';
+    }
     if (transaction.type === 'income') {
       return 'Tu cuenta';
     }
-    return transaction.to || 'Cuenta externa';
+    return transaction.counterpartyName || transaction.to || 'Cuenta externa';
+  }
+
+  detailTitle(tx: Transaction): string {
+    if (tx.kind === 'buy_usd') return 'Detalle de compra';
+    if (tx.kind === 'sell_usd') return 'Detalle de venta';
+    if (tx.kind === 'loan_credit') return 'Detalle del préstamo';
+    if (tx.kind === 'loan_payment') return 'Detalle de cuota';
+    return 'Detalle de transferencia';
+  }
+
+  async downloadReceipt(): Promise<void> {
+    if (!this.selectedTransaction || this.receiptBusy) return;
+    this.receiptBusy = true;
+    try {
+      await this.receiptPdf.download(this.selectedTransaction, this.receiptLabels(this.selectedTransaction));
+      this.toast.show('Comprobante descargado', 'success');
+    } catch (error) {
+      logger.error('Error generando PDF', error);
+      this.toast.show('No se pudo generar el comprobante', 'error');
+    } finally {
+      this.receiptBusy = false;
+    }
+  }
+
+  async shareReceipt(): Promise<void> {
+    if (!this.selectedTransaction || this.receiptBusy) return;
+    this.receiptBusy = true;
+    try {
+      const result = await this.receiptPdf.share(
+        this.selectedTransaction,
+        this.receiptLabels(this.selectedTransaction)
+      );
+      if (result === 'shared') {
+        this.toast.show('Comprobante listo para compartir', 'success');
+      } else {
+        this.toast.show('Comprobante descargado para que lo compartas', 'success');
+      }
+    } catch (error: unknown) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
+      logger.error('Error compartiendo PDF', error);
+      this.toast.show('No se pudo compartir el comprobante', 'error');
+    } finally {
+      this.receiptBusy = false;
+    }
+  }
+
+  private receiptLabels(tx: Transaction) {
+    return {
+      title: this.detailTitle(tx),
+      description: tx.description,
+      amountLabel: this.amountLabel(tx),
+      origin: this.getTransactionOrigin(tx),
+      destination: this.getTransactionDestination(tx),
+    };
   }
 
   onModalBackdropClick(event: MouseEvent, modalType: string): void {
-    if ((event.target as HTMLElement).classList.contains('modal')) {
+    const target = event.target as HTMLElement;
+    if (
+      target.classList.contains('tx-modal') ||
+      target.classList.contains('tx-all-modal')
+    ) {
       if (modalType === 'transaction') {
         this.closeTransactionModal();
       } else if (modalType === 'allTransactions') {
@@ -124,13 +246,22 @@ export class TransactionsPanelComponent implements OnInit, OnDestroy {
   }
 
   openTransactionModal(transaction: Transaction): void {
+    this.detailOpenedFromAll =
+      this.currentModal === 'allTransactions' || this.isInAllTransactionsModal;
     this.selectedTransaction = transaction;
     this.modalService.openModal('transaction');
   }
 
   closeTransactionModal(): void {
-    this.modalService.closeModal();
     this.selectedTransaction = null;
+    if (this.detailOpenedFromAll) {
+      this.detailOpenedFromAll = false;
+      this.isInAllTransactionsModal = true;
+      this.forceKeepTransactions = true;
+      this.modalService.openModal('allTransactions');
+      return;
+    }
+    this.modalService.closeModal();
   }
 
   async openAllTransactionsModal(): Promise<void> {
@@ -142,7 +273,7 @@ export class TransactionsPanelComponent implements OnInit, OnDestroy {
       this.isLoadingMoreTransactions = false;
       this.hasMoreTransactions = true;
 
-      await this.transactionService.loadAllTransactions(false);
+      await this.transactionService.loadAllTransactions(false, this.accountId);
       this.updateDisplayedTransactions();
       this.modalService.openModal('allTransactions');
     } catch (error) {
@@ -175,8 +306,30 @@ export class TransactionsPanelComponent implements OnInit, OnDestroy {
   closeAllTransactionsModal(): void {
     this.isInAllTransactionsModal = false;
     this.forceKeepTransactions = false;
+    this.detailOpenedFromAll = false;
     this.modalService.closeModal();
     this.updateDisplayedTransactions();
+  }
+
+  private async reloadForAccount(force: boolean): Promise<void> {
+    if (!this.accountId) {
+      this.recentTransactions = [];
+      this.allTransactions = [];
+      return;
+    }
+    if (!force && this.lastLoadedAccountId === this.accountId) {
+      return;
+    }
+
+    this.isLoadingList = true;
+    try {
+      await this.transactionService.loadAllTransactions(force, this.accountId);
+      this.lastLoadedAccountId = this.accountId;
+    } catch {
+      // toast ya no siempre: el dashboard también carga
+    } finally {
+      this.isLoadingList = false;
+    }
   }
 
   private updateDisplayedTransactions(): void {

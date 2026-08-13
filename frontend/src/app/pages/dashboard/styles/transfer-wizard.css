@@ -28,11 +28,11 @@
   0%,
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(57, 255, 204, 0.4);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 28%, transparent);
   }
   50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 15px rgba(57, 255, 204, 0);
+    transform: scale(1.03);
+    box-shadow: 0 0 0 12px transparent;
   }
 }
 

@@ -14,14 +14,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Verifica, con la cadena de filtros real, que ninguna operacion sobre cuentas
- * es accesible sin autenticacion.
- *
- * Complementa a AccountControllerTest, que corre sin filtros: desde que la
- * identidad sale del SecurityContext, el rechazo de las peticiones anonimas es
- * responsabilidad de Spring Security y ya no de un chequeo manual del controller.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

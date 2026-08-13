@@ -2,15 +2,9 @@ import { inject } from '@angular/core';
 import { CanActivateFn, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { logger } from '../shared/utils/logger';
 
-/**
- * Guard que protege la ruta /validate para que solo sea accesible 
- * a través de enlaces de email que contengan el token de validación.
- * Si no hay token, redirige a la página 404.
- */
 export const validateGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   const router = inject(Router);
   
-  // Verificar si existe el parámetro 'token' en la query string
   const token = route.queryParams['token'];
   
   if (!token || token.trim() === '') {

@@ -12,6 +12,7 @@ import UserData from '../../../../models/user-data';
 import { UserDataStore } from '../../../../services/user-data-store/user-data.store';
 import { ToastService } from '../../../../services/toast/toast.service';
 import { ModalService } from '../../../../services/modal/modal.service';
+import { formatDni as formatDniAr } from '../../../../shared/utils/dni-format';
 import { logger } from '../../../../shared/utils/logger';
 
 @Component({
@@ -19,7 +20,7 @@ import { logger } from '../../../../shared/utils/logger';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './profile-modal.html',
-  styleUrls: ['../../styles/modals-shared.css'],
+  styleUrls: ['./profile-modal.css'],
 })
 export class ProfileModalComponent implements OnInit, OnDestroy {
   userData: UserData = {
@@ -36,6 +37,8 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
 
   editingUsername = false;
   editingAlias = false;
+  savingUsername = false;
+  savingAlias = false;
   newUsername = '';
   newAlias = '';
 
@@ -62,12 +65,32 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
     this.sub?.unsubscribe();
   }
 
+  get fullName(): string {
+    return `${this.userData.name || ''} ${this.userData.lastName || ''}`.trim();
+  }
+
+  get initials(): string {
+    const a = (this.userData.name || '?').charAt(0);
+    const b = (this.userData.lastName || '').charAt(0);
+    return `${a}${b}`.toUpperCase();
+  }
+
+  formatDni(dni: string | number | null | undefined): string {
+    return formatDniAr(dni);
+  }
+
   startEditUsername(): void {
+    if (this.savingUsername || this.editingAlias) {
+      return;
+    }
     this.editingUsername = true;
     this.newUsername = this.userDataStore.getCurrent()?.username || '';
   }
 
   cancelEditUsername(): void {
+    if (this.savingUsername) {
+      return;
+    }
     this.editingUsername = false;
     this.newUsername = '';
   }
@@ -83,25 +106,31 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.savingUsername = true;
     try {
       await this.userDataStore.updateUsername(this.newUsername);
-      this.toast.show(
-        'Nombre de usuario actualizado correctamente',
-        'success'
-      );
+      this.toast.show('Nombre de usuario actualizado correctamente', 'success');
       this.editingUsername = false;
     } catch (error) {
       logger.error('Error updating username:', error);
       this.toast.show('Error al actualizar el nombre de usuario', 'error');
+    } finally {
+      this.savingUsername = false;
     }
   }
 
   startEditAlias(): void {
+    if (this.savingAlias || this.editingUsername) {
+      return;
+    }
     this.editingAlias = true;
     this.newAlias = this.userDataStore.getCurrent()?.alias || '';
   }
 
   cancelEditAlias(): void {
+    if (this.savingAlias) {
+      return;
+    }
     this.editingAlias = false;
     this.newAlias = '';
   }
@@ -115,6 +144,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.savingAlias = true;
     try {
       await this.userDataStore.updateAlias(this.newAlias);
       this.toast.show('Alias actualizado correctamente', 'success');
@@ -122,10 +152,15 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
     } catch (error) {
       logger.error('Error updating alias:', error);
       this.toast.show('Error al actualizar el alias', 'error');
+    } finally {
+      this.savingAlias = false;
     }
   }
 
   close(): void {
+    if (this.savingUsername || this.savingAlias) {
+      return;
+    }
     this.editingAlias = false;
     this.editingUsername = false;
     this.modalService.closeModal();
@@ -133,7 +168,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   }
 
   onBackdrop(event: MouseEvent): void {
-    if ((event.target as HTMLElement).classList.contains('modal')) {
+    if ((event.target as HTMLElement).classList.contains('profile-modal')) {
       this.close();
     }
   }

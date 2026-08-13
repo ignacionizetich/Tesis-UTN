@@ -16,7 +16,7 @@ import { logger } from '../../../../../../shared/utils/logger';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './delete-favorite-modal.html',
-  styleUrls: ['../../../../styles/modals-shared.css', '../../../../styles/favorites.css'],
+  styleUrls: ['./delete-favorite-modal.css'],
 })
 export class DeleteFavoriteModalComponent {
   @Input({ required: true }) favorite!: FavoriteContact;
@@ -32,19 +32,33 @@ export class DeleteFavoriteModalComponent {
     private toast: ToastService
   ) {}
 
+  get contactInitials(): string {
+    const name = (this.favorite?.accountOwnerName || this.favorite?.contactAlias || '?').trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+
+  close(): void {
+    if (this.isDeletingFavorite) {
+      return;
+    }
+    this.closed.emit();
+  }
+
   onBackdrop(event: MouseEvent): void {
-    if ((event.target as HTMLElement).classList.contains('modal')) {
+    if ((event.target as HTMLElement).classList.contains('del-fav-modal')) {
+      if (this.isDeletingFavorite) {
+        return;
+      }
       this.backdropClick.emit(event);
     }
   }
 
-  initials(name: string): string {
-    const parts = (name || '').trim().split(/\s+/);
-    return `${parts[0]?.charAt(0) || ''}${parts[1]?.charAt(0) || ''}`;
-  }
-
   async confirm(): Promise<void> {
-    if (!this.favorite) {
+    if (!this.favorite || this.isDeletingFavorite) {
       return;
     }
 

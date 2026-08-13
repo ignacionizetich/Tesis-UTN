@@ -1,42 +1,93 @@
-<div class="modal" (click)="onBackdrop($event)">
-  <div class="modal-content add-favorite-modal">
-    <div class="modal-header">
-      <h2>Agregar a Favoritos</h2>
-      <span class="close-button" (click)="closed.emit()">&times;</span>
-    </div>
+<div class="add-fav-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="add-fav-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="add-fav-title"
+    (click)="$event.stopPropagation()">
 
-    <div class="add-favorite-form">
-      <div class="form-group">
-        <input type="text" [(ngModel)]="favoriteContactAlias" placeholder=" " required maxlength="50" [disabled]="isAddingFavorite">
-        <label>Nombre para agendar *</label>
+    <button
+      type="button"
+      class="add-fav-modal__close"
+      (click)="close()"
+      [disabled]="isAddingFavorite"
+      aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="add-fav-modal__header">
+      <div class="add-fav-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
       </div>
-
-      <div class="form-group">
-        <textarea [(ngModel)]="favoriteContactDescription" placeholder=" " maxlength="200" rows="3" [disabled]="isAddingFavorite"></textarea>
-        <label>Descripción (opcional)</label>
+      <div>
+        <h2 id="add-fav-title">Agregar a favoritos</h2>
+        <p>Guardá este contacto para transferirle más fácil</p>
       </div>
+    </header>
 
-      <div class="form-actions">
-        <button class="primary" (click)="save()" [disabled]="!favoriteContactAlias.trim() || isAddingFavorite">
-          @if (isAddingFavorite) {
-            <div class="button-loading">
-              <div class="spinner"></div>
-              Guardando...
-            </div>
-          } @else {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                stroke="currentColor" stroke-width="2" />
-            </svg>
-            Guardar favorito
-          }
-        </button>
-
-        @if (!isAddingFavorite) {
-          <button class="secondary" (click)="closed.emit()">Cancelar</button>
+    @if (transferCompletedData) {
+    <div class="add-fav-contact">
+      <div class="add-fav-contact__avatar" aria-hidden="true">{{ recipientInitials }}</div>
+      <div class="add-fav-contact__body">
+        <strong>{{ recipientName }}</strong>
+        @if (recipientAlias) {
+        <span>{{ recipientAlias }}</span>
         }
       </div>
     </div>
+    }
+
+    <form class="add-fav-form" (ngSubmit)="save()">
+      <label class="add-fav-label" for="fav-alias">Nombre para agendar</label>
+      <div class="add-fav-field" [class.add-fav-field--active]="!!favoriteContactAlias">
+        <input
+          id="fav-alias"
+          type="text"
+          [(ngModel)]="favoriteContactAlias"
+          name="favoriteContactAlias"
+          placeholder="Ej. Juan, Alquiler, Mamá"
+          maxlength="50"
+          required
+          autocomplete="off"
+          [disabled]="isAddingFavorite"
+        />
+      </div>
+
+      <label class="add-fav-label" for="fav-desc">Descripción <span>(opcional)</span></label>
+      <div class="add-fav-field add-fav-field--textarea" [class.add-fav-field--active]="!!favoriteContactDescription">
+        <textarea
+          id="fav-desc"
+          [(ngModel)]="favoriteContactDescription"
+          name="favoriteContactDescription"
+          placeholder="Una nota para reconocerlo rápido"
+          maxlength="200"
+          rows="3"
+          [disabled]="isAddingFavorite"
+        ></textarea>
+      </div>
+
+      <div class="add-fav-actions">
+        <button
+          type="button"
+          class="add-fav-btn add-fav-btn--ghost"
+          (click)="close()"
+          [disabled]="isAddingFavorite">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="add-fav-btn add-fav-btn--primary"
+          [disabled]="!canSave">
+          {{ isAddingFavorite ? 'Guardando...' : 'Guardar favorito' }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>

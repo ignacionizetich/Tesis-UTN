@@ -1,0 +1,229 @@
+/* Alias / CVU modal — rebrand limpio */
+
+:host {
+  display: contents;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+}
+
+.alias-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+  backdrop-filter: blur(6px);
+  animation: aliasFade 0.22s ease-out both;
+}
+
+.alias-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lift);
+  padding: 1.35rem 1.25rem 1.25rem;
+  color: var(--text-primary);
+  animation: aliasRise 0.28s ease-out both;
+}
+
+.alias-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.alias-modal__close:hover {
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  transform: none;
+}
+
+.alias-modal__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 1.15rem;
+  padding-right: 2rem;
+}
+
+.alias-modal__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, #0ea5a4 14%, transparent);
+  color: #0ea5a4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.alias-modal__header h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: unset;
+  text-align: left;
+}
+
+.alias-modal__header p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.alias-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 0.95rem;
+}
+
+.alias-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 0.95rem;
+  background: var(--canvas);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+}
+
+.alias-field__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.alias-field__label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.alias-field__value {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.alias-field__value--mono {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.alias-copy {
+  appearance: none;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--text-accent) 25%, var(--border-light));
+  border-radius: 12px;
+  background: var(--brand-soft) !important;
+  color: var(--text-accent) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+  transition: background 0.2s ease;
+}
+
+.alias-copy:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text-accent) 18%, transparent) !important;
+  transform: none;
+}
+
+.alias-copy:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.alias-hint {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.alias-btn {
+  appearance: none;
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.alias-btn:hover {
+  background: var(--brand-soft) !important;
+  transform: none;
+}
+
+@keyframes aliasFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes aliasRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alias-modal,
+  .alias-modal__panel {
+    animation: none !important;
+  }
+}

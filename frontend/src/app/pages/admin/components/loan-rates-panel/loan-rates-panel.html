@@ -1,0 +1,130 @@
+<div class="rates">
+  <div class="rates__toolbar">
+    <div>
+      <p class="rates__eyebrow">Configuración de producto</p>
+      <p class="rates__lead">
+        Ajustá la tasa mensual de cada plazo. Los préstamos nuevos usan estos valores;
+        los ya otorgados conservan la tasa con la que se aceptaron.
+      </p>
+      @if (updatedAt) {
+      <span class="rates__updated">Última actualización: {{ updatedAt }}</span>
+      }
+    </div>
+    <div class="rates__actions">
+      <button type="button" class="rates-btn rates-btn--ghost" (click)="load()" [disabled]="loading || saving">
+        Recargar
+      </button>
+      <button
+        type="button"
+        class="rates-btn rates-btn--ghost"
+        (click)="resetAll()"
+        [disabled]="!dirty || saving"
+      >
+        Deshacer
+      </button>
+      <button
+        type="button"
+        class="rates-btn rates-btn--primary"
+        (click)="save()"
+        [disabled]="!dirty || saving || loading"
+      >
+        {{ saving ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+  <div class="rates__state" role="status">
+    <div class="rates__spinner"></div>
+    <p>Cargando tasas...</p>
+  </div>
+  }
+
+  @if (!loading && error) {
+  <div class="rates__state">
+    <p>{{ error }}</p>
+    <button type="button" class="rates-btn rates-btn--primary" (click)="load()">Reintentar</button>
+  </div>
+  }
+
+  @if (!loading && !error) {
+  @if (!ascendingHint) {
+  <div class="rates__hint rates__hint--warn">
+    Las tasas no crecen con las cuotas. Suele conviene que 3 ≤ 6 ≤ 12.
+  </div>
+  } @else {
+  <div class="rates__hint">
+    Rango permitido: {{ minPercent }}% a {{ maxPercent }}% mensual · Paso {{ step }}%
+  </div>
+  }
+
+  <div class="rates__preview-bar">
+    <label for="previewPrincipal">Vista previa con capital</label>
+    <div class="rates__preview-input">
+      <span>$</span>
+      <input
+        id="previewPrincipal"
+        type="number"
+        min="1000"
+        max="500000"
+        step="500"
+        [(ngModel)]="previewPrincipal"
+      />
+    </div>
+  </div>
+
+  <div class="rates-grid">
+    @for (rate of rates; track rate.installments) {
+    <article class="rate-card" [class.rate-card--dirty]="rate.monthlyRatePercent !== rate.originalPercent">
+      <header class="rate-card__head">
+        <h3>{{ rate.installments }} cuotas</h3>
+        @if (rate.monthlyRatePercent !== rate.originalPercent) {
+        <button type="button" class="rate-card__reset" (click)="resetRate(rate)">Restablecer</button>
+        }
+      </header>
+
+      <div class="rate-card__value">
+        <button type="button" class="rate-card__bump" (click)="bump(rate, -step)" aria-label="Bajar tasa">
+          −
+        </button>
+        <div class="rate-card__input-wrap">
+          <input
+            type="number"
+            [ngModel]="rate.monthlyRatePercent"
+            (ngModelChange)="onPercentInput(rate, $event)"
+            [min]="minPercent"
+            [max]="maxPercent"
+            [step]="step"
+          />
+          <span>% mens.</span>
+        </div>
+        <button type="button" class="rate-card__bump" (click)="bump(rate, step)" aria-label="Subir tasa">
+          +
+        </button>
+      </div>
+
+      <input
+        class="rate-card__slider"
+        type="range"
+        [min]="minPercent"
+        [max]="maxPercent"
+        [step]="step"
+        [ngModel]="rate.monthlyRatePercent"
+        (ngModelChange)="onPercentInput(rate, $event)"
+      />
+
+      <div class="rate-card__meta">
+        <div>
+          <span>Cuota estimada</span>
+          <strong>${{ formatMoney(previewInstallment(rate)) }}</strong>
+        </div>
+        <div>
+          <span>Total estimado</span>
+          <strong>${{ formatMoney(previewTotal(rate)) }}</strong>
+        </div>
+      </div>
+    </article>
+    }
+  </div>
+  }
+</div>

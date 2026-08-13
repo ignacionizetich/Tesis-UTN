@@ -1,45 +1,141 @@
-<div class="modal" (click)="onBackdrop($event)">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span class="close-tax-button" (click)="close()">&times;</span>
-      <h2>Calculadora de Impuestos</h2>
+<div class="tax-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="tax-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="tax-modal-title"
+    (click)="$event.stopPropagation()">
+
+    <button
+      type="button"
+      class="tax-modal__close"
+      (click)="close()"
+      [disabled]="isCalculating"
+      aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="tax-modal__header">
+      <div class="tax-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M4 4h16v4H4V4zm2 6h4v10H6V10zm6 0h4v10h-4V10zm6 0h2v10h-2V10z"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round" />
+        </svg>
+      </div>
+      <div>
+        <h2 id="tax-modal-title">Calculadora de impuestos</h2>
+        <p>Estimá IVA y conversión con cotización oficial</p>
+      </div>
+    </header>
+
+    <div class="tax-currency" role="group" aria-label="Moneda">
+      <button
+        type="button"
+        class="tax-currency__chip"
+        [class.tax-currency__chip--active]="selectedCurrency === 'ARS'"
+        (click)="selectCurrency('ARS')"
+        [disabled]="isCalculating">
+        Pesos (ARS)
+      </button>
+      <button
+        type="button"
+        class="tax-currency__chip"
+        [class.tax-currency__chip--active]="selectedCurrency === 'USD'"
+        (click)="selectCurrency('USD')"
+        [disabled]="isCalculating">
+        Dólares (USD)
+      </button>
     </div>
 
-    @if (!showTaxForm) {
-    <div id="currency-selection">
-      <p>¿En qué moneda querés calcular?</p>
-      <button class="currency-button" (click)="selectCurrency('ARS')">Pesos (ARS)</button>
-      <button class="currency-button" (click)="selectCurrency('USD')">Dólares (USD)</button>
-    </div>
-    }
+    <form class="tax-form" (ngSubmit)="calculate()">
+      <label class="tax-label" for="tax-amount">Monto en {{ selectedCurrency }}</label>
+      <div class="tax-field" [class.tax-field--active]="!!taxMonto">
+        <span class="tax-field__prefix">$</span>
+        <input
+          id="tax-amount"
+          type="number"
+          name="taxMonto"
+          [(ngModel)]="taxMonto"
+          min="0"
+          step="0.01"
+          placeholder="0,00"
+          inputmode="decimal"
+          [disabled]="isCalculating"
+        />
+      </div>
 
-    @if (showTaxForm) {
-    <div id="tax-form">
-      <label>Monto en {{ selectedCurrency }}:</label>
-      <input
-        type="number"
-        [(ngModel)]="taxMonto"
-        min="0"
-        step="0.01"
-        placeholder="0.00"
-      />
-      <button (click)="calculate()">Calcular</button>
-      @if (result) {
-      <div id="tax-result">
-        @if (result.currency === 'ARS') {
-          <p><strong class="label">Monto sin impuestos:</strong> <span class="value">${{ formatAmount(result.montoOriginal) }} ARS</span></p>
-          <p><strong class="label">IVA 21%:</strong> <span class="value">${{ formatAmount(result.iva) }} ARS</span></p>
-          <p><strong class="label">Total con impuestos:</strong> <span class="value strong">${{ formatAmount(result.totalFinal) }} ARS</span></p>
-        } @else {
-          <p><strong class="label">Monto original USD:</strong> <span class="value">${{ formatAmount(result.inputAmount) }} USD</span></p>
-          <p><strong class="label">Cotización dólar oficial:</strong> <span class="value">${{ formatAmount(result.precioDolar || 0) }} ARS</span></p>
-          <p><strong class="label">Monto en ARS:</strong> <span class="value">${{ formatAmount(result.montoOriginal) }} ARS</span></p>
-          <p><strong class="label">IVA 21%:</strong> <span class="value">${{ formatAmount(result.iva) }} ARS</span></p>
-          <p><strong class="label">Total final:</strong> <span class="value strong">${{ formatAmount(result.totalFinal) }} ARS</span></p>
+      <button
+        type="submit"
+        class="tax-btn tax-btn--primary"
+        [disabled]="!canCalculate">
+        {{ isCalculating ? 'Calculando...' : 'Calcular' }}
+      </button>
+    </form>
+
+    @if (result) {
+    <section class="tax-result" aria-live="polite">
+      @if (result.currency === 'USD') {
+      <div class="tax-quote">
+        <div class="tax-quote__top">
+          <span class="tax-quote__badge">
+            {{ result.nombreCotizacion || 'Dólar oficial' }}
+          </span>
+          @if (result.casa) {
+          <span class="tax-quote__casa">{{ result.casa }}</span>
+          }
+        </div>
+        <div class="tax-quote__rates">
+          <div class="tax-quote__rate">
+            <span>Compra</span>
+            <strong>${{ formatAmount(result.dolarCompra || 0) }}</strong>
+          </div>
+          <div class="tax-quote__rate">
+            <span>Venta</span>
+            <strong>${{ formatAmount(result.dolarVenta || result.precioDolar || 0) }}</strong>
+          </div>
+        </div>
+        @if (result.fechaActualizacion) {
+        <p class="tax-quote__updated">
+          Actualizado: {{ formatQuoteDate(result.fechaActualizacion) }}
+        </p>
         }
+        <p class="tax-quote__note">La conversión usa la cotización de <em>venta</em>.</p>
       </div>
       }
-    </div>
+
+      <ul class="tax-breakdown">
+        @if (result.currency === 'ARS') {
+        <li>
+          <span>Monto sin impuestos</span>
+          <strong>${{ formatAmount(result.montoOriginal) }} ARS</strong>
+        </li>
+        <li>
+          <span>IVA ({{ result.alicuotaIva }}%)</span>
+          <strong>${{ formatAmount(result.iva) }} ARS</strong>
+        </li>
+        } @else {
+        <li>
+          <span>Monto en USD</span>
+          <strong>${{ formatAmount(result.montoUsd ?? result.inputAmount) }} USD</strong>
+        </li>
+        <li>
+          <span>Equivalente en ARS</span>
+          <strong>${{ formatAmount(result.montoOriginal) }} ARS</strong>
+        </li>
+        <li>
+          <span>IVA ({{ result.alicuotaIva }}%) sobre ARS</span>
+          <strong>${{ formatAmount(result.iva) }} ARS</strong>
+        </li>
+        }
+        <li class="tax-breakdown__total">
+          <span>Total con impuestos</span>
+          <strong>${{ formatAmount(result.totalFinal) }} ARS</strong>
+        </li>
+      </ul>
+    </section>
     }
   </div>
 </div>

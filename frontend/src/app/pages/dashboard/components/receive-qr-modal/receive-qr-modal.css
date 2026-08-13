@@ -1,0 +1,283 @@
+/* Receive QR modal — rebrand limpio */
+
+:host {
+  display: contents;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+}
+
+.qr-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+  backdrop-filter: blur(6px);
+  animation: qrFade 0.22s ease-out both;
+}
+
+.qr-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lift);
+  padding: 1.35rem 1.25rem 1.25rem;
+  color: var(--text-primary);
+  animation: qrRise 0.28s ease-out both;
+}
+
+.qr-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.qr-modal__close:hover {
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  transform: none;
+}
+
+.qr-modal__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 1.15rem;
+  padding-right: 2rem;
+}
+
+.qr-modal__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text-accent) 12%, transparent);
+  color: var(--text-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.qr-modal__header h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: unset;
+  text-align: left;
+}
+
+.qr-modal__header p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.qr-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.75rem;
+  min-height: 220px;
+  padding: 1rem 0.5rem;
+}
+
+.qr-status p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  max-width: 28ch;
+}
+
+.qr-status--error p {
+  color: var(--danger);
+}
+
+.qr-status__spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid var(--border-light);
+  border-top-color: var(--text-accent);
+  animation: qrSpin 0.85s linear infinite;
+}
+
+.qr-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.95rem;
+}
+
+.qr-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.95rem;
+  /* Fondo claro fijo: el código debe ser legible para lectores de QR. */
+  background: #ffffff;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--surface) 100%, transparent),
+    0 0 0 5px color-mix(in srgb, var(--text-accent) 28%, transparent),
+    var(--shadow-soft);
+}
+
+[data-theme='dark'] .qr-frame {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, 0.06),
+    0 0 0 7px color-mix(in srgb, var(--text-accent) 35%, transparent),
+    0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.qr-frame ::ng-deep canvas,
+.qr-frame ::ng-deep img {
+  display: block;
+  border-radius: 8px;
+}
+
+.qr-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  text-align: center;
+}
+
+.qr-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.55rem;
+  margin-bottom: 0.25rem;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.qr-meta strong {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.qr-alias {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-accent);
+}
+
+.qr-dni {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.qr-hint {
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  max-width: 32ch;
+}
+
+.qr-btn {
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  min-width: 140px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.qr-btn--ghost {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.qr-btn--ghost:hover {
+  background: var(--brand-soft) !important;
+  transform: none;
+}
+
+.qr-btn--primary {
+  background: var(--text-accent) !important;
+  color: #fff !important;
+}
+
+.qr-btn--primary:hover {
+  background: var(--brand-hover) !important;
+  transform: none;
+}
+
+@keyframes qrFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes qrRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes qrSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qr-modal,
+  .qr-modal__panel,
+  .qr-status__spinner {
+    animation: none !important;
+  }
+}

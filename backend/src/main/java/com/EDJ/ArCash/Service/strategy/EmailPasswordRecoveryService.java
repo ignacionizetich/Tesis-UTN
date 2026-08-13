@@ -4,7 +4,7 @@ import com.EDJ.ArCash.Models.RecoveryToken;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.RecoveryTokenRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
-import com.EDJ.ArCash.Service.RecoveryTokenService;
+import com.EDJ.ArCash.Service.interfaces.RecoveryTokenService;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
@@ -17,10 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-/**
- * Implementación de PasswordRecoveryStrategy para recuperación de contraseñas por email
- * Responsable únicamente de la gestión de recuperación de contraseñas
- */
 @Service("emailPasswordRecoveryService")
 public class EmailPasswordRecoveryService implements PasswordRecoveryStrategy {
 

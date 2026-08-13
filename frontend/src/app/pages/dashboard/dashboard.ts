@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, PLATFORM_ID, Inject } 
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subscription, of, from } from 'rxjs';
+import { Subscription, of, from, firstValueFrom } from 'rxjs';
 
 import { ThemeService } from '../../services/theme/theme.service';
 import { ToastService } from '../../services/toast/toast.service';
@@ -19,7 +19,6 @@ import { AccountPollingCoordinator } from '../../services/account-polling/accoun
 import { formatMoney as formatMoneyShared } from '../../shared/utils/money-format';
 import { errorMessage } from '../../shared/utils/error-message';
 import { FavoriteContact } from '../../models/favorite-contact';
-import { TransferData } from '../../models/transfer.interface';
 
 import { DepositModalComponent } from './components/deposit-modal/deposit-modal';
 import {
@@ -34,10 +33,20 @@ import {
   FavoritesModalsComponent,
   TransferCompletedData,
 } from './components/favorites-modals/favorites-modals';
+import { CardsModalsComponent } from './components/cards-modals/cards-modals';
+import { LoansModalsComponent } from './components/loans-modals/loans-modals';
 import { TransactionsPanelComponent } from './components/transactions-panel/transactions-panel';
+import {
+  BuyUsdPanelComponent,
+  UsdTradeSuccess,
+} from '../usd-account/components/buy-usd-panel/buy-usd-panel';
+import { SellUsdPanelComponent } from '../usd-account/components/sell-usd-panel/sell-usd-panel';
+import { ReceiveUsdModalComponent } from '../usd-account/components/receive-usd-modal/receive-usd-modal';
 
 import UserData from '../../models/user-data';
 import { logger } from '../../shared/utils/logger';
+
+type WalletCurrency = 'ARS' | 'USD';
 
 @Component({
   selector: 'app-dashboard',
@@ -52,7 +61,12 @@ import { logger } from '../../shared/utils/logger';
     ProfileModalComponent,
     ReceiveQrModalComponent,
     FavoritesModalsComponent,
+    CardsModalsComponent,
+    LoansModalsComponent,
     TransactionsPanelComponent,
+    BuyUsdPanelComponent,
+    SellUsdPanelComponent,
+    ReceiveUsdModalComponent,
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
@@ -64,6 +78,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isLoading = true;
   balanceVisible = true;
   isAdmin = false;
+
+  activeCurrency: WalletCurrency = 'ARS';
+  moreMenuOpen = false;
+  showBuyUsd = false;
+  showSellUsd = false;
+  showReceiveUsd = false;
+  isCreatingUsdAccount = false;
+
+  readonly taxRate = 0.03;
+  readonly taxPercentage = 3;
+  exchangeRate = 1100;
 
   userData: UserData = {
     name: 'Cargando...',
@@ -107,6 +132,59 @@ export class DashboardComponent implements OnInit, OnDestroy {
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
+  get otherCurrency(): WalletCurrency {
+    return this.activeCurrency === 'ARS' ? 'USD' : 'ARS';
+  }
+
+  get displayBalance(): number {
+    if (this.activeCurrency === 'USD') {
+      return this.usdAccount?.balance ?? 0;
+    }
+    return this.arsAccount?.balance ?? this.userData.balance ?? 0;
+  }
+
+  get currencySymbol(): string {
+    return this.activeCurrency === 'USD' ? 'U$S' : '$';
+  }
+
+  get displayAlias(): string {
+    if (this.activeCurrency === 'USD' && this.usdAccount) {
+      return this.usdAccount.alias || this.userData.alias;
+    }
+    return this.arsAccount?.alias || this.userData.alias;
+  }
+
+  get displayCvu(): string {
+    if (this.activeCurrency === 'USD' && this.usdAccount) {
+      return this.usdAccount.cvu || this.userData.cvu;
+    }
+    return this.arsAccount?.cvu || this.userData.cvu;
+  }
+
+  get arsAccountId(): string {
+    return this.arsAccount?.id ? String(this.arsAccount.id) : String(this.userData.idAccount || '');
+  }
+
+  get usdAccountId(): string {
+    return this.usdAccount?.id ? String(this.usdAccount.id) : '';
+  }
+
+  /** Cuenta cuyo extracto muestra el panel de movimientos (según toggle). */
+  get activeAccountId(): string {
+    if (this.activeCurrency === 'USD' && this.usdAccountId) {
+      return this.usdAccountId;
+    }
+    return this.arsAccountId;
+  }
+
+  get arsBalance(): number {
+    return this.arsAccount?.balance ?? this.userData.balance ?? 0;
+  }
+
+  get usdBalance(): number {
+    return this.usdAccount?.balance ?? 0;
+  }
+
   ngOnInit(): void {
     this.checkAuthentication();
     this.checkAdminRole();
@@ -142,11 +220,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       intervalMs,
       [
         () => this.userDataStore.load(true),
+        () => from(this.loadUserAccounts()),
         () => {
           if (this.modalService.getCurrentModal() === 'allTransactions') {
             return of(null);
           }
-          return from(this.transactionService.loadAllTransactions(true));
+          return from(
+            this.transactionService.loadAllTransactions(true, this.activeAccountId)
+          );
         },
       ],
       {
@@ -169,10 +250,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private async initializeServices(): Promise<void> {
     try {
       await Promise.all([
-        this.transactionService.loadAllTransactions(),
-        this.favoriteService.loadFavoriteContacts(),
         this.loadUserAccounts(),
+        this.favoriteService.loadFavoriteContacts(),
       ]);
+      await this.transactionService.loadAllTransactions(true, this.activeAccountId);
     } catch (error) {
       logger.error('Error inicializando services:', error);
     }
@@ -228,10 +309,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     try {
       await Promise.allSettled([
         this.userDataStore.load(true),
-        this.transactionHistoryStore.load(),
+        this.transactionHistoryStore.load(this.activeAccountId),
       ]);
     } catch (error) {
-      logger.error('❌ Error cargando datos:', error);
+      logger.error('Error cargando datos:', error);
     }
   }
 
@@ -282,13 +363,145 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  onDepositSuccess(): void {
+  toggleCurrency(): void {
+    this.activeCurrency = this.otherCurrency;
+    if (this.activeAccountId) {
+      void this.transactionService.loadAllTransactions(true, this.activeAccountId);
+    }
+  }
+
+  async createUsdAccount(): Promise<void> {
+    this.isCreatingUsdAccount = true;
+    try {
+      const response = await this.accountService.openUsdAccount().toPromise();
+      if (response?.success) {
+        this.toast.show('Cuenta en dólares creada exitosamente', 'success');
+        await this.loadUserAccounts();
+      } else {
+        this.toast.show(response?.message || 'Error al crear cuenta en dólares', 'error');
+      }
+    } catch (error: unknown) {
+      logger.error('Error creando cuenta USD:', error);
+      this.toast.show(errorMessage(error, 'Error al crear cuenta en dólares'), 'error');
+    } finally {
+      this.isCreatingUsdAccount = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  openMoreMenu(): void {
+    this.moreMenuOpen = true;
+  }
+
+  closeMoreMenu(): void {
+    this.moreMenuOpen = false;
+  }
+
+  onMoreAction(action: 'alias' | 'favorites' | 'cards' | 'loans' | 'tax' | 'buy' | 'sell'): void {
+    this.closeMoreMenu();
+    switch (action) {
+      case 'alias':
+        this.openAliasModal();
+        break;
+      case 'favorites':
+        void this.openFavoritesModal();
+        break;
+      case 'cards':
+        this.openModal('cards');
+        break;
+      case 'loans':
+        this.openModal('loans');
+        break;
+      case 'tax':
+        this.openTaxModal();
+        break;
+      case 'buy':
+        this.openBuyUsd();
+        break;
+      case 'sell':
+        this.openSellUsd();
+        break;
+    }
+  }
+
+  openBuyUsd(): void {
+    if (!this.usdAccount) {
+      this.activeCurrency = 'USD';
+      this.toast.show('Primero abrí tu cuenta en dólares', 'info');
+      return;
+    }
+    if (!this.arsAccountId) {
+      this.toast.show('No se encontró la cuenta en pesos', 'error');
+      return;
+    }
+    this.showSellUsd = false;
+    this.showBuyUsd = true;
+  }
+
+  closeBuyUsd(): void {
+    this.showBuyUsd = false;
+  }
+
+  openSellUsd(): void {
+    if (!this.usdAccount) {
+      this.toast.show('No tenés cuenta en dólares', 'error');
+      return;
+    }
+    this.showBuyUsd = false;
+    this.showSellUsd = true;
+  }
+
+  closeSellUsd(): void {
+    this.showSellUsd = false;
+  }
+
+  openReceiveAction(): void {
+    if (this.activeCurrency === 'USD') {
+      if (!this.usdAccount) {
+        this.toast.show('Primero abrí tu cuenta en dólares', 'info');
+        return;
+      }
+      this.showReceiveUsd = true;
+      return;
+    }
+    this.openMyQrModal();
+  }
+
+  closeReceiveUsd(): void {
+    this.showReceiveUsd = false;
+  }
+
+  async onTradeSuccess(result: UsdTradeSuccess): Promise<void> {
+    if (this.arsAccount) {
+      this.arsAccount = { ...this.arsAccount, balance: result.newBalanceArs };
+    }
+    if (this.usdAccount) {
+      this.usdAccount = { ...this.usdAccount, balance: result.newBalanceUsd };
+    }
+    if (result.exchangeRate) {
+      this.exchangeRate = result.exchangeRate;
+    }
+    this.userData = { ...this.userData, balance: result.newBalanceArs };
+    this.isBalanceUpdating = true;
     setTimeout(() => {
-      this.isBalanceUpdating = true;
+      this.isBalanceUpdating = false;
+      this.cdr.detectChanges();
+    }, 1200);
+    await this.loadUserAccounts();
+    void this.userDataStore.load(true).toPromise();
+    void this.transactionService.loadAllTransactions(true, this.activeAccountId);
+    this.cdr.detectChanges();
+  }
+
+  onDepositSuccess(): void {
+    this.isBalanceUpdating = true;
+    void this.loadUserAccounts().finally(() => {
       setTimeout(() => {
         this.isBalanceUpdating = false;
-      }, 1500);
-    }, 100);
+        this.cdr.detectChanges();
+      }, 1400);
+    });
+    void firstValueFrom(this.userDataStore.load(true)).catch(() => undefined);
   }
 
   private closeAllModals(): void {
@@ -310,7 +523,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   openTransferModal(): void {
-    this.transferSeed = null;
+    if (this.activeCurrency === 'USD' && !this.usdAccount) {
+      this.toast.show('Primero abrí tu cuenta en dólares', 'info');
+      return;
+    }
+    this.transferSeed = { preferredCurrency: this.activeCurrency };
     this.isBalanceDecreasing = false;
     this.openModal('transfer');
   }
@@ -322,6 +539,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   onTransferCompleted(data: TransferCompletedData): void {
     this.transferCompletedData = data;
+    void this.loadUserAccounts();
   }
 
   onReturnToFavoriteDetails(): void {
@@ -335,6 +553,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       destination: this.favoriteService.createTransferDataFromFavorite(favorite),
       step: 3,
       fromFavorite: true,
+      preferredCurrency: this.activeCurrency,
     };
     this.closeAllModals();
     this.openModal('transfer');
@@ -433,9 +652,5 @@ export class DashboardComponent implements OnInit, OnDestroy {
       logger.error('Error copying to clipboard:', error);
       this.toast.show(`No se pudo copiar el ${type}`, 'error');
     }
-  }
-
-  goToUsdAccount(): void {
-    this.router.navigate(['/usd-account']);
   }
 }

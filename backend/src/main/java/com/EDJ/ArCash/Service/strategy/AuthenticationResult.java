@@ -2,10 +2,6 @@ package com.EDJ.ArCash.Service.strategy;
 
 import com.EDJ.ArCash.Models.User;
 
-/**
- * Resultado de validar credenciales, sin emitir tokens ni resolver la cuenta.
- * Permite que AuthenticationStrategy no conozca TokenManagementStrategy.
- */
 public final class AuthenticationResult {
 
     private final boolean success;

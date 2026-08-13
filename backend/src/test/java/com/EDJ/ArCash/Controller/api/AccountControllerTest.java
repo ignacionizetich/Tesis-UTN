@@ -5,12 +5,12 @@ import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Service.AccountBalanceView;
-import com.EDJ.ArCash.Service.AccountService;
-import com.EDJ.ArCash.Service.AliasChangeResult;
-import com.EDJ.ArCash.Service.DepositResult;
-import com.EDJ.ArCash.Service.OpenUsdResult;
-import com.EDJ.ArCash.Service.QrDataResult;
+import com.EDJ.ArCash.Service.result.AccountBalanceView;
+import com.EDJ.ArCash.Service.interfaces.AccountService;
+import com.EDJ.ArCash.Service.result.AliasChangeResult;
+import com.EDJ.ArCash.Service.result.DepositResult;
+import com.EDJ.ArCash.Service.result.OpenUsdResult;
+import com.EDJ.ArCash.Service.result.QrDataResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,14 +37,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Tests de caracterizacion del contrato HTTP de /api/accounts.
- *
- * Desde que la identidad sale del SecurityContext, estos tests corren con la
- * cadena de filtros real y publican el principal con un post-processor, igual
- * que haria el filtro JWT en produccion. El rechazo de las peticiones anonimas
- * lo cubre AccountControllerSecurityTest.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -336,10 +328,6 @@ class AccountControllerTest {
                 .content("{\"newAlias\":\"mi.alias.nuevo\"}"));
     }
 
-    /**
-     * Publica en el SecurityContext el mismo principal que arma el filtro JWT en
-     * produccion: un CustomUserDetails con la entidad User ya cargada.
-     */
     private RequestPostProcessor comoUsuarioAutenticado() {
         CustomUserDetails principal = new CustomUserDetails(usuario(ID_USUARIO));
         return authentication(new UsernamePasswordAuthenticationToken(principal, null, List.of()));

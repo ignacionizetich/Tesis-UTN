@@ -4,7 +4,7 @@ import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Service.UserService;
+import com.EDJ.ArCash.Service.interfaces.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +28,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Verifica que changeUsername toma el userId del principal autenticado
- * (CustomUserDetails del SecurityContext), no de otra fuente.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -49,7 +45,7 @@ class AuthControllerChangeUsernameTest {
     @DisplayName("changeUsername pasa a UserService el ID del principal autenticado, no otro")
     void pasaIdDelPrincipalAutenticado() throws Exception {
         when(userService.changeUsername(eq(ID_AUTENTICADO), eq("nuevoalias")))
-                .thenReturn(com.EDJ.ArCash.Service.UsernameChangeResult.ok());
+                .thenReturn(com.EDJ.ArCash.Service.result.UsernameChangeResult.ok());
 
         mockMvc.perform(put("/api/auth/changeUsername")
                         .with(comoUsuarioAutenticado(ID_AUTENTICADO))
@@ -62,10 +58,6 @@ class AuthControllerChangeUsernameTest {
         verifyNoMoreInteractions(userService);
     }
 
-    /**
-     * Mismo criterio que AccountControllerTest / Fase 4: el filtro JWT publica
-     * un CustomUserDetails con la entidad User ya cargada.
-     */
     private RequestPostProcessor comoUsuarioAutenticado(long userId) {
         CustomUserDetails principal = new CustomUserDetails(usuario(userId));
         return authentication(new UsernamePasswordAuthenticationToken(principal, null, List.of()));

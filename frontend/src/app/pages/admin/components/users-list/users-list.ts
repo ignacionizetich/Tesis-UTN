@@ -12,6 +12,7 @@ import { UserResponse } from '../../../../models/admin.interface';
 import { AuthenticatedInfoComponent } from '../../../../components/ui/authenticated-info/authenticated-info';
 import { UserStatusConfirmModalComponent } from '../user-status-confirm-modal/user-status-confirm-modal';
 import { logger } from '../../../../shared/utils/logger';
+import { formatDni as formatDniAr } from '../../../../shared/utils/dni-format';
 
 @Component({
   selector: 'app-users-list',
@@ -33,6 +34,16 @@ export class UsersListComponent implements OnInit {
   loadingUserAction: number | null = null;
 
   private currentUserId = 0;
+
+  formatDni(dni: string | number | null | undefined): string {
+    return formatDniAr(dni);
+  }
+
+  initials(user: UserResponse): string {
+    const a = (user.name || '').trim().charAt(0);
+    const b = (user.lastName || '').trim().charAt(0);
+    return `${a}${b}`.toUpperCase() || '?';
+  }
 
   constructor(
     private adminService: AdminService,

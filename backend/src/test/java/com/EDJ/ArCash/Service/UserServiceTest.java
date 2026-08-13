@@ -1,4 +1,12 @@
 package com.EDJ.ArCash.Service;
+import com.EDJ.ArCash.Service.result.EmailActivationResult;
+import com.EDJ.ArCash.Service.result.RegistrationConflictCode;
+import com.EDJ.ArCash.Service.result.RegistrationConflictException;
+import com.EDJ.ArCash.Service.interfaces.AccountService;
+import com.EDJ.ArCash.Service.interfaces.EmailService;
+import com.EDJ.ArCash.Service.interfaces.UserService;
+import com.EDJ.ArCash.Service.interfaces.ValidationTokenService;
+import com.EDJ.ArCash.Service.impl.UserServiceImpl;
 
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Credentials;
@@ -30,9 +38,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Caracterizacion de UserService: registro (conflictos/camino feliz) y cambio de alias/username.
- */
 class UserServiceTest {
 
     private static final String EMAIL = "ana@test.com";
@@ -64,7 +69,7 @@ class UserServiceTest {
         validationTokenService = mock(ValidationTokenService.class);
         eventPublisher = mock(EventPublisher.class);
 
-        userService = new UserService(
+        userService = new UserServiceImpl(
                 passwordEncoder,
                 userRepository,
                 accountService,

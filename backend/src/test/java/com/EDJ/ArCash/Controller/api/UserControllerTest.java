@@ -1,10 +1,10 @@
 package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.NonAuthDTO.RegistrerRequest;
-import com.EDJ.ArCash.Service.RegisterResult;
-import com.EDJ.ArCash.Service.RegistrationConflictCode;
-import com.EDJ.ArCash.Service.RegistrationConflictMessages;
-import com.EDJ.ArCash.Service.UserService;
+import com.EDJ.ArCash.Service.result.RegisterResult;
+import com.EDJ.ArCash.Service.result.RegistrationConflictCode;
+import com.EDJ.ArCash.Service.result.RegistrationConflictMessages;
+import com.EDJ.ArCash.Service.interfaces.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +25,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Caracterizacion HTTP de POST /api/user/create (mensajes ES de conflictos).
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

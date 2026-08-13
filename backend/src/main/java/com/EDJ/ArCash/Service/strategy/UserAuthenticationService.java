@@ -11,11 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-/**
- * Valida usuario/password/activo.
- * No emite tokens ni conoce TokenManagementStrategy.
- * La cuenta ARS y la emisión de tokens las orquesta AuthService (mismo orden que antes).
- */
 @Service("userAuthenticationService")
 public class UserAuthenticationService implements AuthenticationStrategy {
 

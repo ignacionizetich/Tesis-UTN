@@ -1,0 +1,69 @@
+<div class="cards-list-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="cards-list-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cards-list-title"
+    (click)="$event.stopPropagation()">
+
+    <button type="button" class="cards-list-modal__close" (click)="closed.emit()" aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="cards-list-modal__header">
+      <div class="cards-list-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" stroke-width="2" />
+          <path d="M2 10h20" stroke="currentColor" stroke-width="2" />
+        </svg>
+      </div>
+      <div>
+        <h2 id="cards-list-title">Tus tarjetas</h2>
+        <p>
+          @if (pinConfigured) {
+          Prepagas virtuales protegidas con PIN
+          } @else {
+          Configurá un PIN de 6 dígitos para ver los datos
+          }
+        </p>
+      </div>
+    </header>
+
+    @if (loading) {
+    <p class="cards-list-modal__loading">Cargando tarjetas…</p>
+    } @else if (cards.length === 0) {
+    <p class="cards-list-modal__empty">Todavía no tenés prepagas. Se crean al abrir cada cuenta.</p>
+    } @else {
+    <div class="cards-list">
+      @for (card of cards; track card.id) {
+      <div
+        class="cards-list__item"
+        [class.cards-list__item--usd]="card.currency === 'USD'"
+        [class.cards-list__item--paused]="card.status === 'PAUSED'"
+        [class.cards-list__item--cancelled]="card.status === 'CANCELLED'">
+        <button type="button" class="cards-list__main" (click)="cardSelected.emit(card)">
+          <div class="cards-list__chip">{{ card.currency }}</div>
+          <div class="cards-list__body">
+            <strong>Prepaga {{ card.currency }}</strong>
+            <span>{{ masked(card.last4) }}</span>
+          </div>
+          @if (statusLabel(card); as label) {
+          <span class="cards-list__badge">{{ label }}</span>
+          }
+        </button>
+        @if (card.canReissue) {
+        <button
+          type="button"
+          class="cards-list__reissue"
+          (click)="onReissueClick($event, card)">
+          Solicitar nueva
+        </button>
+        } @else if (card.status === 'CANCELLED' && card.reissueMessage) {
+        <p class="cards-list__hint">{{ card.reissueMessage }}</p>
+        }
+      </div>
+      }
+    </div>
+    }
+  </div>
+</div>

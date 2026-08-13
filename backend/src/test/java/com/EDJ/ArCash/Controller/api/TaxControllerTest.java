@@ -1,6 +1,6 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.Service.CotizationUsdService;
+import com.EDJ.ArCash.Service.interfaces.CotizationUsdService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +16,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Tests de caracterizacion del contrato HTTP de /api/impuestos.
- * Congelan codigos de estado, nombres de claves JSON y textos de error
- * tal como los consume hoy el frontend Angular.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -40,6 +35,7 @@ class TaxControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.montoOriginal").value(10000.0))
                 .andExpect(jsonPath("$.moneda").value("ARS"))
+                .andExpect(jsonPath("$.alicuotaIva").value(21.0))
                 .andExpect(jsonPath("$.iva").value(2100.0))
                 .andExpect(jsonPath("$.totalFinal").value(12100.0))
                 // data-service.ts lee response.iva: si el campo se serializa como "IVA" el front rompe.
@@ -69,13 +65,24 @@ class TaxControllerTest {
     @DisplayName("calculateUSD devuelve montoOriginal en pesos con moneda USD")
     void calculateUsdDevuelveElMontoConvertidoAPesos() throws Exception {
         when(cotizationUsdService.obtenerCotizacionVenta()).thenReturn(1000.0);
+        when(cotizationUsdService.obtenerCotizacionCompra()).thenReturn(950.0);
+        when(cotizationUsdService.obtenerNombreCotizacion()).thenReturn("Oficial");
+        when(cotizationUsdService.obtenerCasaCotizacion()).thenReturn("oficial");
+        when(cotizationUsdService.obtenerFechaActualizacion()).thenReturn("2026-08-13T16:00:00.000Z");
 
         mockMvc.perform(get("/api/impuestos/calculateUSD").param("montoUSD", "100"))
                 .andExpect(status().isOk())
                 // El dashboard rotula montoOriginal como "Monto en ARS": debe seguir viniendo convertido.
+                .andExpect(jsonPath("$.montoUsd").value(100.0))
                 .andExpect(jsonPath("$.montoOriginal").value(100000.0))
                 .andExpect(jsonPath("$.moneda").value("USD"))
                 .andExpect(jsonPath("$.precioDolar").value(1000.0))
+                .andExpect(jsonPath("$.dolarVenta").value(1000.0))
+                .andExpect(jsonPath("$.dolarCompra").value(950.0))
+                .andExpect(jsonPath("$.nombreCotizacion").value("Oficial"))
+                .andExpect(jsonPath("$.casa").value("oficial"))
+                .andExpect(jsonPath("$.fechaActualizacion").value("2026-08-13T16:00:00.000Z"))
+                .andExpect(jsonPath("$.alicuotaIva").value(21.0))
                 .andExpect(jsonPath("$.iva").value(21000.0))
                 .andExpect(jsonPath("$.totalFinal").value(121000.0));
     }

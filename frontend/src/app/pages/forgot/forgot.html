@@ -1,53 +1,32 @@
 <app-theme-toggle></app-theme-toggle>
-<app-back-button></app-back-button>
 
-<main class="main auth-shell forgot-page">
-
-    <aside class="left-panel">
-        <app-brand-logo></app-brand-logo>
-
-        <ul class="recovery-features">
-            
-            <li class="feature">
-                <div class="feature-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                        <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" stroke="currentColor" stroke-width="2" />
-                        <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" stroke="currentColor" stroke-width="2" />
-                        <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3" stroke="currentColor" stroke-width="2" />
-                        <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3" stroke="currentColor" stroke-width="2" />
-                    </svg>
-                </div>
-                <div class="feature-text">
-                    <h3>Recuperación Rápida</h3>
-                    <p>Acceso inmediato a través de email verificado</p>
-                </div>
-            </li>
-
-            <li class="feature">
-                <div class="feature-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor"
-                            stroke-width="2" />
-                        <circle cx="12" cy="16" r="1" fill="currentColor" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2" />
-                    </svg>
-                </div>
-                <div class="feature-text">
-                    <h3>Máxima Seguridad</h3>
-                    <p>Encriptación de extremo a extremo en todos los procesos</p>
-                </div>
-            </li>
+<div class="forgot-page">
+  <main class="forgot-page__main">
+    <aside class="forgot-page__aside" aria-label="Marca Arcash">
+      <app-brand-logo></app-brand-logo>
+      <div class="forgot-page__pitch">
+        <h2>Recuperá tu acceso</h2>
+        <p>
+          Te enviamos un enlace seguro al email para crear una nueva contraseña.
+        </p>
+        <ul class="forgot-page__perks">
+          <li>Proceso simple y rápido</li>
+          <li>Enlace válido por tiempo limitado</li>
+          <li>Tu cuenta queda protegida</li>
         </ul>
+
+        <app-back-button
+          variant="inline"
+          explicitRoute="/login"
+          label="Volver a ingresar"
+        ></app-back-button>
+      </div>
     </aside>
 
-    <div class="right-panel">
+    <section class="forgot-page__form-wrap" aria-label="Recuperar contraseña">
+      <app-forgot-password-form (emailSent)="onEmailSent()"></app-forgot-password-form>
+    </section>
+  </main>
 
-        <app-forgot-password-form (emailSent)="onEmailSent()"></app-forgot-password-form>
-
-    </div>
-</main>
-
-<footer>
-    <app-global-footer></app-global-footer>
-</footer>
+  <app-footer></app-footer>
+</div>

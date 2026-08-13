@@ -1,7 +1,7 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.Service.EmailActivationResult;
-import com.EDJ.ArCash.Service.UserService;
+import com.EDJ.ArCash.Service.result.EmailActivationResult;
+import com.EDJ.ArCash.Service.interfaces.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -2,11 +2,6 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { logger } from '../shared/utils/logger';
 
-/**
- * Guard que protege la ruta /resend para que no sea accesible directamente desde la URL.
- * Solo permite el acceso si el usuario ha sido redirigido desde el sistema interno
- * o desde páginas específicas como login, register o validate.
- */
 export const resendGuard: CanActivateFn = () => {
   const router = inject(Router);
   

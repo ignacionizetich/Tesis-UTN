@@ -1,0 +1,273 @@
+:host {
+  display: contents;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+}
+
+.loans-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.loans-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lift);
+  padding: 1.25rem 1.15rem 1.3rem;
+  color: var(--text-primary);
+}
+
+.loans-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.35rem;
+  cursor: pointer;
+  box-shadow: none !important;
+}
+
+.loans-modal__header {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-right: 2rem;
+}
+
+.loans-modal__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text-accent) 12%, transparent);
+  color: var(--text-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.loans-modal__header h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.15rem;
+  font-weight: 750;
+  background: none;
+  -webkit-text-fill-color: unset;
+  color: var(--text-primary);
+}
+
+.loans-modal__header p {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.loans-back {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+  cursor: pointer;
+  box-shadow: none !important;
+}
+
+.loans-btn {
+  appearance: none;
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 650;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: none !important;
+  margin-top: 0.5rem;
+}
+
+.loans-btn--primary {
+  background: var(--text-accent) !important;
+  color: #fff !important;
+}
+
+.loans-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.loans-empty,
+.loans-hint,
+.loans-fine {
+  margin: 0.75rem 0 0;
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.loans-list {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.loans-list__item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  text-align: left;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  background: var(--canvas);
+  color: var(--text-primary);
+  padding: 0.8rem 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: none !important;
+}
+
+.loans-list__item strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.loans-list__item span {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.loans-list__meta {
+  font-size: 0.78rem !important;
+  font-weight: 650;
+  color: var(--text-accent) !important;
+  white-space: nowrap;
+}
+
+.loans-label {
+  display: block;
+  margin: 0.65rem 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.loans-input {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 650;
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.loans-terms {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+}
+
+.loans-term {
+  appearance: none;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.55rem 0.45rem;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-family: 'Manrope', sans-serif;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.loans-term small {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.loans-term--on {
+  background: var(--brand-soft);
+  border-color: var(--text-accent);
+  color: var(--text-accent);
+}
+
+.loans-preview {
+  margin-top: 0.9rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: var(--canvas);
+  border: 1px solid var(--border-light);
+}
+
+.loans-preview__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  font-size: 0.88rem;
+}
+
+.loans-preview__row span {
+  color: var(--text-secondary);
+}
+
+.loans-sub {
+  margin: 1rem 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.loans-schedule {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.loans-schedule li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.82rem;
+}
+
+.loans-schedule--paid {
+  opacity: 0.65;
+}

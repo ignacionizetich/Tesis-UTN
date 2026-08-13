@@ -1,61 +1,72 @@
-<div class="modal" (click)="onBackdrop($event)">
-  <div class="modal-content delete-favorite-modal">
-    <div class="modal-header">
-      <h2>Eliminar Contacto Favorito</h2>
-      <span class="close-button" (click)="closed.emit()">&times;</span>
-    </div>
+<div class="del-fav-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="del-fav-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="del-fav-title"
+    (click)="$event.stopPropagation()">
 
-    <div class="delete-confirmation-content">
-      <div class="warning-icon">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
-          <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                stroke="var(--plasma-pink)"
-                stroke-width="2"
-                stroke-linecap="round"/>
+    <button
+      type="button"
+      class="del-fav-modal__close"
+      (click)="close()"
+      [disabled]="isDeletingFavorite"
+      aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="del-fav-modal__header">
+      <div class="del-fav-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round" />
+          <path
+            d="M10 11v6M14 11v6"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round" />
         </svg>
       </div>
-
-      <div class="confirmation-message">
-        <h3>¿Estás seguro de que querés eliminar este contacto?</h3>
-        <p>Esta acción no se puede deshacer.</p>
-
-        <div class="favorite-to-delete">
-          <div class="favorite-avatar small">
-            <span>{{ initials(favorite.accountOwnerName) }}</span>
-          </div>
-          <div class="favorite-details">
-            <strong>{{ favorite.contactAlias }}</strong>
-            <span>{{ favorite.accountOwnerName }}</span>
-          </div>
-        </div>
+      <div>
+        <h2 id="del-fav-title">Eliminar favorito</h2>
+        <p>Esta acción no se puede deshacer</p>
       </div>
+    </header>
 
-      <div class="confirmation-actions">
-        @if (!isDeletingFavorite) {
-        <button class="cancel-btn" (click)="closed.emit()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2"/>
-          </svg>
-          Cancelar
-        </button>
+    <div class="del-fav-contact">
+      <div class="del-fav-contact__avatar" aria-hidden="true">{{ contactInitials }}</div>
+      <div class="del-fav-contact__body">
+        <strong>{{ favorite.contactAlias }}</strong>
+        <span>{{ favorite.accountOwnerName }}</span>
+        @if (favorite.accountAlias) {
+        <span class="del-fav-contact__meta">{{ favorite.accountAlias }}</span>
         }
-
-        <button class="delete-btn" (click)="confirm()" [disabled]="isDeletingFavorite">
-          @if (isDeletingFavorite) {
-            <div class="button-loading">
-              <div class="spinner"></div>
-              Eliminando...
-            </div>
-          } @else {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
-                    stroke="currentColor"
-                    stroke-width="2"/>
-            </svg>
-            Sí, eliminar
-          }
-        </button>
       </div>
+    </div>
+
+    <p class="del-fav-hint">
+      ¿Seguro que querés quitar este contacto de tus favoritos?
+    </p>
+
+    <div class="del-fav-actions">
+      <button
+        type="button"
+        class="del-fav-btn del-fav-btn--ghost"
+        (click)="close()"
+        [disabled]="isDeletingFavorite">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="del-fav-btn del-fav-btn--danger"
+        (click)="confirm()"
+        [disabled]="isDeletingFavorite">
+        {{ isDeletingFavorite ? 'Eliminando...' : 'Sí, eliminar' }}
+      </button>
     </div>
   </div>
 </div>

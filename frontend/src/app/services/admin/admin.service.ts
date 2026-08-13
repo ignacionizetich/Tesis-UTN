@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { UserResponse, AdminRequest } from '../../models/admin.interface';
+import { AdminMetrics } from '../../models/admin-metrics';
+import { LoanRatesResponse, LoanRatesUpdateRequest } from '../../models/loan-rates';
 import { environment } from '../../../environments/environment';
 import { SessionStore } from '../../core/session/session.store';
 
@@ -18,6 +20,18 @@ export class AdminService {
 
   checkAccess(): Observable<any> {
     return this.http.get(`${this.apiUrl}/check-access`);
+  }
+
+  getMetrics(): Observable<AdminMetrics> {
+    return this.http.get<AdminMetrics>(`${this.apiUrl}/metrics`);
+  }
+
+  getLoanRates(): Observable<LoanRatesResponse> {
+    return this.http.get<LoanRatesResponse>(`${this.apiUrl}/loan-rates`);
+  }
+
+  updateLoanRates(payload: LoanRatesUpdateRequest): Observable<LoanRatesResponse> {
+    return this.http.put<LoanRatesResponse>(`${this.apiUrl}/loan-rates`, payload);
   }
 
   getAuthenticatedUsers(): Observable<UserResponse[]> {

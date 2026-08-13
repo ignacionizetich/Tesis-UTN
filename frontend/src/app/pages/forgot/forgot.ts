@@ -1,32 +1,28 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeToggleComponent } from '../../components/ui/theme-toggle/theme-toggle';
 import { BackButtonComponent } from '../../components/ui/back-button/back-button';
 import { BrandLogoComponent } from '../../components/ui/brand-logo/brand-logo';
 import { ForgotPasswordFormComponent } from '../../components/forms/forgot-password-form/forgot-password-form';
-import { GlobalFooterComponent } from '../../components/ui/global-footer/global-footer';
+import { Footer } from '../../components/footer/footer';
 import { logger } from '../../shared/utils/logger';
 
 @Component({
   selector: 'app-forgot',
   standalone: true,
   imports: [
-    FormsModule,
     CommonModule,
     ThemeToggleComponent,
     BackButtonComponent,
     BrandLogoComponent,
     ForgotPasswordFormComponent,
-    GlobalFooterComponent
+    Footer,
   ],
   templateUrl: './forgot.html',
-  styleUrls: ['./forgot.css']
+  styleUrls: ['./forgot.css'],
 })
-export class ForgotComponent  {
-  
-  onEmailSent(){
-    logger.debug("Correo reenviado correctamente!")
+export class ForgotComponent {
+  onEmailSent(): void {
+    logger.debug('Correo de recuperación enviado correctamente');
   }
 }

@@ -7,7 +7,7 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.CredentialRepository;
 import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
-import com.EDJ.ArCash.Service.AdminService;
+import com.EDJ.ArCash.Service.interfaces.AdminService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,10 +27,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * disableUser corta la sesion de inmediato: revoca refresh y el filtro rechaza
- * active=false con "Cuenta deshabilitada".
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

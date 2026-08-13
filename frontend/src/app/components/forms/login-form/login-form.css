@@ -1,1 +1,247 @@
-/* Base: styles/auth-form.css (global, scoped .auth-shell) */
+/* Login form — mismo lenguaje que register-form */
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.login-form {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 1.6rem 1.5rem;
+  box-shadow: var(--shadow-soft);
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  animation: formIn 0.45s ease-out both;
+}
+
+@keyframes formIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-form__header {
+  margin-bottom: 1.5rem;
+}
+
+.login-form__header h2 {
+  margin: 0 0 0.35rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.login-form__header p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.field {
+  margin-bottom: 1.1rem;
+  min-width: 0;
+}
+
+.field__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.field__label-row label {
+  margin-bottom: 0;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.field__control {
+  position: relative;
+}
+
+.field__control input {
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--canvas);
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary);
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.95rem;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.field__control input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.75;
+  -webkit-text-fill-color: var(--text-secondary);
+}
+
+.field__control input:focus {
+  border-color: var(--text-accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.14);
+}
+
+.field__control--password input {
+  padding-right: 2.75rem;
+}
+
+.field__control .password-toggle {
+  position: absolute;
+  right: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--text-secondary) !important;
+  cursor: pointer;
+  padding: 0.3rem !important;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.field__control .password-toggle:hover {
+  color: var(--text-accent) !important;
+  background: var(--brand-soft) !important;
+  transform: translateY(-50%);
+}
+
+.field__errors {
+  margin-top: 0.4rem;
+}
+
+.field__errors small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--danger);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.login-form__forgot {
+  appearance: none;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--text-accent) !important;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 !important;
+  white-space: nowrap;
+}
+
+.login-form__forgot:hover {
+  text-decoration: underline;
+  transform: none !important;
+  background: none !important;
+}
+
+.login-form__submit {
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.9rem 1.25rem;
+  border: none !important;
+  border-radius: 14px;
+  background: var(--text-accent) !important;
+  color: #fff !important;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(var(--brand-rgb), 0.25);
+}
+
+.login-form__submit:hover:not(:disabled) {
+  background: var(--brand-hover) !important;
+  color: #fff !important;
+  transform: translateY(-1px);
+}
+
+.login-form__submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.login-form__register {
+  margin: 1.15rem 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.login-form__register-link {
+  appearance: none;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--text-accent) !important;
+  font-weight: 700;
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0 0.15rem !important;
+}
+
+.login-form__register-link:hover {
+  text-decoration: underline;
+  transform: none;
+}
+
+.login-form__decoy {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 640px) {
+  .login-form {
+    padding: 1.35rem 1.1rem 1.25rem;
+    border-radius: var(--radius-md);
+    max-width: none;
+  }
+
+  .field__label-row {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-form {
+    animation: none;
+  }
+}

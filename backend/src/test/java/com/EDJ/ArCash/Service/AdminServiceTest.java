@@ -1,4 +1,9 @@
 package com.EDJ.ArCash.Service;
+import com.EDJ.ArCash.Service.result.AdminCreateResult;
+import com.EDJ.ArCash.Service.interfaces.AccountService;
+import com.EDJ.ArCash.Service.interfaces.AdminService;
+import com.EDJ.ArCash.Service.interfaces.SessionService;
+import com.EDJ.ArCash.Service.impl.AdminServiceImpl;
 
 import com.EDJ.ArCash.DTO.AuthDTO.AdminRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.UserResponse;
@@ -44,7 +49,7 @@ class AdminServiceTest {
         accountService = mock(AccountService.class);
         sessionService = mock(SessionService.class);
         passwordEncoder = mock(PasswordEncoder.class);
-        adminService = new AdminService();
+        adminService = new AdminServiceImpl();
         ReflectionTestUtils.setField(adminService, "userRepository", userRepository);
         ReflectionTestUtils.setField(adminService, "accountService", accountService);
         ReflectionTestUtils.setField(adminService, "sessionService", sessionService);

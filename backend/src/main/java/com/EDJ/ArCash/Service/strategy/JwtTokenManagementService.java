@@ -6,7 +6,7 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.Security.JwtService;
-import com.EDJ.ArCash.Service.SessionService;
+import com.EDJ.ArCash.Service.interfaces.SessionService;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +18,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Implementación de TokenManagementStrategy usando JWT
- * Responsable únicamente de la gestión de tokens de autenticación
- */
 @Service("jwtTokenManagementService")
 public class JwtTokenManagementService implements TokenManagementStrategy {
 
@@ -146,12 +142,6 @@ public class JwtTokenManagementService implements TokenManagementStrategy {
         }
     }
 
-    /**
-     * Verifica si existe un token activo para el usuario
-     * 
-     * @param userId ID del usuario
-     * @return true si existe un token activo, false en caso contrario
-     */
     public boolean hasActiveToken(Long userId) {
         return refreshTokenRepository.existsByUser_IdAndRevokedFalse(userId);
     }

@@ -1,0 +1,705 @@
+/* Transfer wizard — rebrand limpio */
+
+:host {
+  display: contents;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+}
+
+.transfer-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+  backdrop-filter: blur(6px);
+  animation: transferFade 0.22s ease-out both;
+}
+
+.transfer-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lift);
+  padding: 1.35rem 1.25rem 1.25rem;
+  color: var(--text-primary);
+  animation: transferRise 0.28s ease-out both;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.transfer-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.transfer-modal__close:hover {
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  transform: none;
+}
+
+.transfer-modal__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+  padding-right: 2rem;
+}
+
+.transfer-modal__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.transfer-modal__heading h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: unset;
+  text-align: left;
+}
+
+.transfer-modal__heading p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.transfer-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 1.15rem;
+}
+
+.transfer-steps span {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border-light);
+}
+
+.transfer-steps span.active {
+  background: color-mix(in srgb, var(--text-accent) 45%, var(--border-light));
+}
+
+.transfer-steps span.done,
+.transfer-steps span.active.done {
+  background: var(--text-accent);
+}
+
+.transfer-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.transfer-field input,
+.transfer-amount input {
+  width: 100%;
+  border: none !important;
+  outline: none;
+  background: transparent !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: 'Manrope', sans-serif;
+  color: var(--text-primary) !important;
+}
+
+.transfer-field {
+  background: var(--canvas);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.transfer-field:focus-within {
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-accent) 16%, transparent);
+  background: var(--surface);
+}
+
+.transfer-field input {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.transfer-hint {
+  margin: 0.55rem 0 1rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.transfer-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.transfer-actions--stack {
+  grid-template-columns: 1fr;
+}
+
+.transfer-btn {
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.transfer-btn--ghost {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.transfer-btn--ghost:hover:not(:disabled) {
+  background: var(--brand-soft) !important;
+  transform: none;
+}
+
+.transfer-btn--primary {
+  background: var(--text-accent) !important;
+  color: #fff !important;
+}
+
+.transfer-btn--primary:hover:not(:disabled) {
+  background: var(--brand-hover) !important;
+  transform: none;
+}
+
+.transfer-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Step 1: if only primary then QR below, stack when 2 full width buttons */
+.transfer-step > .transfer-actions {
+  grid-template-columns: 1fr;
+}
+
+.transfer-step form .transfer-actions,
+.transfer-step > .transfer-actions:has(.transfer-btn--ghost):has(.transfer-btn--primary) {
+  grid-template-columns: 1fr 1.25fr;
+}
+
+.transfer-recipient {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 0.95rem;
+  background: var(--canvas);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  margin-bottom: 0.75rem;
+}
+
+.transfer-recipient__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--text-accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.transfer-recipient__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.transfer-recipient__body strong {
+  font-size: 0.98rem;
+  color: var(--text-primary);
+}
+
+.transfer-recipient__body span {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.transfer-recipient__meta {
+  font-size: 0.75rem !important;
+}
+
+.transfer-recipient__badge {
+  align-self: flex-start;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--text-accent) !important;
+  font-size: 0.7rem !important;
+  font-weight: 700;
+}
+
+.transfer-details-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  background: var(--surface);
+}
+
+.transfer-details-card div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.transfer-details-card span {
+  color: var(--text-secondary);
+}
+
+.transfer-details-card strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: right;
+  word-break: break-all;
+}
+
+.transfer-to-chip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  padding: 0.7rem 0.85rem;
+  margin-bottom: 1rem;
+  background: var(--canvas);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+}
+
+.transfer-to-chip span {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  font-weight: 650;
+}
+
+.transfer-to-chip strong {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.transfer-to-chip small {
+  width: 100%;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.transfer-currency {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.currency-pill {
+  appearance: none;
+  border: 1px solid var(--border-light);
+  background: var(--canvas) !important;
+  border-radius: 14px;
+  padding: 0.75rem 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: 'Manrope', sans-serif;
+  color: var(--text-primary) !important;
+}
+
+.currency-pill span {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.currency-pill small {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.currency-pill:hover {
+  border-color: color-mix(in srgb, var(--text-accent) 30%, var(--border-light));
+  background: var(--brand-soft) !important;
+  transform: none;
+}
+
+.currency-pill--active {
+  border-color: color-mix(in srgb, var(--text-accent) 45%, var(--border-light));
+  background: var(--brand-soft) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-accent) 12%, transparent) !important;
+}
+
+.currency-pill--active span {
+  color: var(--text-accent);
+}
+
+.transfer-amount {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--canvas);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.85rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.transfer-amount--active,
+.transfer-amount:focus-within {
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-accent) 16%, transparent);
+  background: var(--surface);
+}
+
+.transfer-amount > span {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text-accent);
+}
+
+.transfer-amount input {
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  appearance: textfield;
+}
+
+.transfer-amount input::-webkit-outer-spin-button,
+.transfer-amount input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.transfer-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  margin-bottom: 1rem;
+  background: var(--canvas);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+}
+
+.transfer-summary span {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.transfer-summary strong {
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.transfer-alert {
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin-bottom: 0.85rem;
+}
+
+.transfer-alert--warn {
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+  color: var(--warning);
+}
+
+.transfer-alert--info {
+  background: var(--brand-soft);
+  border: 1px solid color-mix(in srgb, var(--text-accent) 25%, transparent);
+  color: var(--text-accent);
+}
+
+.transfer-scanner__title {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.transfer-scanner__frame {
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 0.85rem;
+  background: #0b1220;
+}
+
+.transfer-scanner__frame ::ng-deep video,
+.transfer-scanner__frame ::ng-deep zxing-scanner {
+  width: 100% !important;
+  max-height: 280px;
+  object-fit: cover;
+}
+
+.transfer-success {
+  text-align: center;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.transfer-success__icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 0.85rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.transfer-success h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.transfer-success > p {
+  margin: 0 0 1.1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.transfer-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem 0.5rem 1rem;
+  gap: 0.55rem;
+  min-height: 220px;
+  justify-content: center;
+}
+
+.transfer-status h2 {
+  margin: 0.35rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: unset;
+  text-align: center;
+}
+
+.transfer-status p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  max-width: 30ch;
+}
+
+.transfer-status p strong {
+  color: var(--text-primary);
+}
+
+.transfer-status__spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid var(--border-light);
+  border-top-color: var(--text-accent);
+  animation: transferSpin 0.85s linear infinite;
+}
+
+.transfer-status__bar {
+  width: min(220px, 80%);
+  height: 4px;
+  margin-top: 0.85rem;
+  border-radius: 999px;
+  background: var(--border-light);
+  overflow: hidden;
+}
+
+.transfer-status__bar span {
+  display: block;
+  height: 100%;
+  width: 40%;
+  border-radius: inherit;
+  background: var(--text-accent);
+  animation: transferBar 1.4s ease-in-out infinite;
+}
+
+.transfer-status__check {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.transfer-status--ok h2 {
+  color: var(--success);
+}
+
+.transfer-status--ok {
+  position: relative;
+  padding-top: 0.5rem;
+}
+
+.transfer-modal__close--on-status {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.transfer-status__actions {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.transfer-loading {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(4px);
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  z-index: 5;
+}
+
+.transfer-loading p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+@keyframes transferFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes transferRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes transferSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes transferBar {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+@media (max-width: 420px) {
+  .transfer-step form .transfer-actions,
+  .transfer-step > .transfer-actions:has(.transfer-btn--ghost):has(.transfer-btn--primary) {
+    grid-template-columns: 1fr;
+  }
+
+  .transfer-amount input {
+    font-size: 1.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transfer-modal,
+  .transfer-modal__panel,
+  .transfer-status__spinner,
+  .transfer-status__bar span {
+    animation: none !important;
+  }
+}

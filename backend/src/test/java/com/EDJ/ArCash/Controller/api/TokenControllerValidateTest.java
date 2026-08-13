@@ -1,7 +1,7 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.Service.EmailActivationResult;
-import com.EDJ.ArCash.Service.UserService;
+import com.EDJ.ArCash.Service.result.EmailActivationResult;
+import com.EDJ.ArCash.Service.interfaces.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +16,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Contrato HTTP de /api/auth/validate (mapping desde EmailActivationResult).
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

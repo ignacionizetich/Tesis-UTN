@@ -33,12 +33,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Caracterizacion del JwtAuthenticationFilter contra la cadena real.
- *
- * Pega a GET /api/accounts/user-accounts porque exige autenticacion y, con el
- * usuario recien persistido y sin cuentas, responde 200 con lista vacia.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

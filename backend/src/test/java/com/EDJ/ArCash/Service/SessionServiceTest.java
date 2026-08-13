@@ -1,4 +1,6 @@
 package com.EDJ.ArCash.Service;
+import com.EDJ.ArCash.Service.interfaces.SessionService;
+import com.EDJ.ArCash.Service.impl.SessionServiceImpl;
 
 import com.EDJ.ArCash.Models.RefreshToken;
 import com.EDJ.ArCash.Models.User;
@@ -19,9 +21,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Caracterizacion de SessionService (antes metodos de sesion en JwtUtils).
- */
 class SessionServiceTest {
 
     private static final long ID_USUARIO = 7L;
@@ -35,7 +34,7 @@ class SessionServiceTest {
     void setUp() {
         userRepository = mock(UserRepository.class);
         refreshTokenRepository = mock(RefreshTokenRepository.class);
-        sessionService = new SessionService(userRepository, refreshTokenRepository);
+        sessionService = new SessionServiceImpl(userRepository, refreshTokenRepository);
 
         usuario = new User();
         usuario.setId(ID_USUARIO);

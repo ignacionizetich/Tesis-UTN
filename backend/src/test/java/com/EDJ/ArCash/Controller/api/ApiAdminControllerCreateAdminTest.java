@@ -8,8 +8,8 @@ import com.EDJ.ArCash.Repository.CredentialRepository;
 import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.Security.JwtService;
-import com.EDJ.ArCash.Service.AdminCreateResult;
-import com.EDJ.ArCash.Service.AdminService;
+import com.EDJ.ArCash.Service.result.AdminCreateResult;
+import com.EDJ.ArCash.Service.interfaces.AdminService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,9 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Contrato HTTP de create-admin: mensajes de conflicto y ausencia de "detalle".
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

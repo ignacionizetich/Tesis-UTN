@@ -1,65 +1,211 @@
-<div class="modal" (click)="onBackdrop($event)">
-  <div class="modal-content">
-    <span class="close-button" (click)="close()">&times;</span>
-    <h2>Perfil de Usuario</h2>
-    <div class="profile-details">
-      <div class="profile-photo">
-        <svg width="50" height="50" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="12" fill="#ccc" />
+<div class="profile-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="profile-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="profile-title"
+    (click)="$event.stopPropagation()">
+
+    <button
+      type="button"
+      class="profile-modal__close"
+      (click)="close()"
+      [disabled]="savingUsername || savingAlias"
+      aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="profile-modal__header">
+      <div class="profile-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           <path
-            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-            fill="#666"
-          />
+            d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round" />
+          <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" />
         </svg>
       </div>
-      <p><strong>Nombre:</strong> <span>{{ userData.name }}</span></p>
-      <p><strong>Apellido:</strong> <span>{{ userData.lastName }}</span></p>
-      <p><strong>Correo:</strong> <span>{{ userData.email }}</span></p>
-      <p><strong>DNI:</strong> <span>{{ userData.dni }}</span></p>
+      <div>
+        <h2 id="profile-title">Tu perfil</h2>
+        <p>Datos personales y de la cuenta</p>
+      </div>
+    </header>
 
-      <p>
-        <strong>Nombre de usuario:</strong>
-        @if (!editingUsername) {
-        <span>{{ userData.username }}</span>
-        }
-        @if (editingUsername) {
-        <input
-          type="text"
-          [(ngModel)]="newUsername"
-          (keydown.enter)="saveUsername()"
-          (keydown.escape)="cancelEditUsername()"
-          maxlength="25"
-        />
-        }
-        @if (!editingUsername) {
-        <button (click)="startEditUsername()" title="Editar nombre de usuario">
-          <i class="fas fa-pencil-alt"></i>
-        </button>
-        }
-      </p>
-
-      <p>
-        <strong>Alias:</strong>
-        @if (!editingAlias) {
-        <span>{{ userData.alias }}</span>
-        }
-        @if (editingAlias) {
-        <input
-          type="text"
-          [(ngModel)]="newAlias"
-          (keydown.enter)="saveAlias()"
-          (keydown.escape)="cancelEditAlias()"
-          maxlength="25"
-        />
-        }
-        @if (!editingAlias) {
-        <button (click)="startEditAlias()" title="Editar alias">
-          <i class="fas fa-pencil-alt"></i>
-        </button>
-        }
-      </p>
-
-      <p><strong>CVU:</strong> <span>{{ userData.cvu }}</span></p>
+    <div class="profile-hero">
+      <div class="profile-hero__avatar" aria-hidden="true">{{ initials }}</div>
+      <div class="profile-hero__text">
+        <strong>{{ fullName || 'Usuario' }}</strong>
+        <span>{{ userData.email || '—' }}</span>
+      </div>
     </div>
+
+    <section class="profile-block" aria-label="Datos personales">
+      <h3 class="profile-block__title">Datos personales</h3>
+      <ul class="profile-facts">
+        <li>
+          <span>Nombre</span>
+          <strong>{{ userData.name || '—' }}</strong>
+        </li>
+        <li>
+          <span>Apellido</span>
+          <strong>{{ userData.lastName || '—' }}</strong>
+        </li>
+        <li>
+          <span>DNI</span>
+          <strong>{{ formatDni(userData.dni) || '—' }}</strong>
+        </li>
+        <li>
+          <span>Correo</span>
+          <strong class="profile-facts__wrap">{{ userData.email || '—' }}</strong>
+        </li>
+      </ul>
+    </section>
+
+    <section class="profile-block" aria-label="Cuenta">
+      <h3 class="profile-block__title">Cuenta</h3>
+
+      <div class="profile-edit-row">
+        <div class="profile-edit-row__label">
+          <span>Usuario</span>
+          @if (!editingUsername) {
+          <strong>{{ userData.username || '—' }}</strong>
+          }
+        </div>
+        @if (!editingUsername) {
+        <button
+          type="button"
+          class="profile-edit-row__action"
+          (click)="startEditUsername()"
+          [disabled]="editingAlias || savingAlias"
+          aria-label="Editar usuario">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path
+              d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        }
+      </div>
+
+      @if (editingUsername) {
+      <div class="profile-edit-form">
+        <div class="profile-field" [class.profile-field--active]="!!newUsername">
+          <input
+            type="text"
+            [(ngModel)]="newUsername"
+            name="newUsername"
+            maxlength="25"
+            autocomplete="username"
+            [disabled]="savingUsername"
+            (keydown.enter)="saveUsername()"
+            (keydown.escape)="cancelEditUsername()"
+            aria-label="Nuevo nombre de usuario"
+          />
+        </div>
+        <p class="profile-hint">Letras y números, 4 a 25 caracteres.</p>
+        <div class="profile-edit-actions">
+          <button
+            type="button"
+            class="profile-btn profile-btn--ghost"
+            (click)="cancelEditUsername()"
+            [disabled]="savingUsername">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="profile-btn profile-btn--primary"
+            (click)="saveUsername()"
+            [disabled]="savingUsername || !newUsername.trim()">
+            {{ savingUsername ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+      }
+
+      <div class="profile-edit-row">
+        <div class="profile-edit-row__label">
+          <span>Alias</span>
+          @if (!editingAlias) {
+          <strong>{{ userData.alias || '—' }}</strong>
+          }
+        </div>
+        @if (!editingAlias) {
+        <button
+          type="button"
+          class="profile-edit-row__action"
+          (click)="startEditAlias()"
+          [disabled]="editingUsername || savingUsername"
+          aria-label="Editar alias">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path
+              d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        }
+      </div>
+
+      @if (editingAlias) {
+      <div class="profile-edit-form">
+        <div class="profile-field" [class.profile-field--active]="!!newAlias">
+          <input
+            type="text"
+            [(ngModel)]="newAlias"
+            name="newAlias"
+            maxlength="25"
+            autocomplete="off"
+            [disabled]="savingAlias"
+            (keydown.enter)="saveAlias()"
+            (keydown.escape)="cancelEditAlias()"
+            aria-label="Nuevo alias"
+          />
+        </div>
+        <p class="profile-hint">Ej. nombre.apellido — con puntos, 4 a 25 caracteres.</p>
+        <div class="profile-edit-actions">
+          <button
+            type="button"
+            class="profile-btn profile-btn--ghost"
+            (click)="cancelEditAlias()"
+            [disabled]="savingAlias">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="profile-btn profile-btn--primary"
+            (click)="saveAlias()"
+            [disabled]="savingAlias || !newAlias.trim()">
+            {{ savingAlias ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+      }
+
+      <ul class="profile-facts profile-facts--tight">
+        <li>
+          <span>CVU</span>
+          <strong class="profile-facts__mono">{{ userData.cvu || '—' }}</strong>
+        </li>
+      </ul>
+    </section>
   </div>
 </div>

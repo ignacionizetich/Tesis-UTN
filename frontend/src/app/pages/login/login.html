@@ -1,16 +1,32 @@
 <app-theme-toggle></app-theme-toggle>
-<app-back-button [explicitRoute]="'/'"></app-back-button>
 
-<main class="main auth-shell"> 
-    <aside class="left-panel">
-        <app-brand-logo></app-brand-logo>
+<div class="login-page">
+  <main class="login-page__main">
+    <aside class="login-page__aside" aria-label="Marca Arcash">
+      <app-brand-logo></app-brand-logo>
+      <div class="login-page__pitch">
+        <h2>Ingresá a tu billetera</h2>
+        <p>
+          Accedé a pesos y dólares, transferí y cobrá con QR en un solo lugar.
+        </p>
+        <ul class="login-page__perks">
+          <li>Saldo y movimientos al instante</li>
+          <li>Transferencias con alias, CVU o favoritos</li>
+          <li>Sesión protegida y fácil de usar</li>
+        </ul>
+
+        <app-back-button
+          variant="inline"
+          explicitRoute="/"
+          label="Volver a la pantalla de inicio"
+        ></app-back-button>
+      </div>
     </aside>
 
-    <div class="right-panel">
-        <app-login-form (loginSuccess)="onLoginSuccess($event)"></app-login-form>
-    </div>
-</main>
+    <section class="login-page__form-wrap" aria-label="Formulario de ingreso">
+      <app-login-form (loginSuccess)="onLoginSuccess($event)"></app-login-form>
+    </section>
+  </main>
 
-<footer>
-    <app-global-footer></app-global-footer>
-</footer>
+  <app-footer></app-footer>
+</div>

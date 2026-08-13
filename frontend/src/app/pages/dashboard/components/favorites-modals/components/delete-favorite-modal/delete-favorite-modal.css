@@ -1,0 +1,237 @@
+/* Delete favorite modal — rebrand limpio */
+
+:host {
+  display: contents;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+}
+
+.del-fav-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+  backdrop-filter: blur(6px);
+  animation: delFavFade 0.22s ease-out both;
+}
+
+.del-fav-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lift);
+  padding: 1.35rem 1.25rem 1.25rem;
+  color: var(--text-primary);
+  animation: delFavRise 0.28s ease-out both;
+}
+
+.del-fav-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.del-fav-modal__close:hover:not(:disabled) {
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  transform: none;
+}
+
+.del-fav-modal__close:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.del-fav-modal__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
+  padding-right: 2rem;
+}
+
+.del-fav-modal__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, #dc2626 12%, transparent);
+  color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.del-fav-modal__header h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: unset;
+  text-align: left;
+}
+
+.del-fav-modal__header p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.del-fav-contact {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  margin-bottom: 1rem;
+  background: var(--canvas);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+}
+
+.del-fav-contact__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--text-accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.del-fav-contact__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.del-fav-contact__body strong {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.del-fav-contact__body span {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.del-fav-contact__meta {
+  font-size: 0.75rem !important;
+  opacity: 0.9;
+}
+
+.del-fav-hint {
+  margin: 0 0 1.15rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.del-fav-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 0.55rem;
+}
+
+.del-fav-btn {
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+  transition: background 0.2s ease;
+}
+
+.del-fav-btn--ghost {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.del-fav-btn--ghost:hover:not(:disabled) {
+  background: var(--brand-soft) !important;
+  transform: none;
+}
+
+.del-fav-btn--danger {
+  background: #dc2626 !important;
+  color: #fff !important;
+}
+
+.del-fav-btn--danger:hover:not(:disabled) {
+  background: #b91c1c !important;
+  transform: none;
+}
+
+.del-fav-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@keyframes delFavFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes delFavRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 420px) {
+  .del-fav-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .del-fav-modal,
+  .del-fav-modal__panel {
+    animation: none !important;
+  }
+}

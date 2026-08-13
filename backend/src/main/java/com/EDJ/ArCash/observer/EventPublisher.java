@@ -5,10 +5,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Clase Subject del patrón Observer
- * Mantiene una lista de observadores y los notifica cuando ocurre un evento
- */
 @Component
 public class EventPublisher {
 

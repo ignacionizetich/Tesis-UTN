@@ -1,8 +1,8 @@
 package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.AuthDTO.LoginResponse;
-import com.EDJ.ArCash.Service.AuthService;
-import com.EDJ.ArCash.Service.RefreshAccessResult;
+import com.EDJ.ArCash.Service.interfaces.AuthService;
+import com.EDJ.ArCash.Service.result.RefreshAccessResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +21,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Contrato HTTP de /api/auth/login para el caso sin cuenta ARS.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

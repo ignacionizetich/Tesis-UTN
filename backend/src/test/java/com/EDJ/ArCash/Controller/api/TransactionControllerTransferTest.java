@@ -4,9 +4,9 @@ import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Service.AccountService;
-import com.EDJ.ArCash.Service.OwnedTransferResult;
-import com.EDJ.ArCash.Service.TransactionService;
+import com.EDJ.ArCash.Service.interfaces.AccountService;
+import com.EDJ.ArCash.Service.result.OwnedTransferResult;
+import com.EDJ.ArCash.Service.interfaces.TransactionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,10 +28,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Caracterizacion HTTP de transfer. addFilters=false + AuthenticationPrincipal
- * (misma identidad que publicaria el filtro JWT).
- */
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")

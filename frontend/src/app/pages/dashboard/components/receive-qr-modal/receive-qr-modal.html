@@ -1,20 +1,76 @@
-<div class="modal" (click)="onBackdrop($event)">
-  <div class="modal-content" [class.loading-qr]="isLoadingQr" (click)="$event.stopPropagation()">
-    <span class="close-button qr-close-button" (click)="close()">&times;</span>
+<div class="qr-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="qr-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="qr-title"
+    (click)="$event.stopPropagation()">
+
+    <button
+      type="button"
+      class="qr-modal__close"
+      (click)="close()"
+      aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="qr-modal__header">
+      <div class="qr-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <rect x="17" y="17" width="4" height="4" rx="1" />
+          <rect x="17" y="12" width="2" height="2" rx="1" />
+          <rect x="12" y="17" width="2" height="2" rx="1" />
+          <rect x="12" y="12" width="2" height="2" rx="1" />
+        </svg>
+      </div>
+      <div>
+        <h2 id="qr-title">Mi QR</h2>
+        <p>Mostralo para recibir una transferencia</p>
+      </div>
+    </header>
 
     @if (isLoadingQr) {
-    <div class="search-loading-overlay">
-      <div class="search-loading-content">
-        <div class="search-spinner"></div>
-        <p>Cargando QR...</p>
-      </div>
+    <div class="qr-status" aria-live="polite">
+      <div class="qr-status__spinner" aria-hidden="true"></div>
+      <p>Generando tu código QR...</p>
     </div>
     }
+
+    @if (loadError && !isLoadingQr) {
+    <div class="qr-status qr-status--error" aria-live="assertive">
+      <p>No pudimos generar tu QR. Intentá de nuevo en un momento.</p>
+      <button type="button" class="qr-btn qr-btn--primary" (click)="close()">Cerrar</button>
+    </div>
+    }
+
     @if (qrCodeDataString && qrCodeDataObject && !isLoadingQr) {
-    <div class="qr-container">
-      <h2>Recibi dinero con tu QR</h2>
-      <qrcode [qrdata]="qrCodeDataString" [width]="256" [errorCorrectionLevel]="'M'"></qrcode>
-      <h5 class="qr-footer">Tu QR para recibir transferencias en {{ qrCodeDataObject.currency }}</h5>
+    <div class="qr-body">
+      <div class="qr-frame">
+        <qrcode
+          [qrdata]="qrCodeDataString"
+          [width]="220"
+          [margin]="1"
+          [errorCorrectionLevel]="'M'">
+        </qrcode>
+      </div>
+
+      <div class="qr-meta">
+        <span class="qr-badge">{{ qrCodeDataObject.currency || 'ARS' }}</span>
+        <strong>{{ qrCodeDataObject.receiverName }}</strong>
+        <span class="qr-alias">{{ qrCodeDataObject.accountAlias }}</span>
+        @if (formattedDni) {
+        <span class="qr-dni">DNI {{ formattedDni }}</span>
+        }
+      </div>
+
+      <p class="qr-hint">
+        Este código sirve para recibir transferencias en {{ currencyLabel }}.
+      </p>
+
+      <button type="button" class="qr-btn qr-btn--ghost" (click)="close()">Listo</button>
     </div>
     }
   </div>

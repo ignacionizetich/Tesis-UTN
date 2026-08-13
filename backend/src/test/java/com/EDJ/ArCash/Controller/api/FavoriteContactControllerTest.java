@@ -7,7 +7,7 @@ import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Service.FavoriteContactService;
+import com.EDJ.ArCash.Service.interfaces.FavoriteContactService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,10 +38,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Contrato HTTP de /api/favorites con AuthenticationPrincipal.
- * addFilters=false para ejercer la rama principal==null (401 del controller).
- */
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
@@ -202,7 +198,7 @@ class FavoriteContactControllerTest {
     @DisplayName("La edicion exitosa devuelve 200 con status SUCCESS")
     void updateDevuelveSuccess() throws Exception {
         when(favoriteContactService.updateFavoriteContactForOwner(eq(77L), eq(ID_USUARIO), any(), any()))
-                .thenReturn(com.EDJ.ArCash.Service.FavoriteUpdateResult.ok());
+                .thenReturn(com.EDJ.ArCash.Service.result.FavoriteUpdateResult.ok());
 
         mockMvc.perform(put("/api/favorites/update/77")
                         .with(comoUsuarioAutenticado())
@@ -217,7 +213,7 @@ class FavoriteContactControllerTest {
     @DisplayName("La edicion sin ningun campo devuelve 400")
     void updateSinCamposDevuelveBadRequest() throws Exception {
         when(favoriteContactService.updateFavoriteContactForOwner(eq(77L), eq(ID_USUARIO), any(), any()))
-                .thenReturn(com.EDJ.ArCash.Service.FavoriteUpdateResult.badRequest());
+                .thenReturn(com.EDJ.ArCash.Service.result.FavoriteUpdateResult.badRequest());
 
         mockMvc.perform(put("/api/favorites/update/77")
                         .with(comoUsuarioAutenticado())
@@ -232,7 +228,7 @@ class FavoriteContactControllerTest {
     @DisplayName("Si el servicio devuelve false la edicion sale con 404, no con 400")
     void updateDevuelveNotFoundSiElServicioRechaza() throws Exception {
         when(favoriteContactService.updateFavoriteContactForOwner(eq(77L), eq(ID_USUARIO), any(), any()))
-                .thenReturn(com.EDJ.ArCash.Service.FavoriteUpdateResult.notFound());
+                .thenReturn(com.EDJ.ArCash.Service.result.FavoriteUpdateResult.notFound());
 
         mockMvc.perform(put("/api/favorites/update/77")
                         .with(comoUsuarioAutenticado())

@@ -1,1 +1,148 @@
-/* Register page: layout/footer en styles/auth-layout.css; form en auth-form.css */
+/* Register — layout limpio (independiente de auth-shell legacy) */
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  animation: registerEnter 0.5s ease-out both;
+}
+
+@keyframes registerEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.register-page__main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(320px, 1.15fr);
+  gap: 2rem;
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 4.5rem 1.5rem 2.5rem;
+  align-items: start;
+}
+
+.register-page__aside {
+  position: sticky;
+  top: 5rem;
+  padding: 0.5rem 0.5rem 1rem 0;
+}
+
+.register-page__aside ::ng-deep .logo {
+  align-items: flex-start;
+  text-align: left;
+  gap: 0.75rem;
+}
+
+.register-page__aside ::ng-deep .brand-mark {
+  margin: 0 0 0.35rem;
+}
+
+.register-page__pitch {
+  margin-top: 1.75rem;
+  max-width: 28rem;
+}
+
+.register-page__pitch h2 {
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(1.45rem, 2.2vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem;
+}
+
+.register-page__pitch > p {
+  margin: 0 0 1.25rem;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.register-page__perks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.register-page__perks li {
+  position: relative;
+  padding-left: 1.2rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.register-page__perks li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--text-accent);
+}
+
+.register-page__form-wrap {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .register-page__main {
+    grid-template-columns: 1fr;
+    padding-top: 4rem;
+    gap: 1.5rem;
+  }
+
+  .register-page__aside {
+    position: static;
+    text-align: center;
+  }
+
+  .register-page__aside ::ng-deep .logo {
+    align-items: center;
+    text-align: center;
+  }
+
+  .register-page__pitch {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .register-page__perks {
+    align-items: flex-start;
+    max-width: 22rem;
+    margin: 0 auto;
+    text-align: left;
+  }
+
+  .register-page__pitch ::ng-deep .back-inline {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .register-page {
+    animation: none;
+  }
+}

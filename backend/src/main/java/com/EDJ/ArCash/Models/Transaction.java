@@ -62,6 +62,14 @@ public class Transaction {
     @Column(name = "tax_percentage")
     private Double taxPercentage; // Porcentaje de impuesto aplicado
 
+    /** TRANSFER, BUY_USD, SELL_USD, LOAN_CREDIT, LOAN_PAYMENT, … */
+    @Column(name = "operation_type", length = 32)
+    private String operationType;
+
+    /** Texto corto auxiliar (ej. "Cuota 2/6"). */
+    @Column(name = "notes", length = 120)
+    private String notes;
+
     private String transaction_date;
 
 

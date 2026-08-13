@@ -1,20 +1,28 @@
 @if (user) {
 <div class="modal confirmation-modal" [class.show]="visible">
   <div class="modal-content">
-    <h3>Confirmar Acción</h3>
+    <h3>Confirmar acción</h3>
     <p>
-      ¿Está seguro que desea {{ user.active ? 'deshabilitar' : 'habilitar' }}
-      al usuario <strong>{{ user.name }} {{ user.lastName }}</strong>?
+      ¿Seguro que querés {{ user.active ? 'deshabilitar' : 'habilitar' }}
+      a <strong>{{ user.name }} {{ user.lastName }}</strong>?
     </p>
     <div class="confirmation-buttons">
-      <button class="confirm-btn" (click)="confirmed.emit()" [disabled]="loading">
+      <button
+        type="button"
+        class="confirm-btn"
+        [class.confirm-btn--enable]="!user.active"
+        (click)="confirmed.emit()"
+        [disabled]="loading"
+      >
         @if (loading) {
         <div class="spinner"></div>
         } @else {
         {{ user.active ? 'Deshabilitar' : 'Habilitar' }}
         }
       </button>
-      <button class="cancel-btn" (click)="cancelled.emit()" [disabled]="loading">Cancelar</button>
+      <button type="button" class="cancel-btn" (click)="cancelled.emit()" [disabled]="loading">
+        Cancelar
+      </button>
     </div>
   </div>
 </div>

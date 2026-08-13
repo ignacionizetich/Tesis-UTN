@@ -1,0 +1,184 @@
+@if (open) {
+<div class="loans-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="loans-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="loans-title"
+    (click)="$event.stopPropagation()">
+
+    <button type="button" class="loans-modal__close" (click)="close()" aria-label="Cerrar">
+      &times;
+    </button>
+
+    @if (view === 'list') {
+    <header class="loans-modal__header">
+      <div class="loans-modal__icon" aria-hidden="true">$</div>
+      <div>
+        <h2 id="loans-title">Préstamos</h2>
+        <p>Simulación en pesos · a más cuotas, mayor tasa</p>
+      </div>
+    </header>
+
+    @if (loading) {
+    <p class="loans-empty">Cargando…</p>
+    } @else {
+    @if (!activeLoan) {
+    <button type="button" class="loans-btn loans-btn--primary" (click)="goSimulate()">
+      Simular préstamo
+    </button>
+    } @else {
+    <p class="loans-hint">Ya tenés un préstamo activo. Pagá las cuotas para solicitar otro.</p>
+    }
+
+    @if (loans.length === 0) {
+    <p class="loans-empty">Todavía no pediste ningún préstamo.</p>
+    } @else {
+    <ul class="loans-list">
+      @for (loan of loans; track loan.id) {
+      <li>
+        <button type="button" class="loans-list__item" (click)="openDetail(loan)">
+          <div>
+            <strong>${{ formatMoney(loan.principal) }}</strong>
+            <span>{{ loan.installmentCount }} cuotas · {{ statusLabel(loan.status) }}</span>
+          </div>
+          <span class="loans-list__meta">
+            @if (loan.status === 'ACTIVE' && loan.nextInstallmentAmount) {
+            Próx. ${{ formatMoney(loan.nextInstallmentAmount) }}
+            } @else {
+            Completo
+            }
+          </span>
+        </button>
+      </li>
+      }
+    </ul>
+    }
+    }
+    }
+
+    @if (view === 'simulate') {
+    <header class="loans-modal__header">
+      <button type="button" class="loans-back" (click)="goList()" aria-label="Volver">‹</button>
+      <div>
+        <h2 id="loans-title">Simular</h2>
+        <p>Elegí monto y plazo</p>
+      </div>
+    </header>
+
+    <label class="loans-label" for="loan-principal">Monto (ARS)</label>
+    <input
+      id="loan-principal"
+      class="loans-input"
+      type="number"
+      min="1000"
+      max="500000"
+      step="500"
+      [(ngModel)]="principal"
+      (ngModelChange)="runSimulate()"
+    />
+
+    <p class="loans-label">Cuotas</p>
+    <div class="loans-terms">
+      @for (term of termOptions; track term) {
+      <button
+        type="button"
+        class="loans-term"
+        [class.loans-term--on]="installments === term"
+        (click)="installments = term; runSimulate()">
+        {{ term }}
+        <small>{{ rateLabel(term) }}</small>
+      </button>
+      }
+    </div>
+
+    @if (simulation) {
+    <div class="loans-preview">
+      <div class="loans-preview__row">
+        <span>Cuota mensual</span>
+        <strong>${{ formatMoney(simulation.installmentAmount) }}</strong>
+      </div>
+      <div class="loans-preview__row">
+        <span>Total a devolver</span>
+        <strong>${{ formatMoney(simulation.totalAmount) }}</strong>
+      </div>
+      <div class="loans-preview__row">
+        <span>Intereses</span>
+        <strong>${{ formatMoney(simulation.totalInterest) }}</strong>
+      </div>
+      <div class="loans-preview__row">
+        <span>Tasa</span>
+        <strong>{{ simulation.monthlyRatePercent }}% mensual</strong>
+      </div>
+    </div>
+
+    <h3 class="loans-sub">Cronograma</h3>
+    <ul class="loans-schedule">
+      @for (row of simulation.schedule; track row.number) {
+      <li>
+        <span>#{{ row.number }} · {{ row.dueDate }}</span>
+        <strong>${{ formatMoney(row.amount) }}</strong>
+      </li>
+      }
+    </ul>
+
+    <button
+      type="button"
+      class="loans-btn loans-btn--primary"
+      (click)="acceptLoan()"
+      [disabled]="busy">
+      {{ busy ? 'Acreditando…' : 'Aceptar y acreditar' }}
+    </button>
+    <p class="loans-fine">
+      Demo: el capital se suma a tu saldo ARS. Las cuotas se debitan al pagarlas.
+    </p>
+    }
+    }
+
+    @if (view === 'detail' && selected) {
+    <header class="loans-modal__header">
+      <button type="button" class="loans-back" (click)="goList()" aria-label="Volver">‹</button>
+      <div>
+        <h2 id="loans-title">Préstamo #{{ selected.id }}</h2>
+        <p>{{ statusLabel(selected.status) }} · ${{ formatMoney(selected.principal) }}</p>
+      </div>
+    </header>
+
+    <div class="loans-preview">
+      <div class="loans-preview__row">
+        <span>Cuota</span>
+        <strong>${{ formatMoney(selected.installmentAmount) }}</strong>
+      </div>
+      <div class="loans-preview__row">
+        <span>Pagadas</span>
+        <strong>{{ selectedPaidCount }} / {{ selected.installmentCount }}</strong>
+      </div>
+      <div class="loans-preview__row">
+        <span>Total / intereses</span>
+        <strong>${{ formatMoney(selected.totalAmount) }} / ${{ formatMoney(selected.totalInterest) }}</strong>
+      </div>
+    </div>
+
+    @if (selected.status === 'ACTIVE') {
+    <button
+      type="button"
+      class="loans-btn loans-btn--primary"
+      (click)="payNext()"
+      [disabled]="busy">
+      {{ busy ? 'Pagando…' : 'Pagar próxima cuota' }}
+    </button>
+    }
+
+    <h3 class="loans-sub">Cuotas</h3>
+    <ul class="loans-schedule">
+      @for (row of selected.installments; track row.number) {
+      <li [class.loans-schedule--paid]="row.status === 'PAID'">
+        <span>#{{ row.number }} · {{ row.dueDate }} · {{ row.status === 'PAID' ? 'Pagada' : 'Pendiente' }}</span>
+        <strong>${{ formatMoney(row.amount) }}</strong>
+      </li>
+      }
+    </ul>
+    }
+  </div>
+</div>
+}

@@ -1,8 +1,8 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.Service.AuthService;
-import com.EDJ.ArCash.Service.ResendEmailResult;
-import com.EDJ.ArCash.Service.UserService;
+import com.EDJ.ArCash.Service.interfaces.AuthService;
+import com.EDJ.ArCash.Service.result.ResendEmailResult;
+import com.EDJ.ArCash.Service.interfaces.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,10 +21,6 @@ public class ResendController {
         this.authService = authService;
     }
 
-    /**
-     * Reenvía el enlace de validación de email.
-     * Respuesta idéntica ante email inexistente / ya validado / enviado (anti-enumeration).
-     */
     @PostMapping("/validation")
     public ResponseEntity<Map<String, Object>> resendValidationEmail(@RequestParam("email") String email) {
         ResendEmailResult result = userService.resendValidationEmailRequest(email);
@@ -35,10 +31,6 @@ public class ResendController {
         };
     }
 
-    /**
-     * Reenvía el enlace de recuperación de contraseña.
-     * Respuesta idéntica ante email inexistente / enviado (anti-enumeration).
-     */
     @PostMapping("/password-recovery")
     public ResponseEntity<Map<String, Object>> resendPasswordRecovery(@RequestParam("email") String email) {
         ResendEmailResult result = authService.resendPasswordRecoveryEmail(email);

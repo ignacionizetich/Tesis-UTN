@@ -19,7 +19,7 @@ import { logger } from '../../../../../../shared/utils/logger';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './edit-favorite-modal.html',
-  styleUrls: ['../../../../styles/modals-shared.css', '../../../../styles/favorites.css'],
+  styleUrls: ['./edit-favorite-modal.css'],
 })
 export class EditFavoriteModalComponent implements OnChanges {
   @Input({ required: true }) favorite!: FavoriteContact;
@@ -44,15 +44,38 @@ export class EditFavoriteModalComponent implements OnChanges {
     }
   }
 
+  get contactInitials(): string {
+    const name = (this.favorite?.accountOwnerName || this.favorite?.contactAlias || '?').trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+
+  get canSave(): boolean {
+    return !!this.favoriteContactAlias.trim() && !this.isUpdatingFavorite;
+  }
+
+  close(): void {
+    if (this.isUpdatingFavorite) {
+      return;
+    }
+    this.closed.emit();
+  }
+
   onBackdrop(event: MouseEvent): void {
-    if ((event.target as HTMLElement).classList.contains('modal')) {
+    if ((event.target as HTMLElement).classList.contains('edit-fav-modal')) {
+      if (this.isUpdatingFavorite) {
+        return;
+      }
       this.backdropClick.emit(event);
     }
   }
 
   async save(): Promise<void> {
     if (!this.favoriteContactAlias.trim()) {
-      this.toast.show('Por favor ingresa un nombre para el contacto', 'error');
+      this.toast.show('Por favor ingresá un nombre para el contacto', 'error');
       return;
     }
 

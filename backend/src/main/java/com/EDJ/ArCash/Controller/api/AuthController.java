@@ -6,12 +6,12 @@ import com.EDJ.ArCash.DTO.AuthDTO.UsernameRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.UsernameResponse;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Service.AuthService;
-import com.EDJ.ArCash.Service.RecoverMailResult;
-import com.EDJ.ArCash.Service.RefreshAccessResult;
-import com.EDJ.ArCash.Service.SessionCheckResult;
-import com.EDJ.ArCash.Service.UserService;
-import com.EDJ.ArCash.Service.UsernameChangeResult;
+import com.EDJ.ArCash.Service.interfaces.AuthService;
+import com.EDJ.ArCash.Service.result.RecoverMailResult;
+import com.EDJ.ArCash.Service.result.RefreshAccessResult;
+import com.EDJ.ArCash.Service.result.SessionCheckResult;
+import com.EDJ.ArCash.Service.interfaces.UserService;
+import com.EDJ.ArCash.Service.result.UsernameChangeResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -64,7 +64,6 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         try {
-
 
             LoginResponse loginResponse = authService.login(loginRequest);
 
@@ -242,10 +241,6 @@ public class AuthController {
         };
     }
 
-
-
-
-
     @Operation(
             summary = "Refrescar token de acceso",
             description = "Genera un nuevo token de acceso JWT usando un refresh token válido enviado en la cookie."
@@ -291,6 +286,5 @@ public class AuthController {
             case OK -> ResponseEntity.ok(Map.of("accessToken", result.getAccessToken()));
         };
     }
-
 
 }

@@ -5,12 +5,12 @@ import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Service.AccountService;
-import com.EDJ.ArCash.Service.BuyUsdResult;
-import com.EDJ.ArCash.Service.OwnedBuyUsdResult;
-import com.EDJ.ArCash.Service.OwnedSellUsdResult;
-import com.EDJ.ArCash.Service.SellUsdResult;
-import com.EDJ.ArCash.Service.TransactionService;
+import com.EDJ.ArCash.Service.interfaces.AccountService;
+import com.EDJ.ArCash.Service.result.BuyUsdResult;
+import com.EDJ.ArCash.Service.result.OwnedBuyUsdResult;
+import com.EDJ.ArCash.Service.result.OwnedSellUsdResult;
+import com.EDJ.ArCash.Service.result.SellUsdResult;
+import com.EDJ.ArCash.Service.interfaces.TransactionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,10 +38,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Contrato HTTP de buy-usd y sell-usd. addFilters=false permite ejercer la rama
- * principal==null (inalcanzable en produccion tras anyRequest().authenticated()).
- */
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
@@ -232,10 +228,6 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.amountArs").doesNotExist());
     }
 
-    /**
-     * Con addFilters=false hay que publicar el principal en SecurityContextHolder
-     * a mano: el filtro de test de Spring Security no corre.
-     */
     private RequestPostProcessor comoUsuarioAutenticado() {
         CustomUserDetails principal = new CustomUserDetails(usuario(ID_USUARIO));
         var auth = new UsernamePasswordAuthenticationToken(

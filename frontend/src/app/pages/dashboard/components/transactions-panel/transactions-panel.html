@@ -1,154 +1,254 @@
-<section class="transactions-section">
-  <div class="transactions-header">
-    <h2 class="section-title">Movimientos Recientes</h2>
-    <button class="view-all-btn" (click)="openAllTransactionsModal()">Ver todos</button>
+<section class="tx-section">
+  <div class="tx-section__header">
+    <div>
+      <h2 class="tx-section__title">Movimientos</h2>
+      <p class="tx-section__hint">Cuenta en {{ currency }}</p>
+    </div>
+    <button type="button" class="tx-section__all" (click)="openAllTransactionsModal()">
+      Ver todos
+    </button>
   </div>
 
-  <div class="transactions-container">
-    @if (recentTransactions.length === 0) {
-    <div class="no-transactions">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+  <div class="tx-list">
+    @if (isLoadingList && recentTransactions.length === 0) {
+    <div class="tx-empty">
+      <p>Cargando movimientos…</p>
+    </div>
+    } @else if (recentTransactions.length === 0) {
+    <div class="tx-empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" />
+        <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
       </svg>
-      <p>No hay transacciones recientes</p>
+      <p>Todavía no hay movimientos en {{ currency }}</p>
     </div>
-    }
-
+    } @else {
     @for (transaction of recentTransactions; track trackTransaction($index, transaction)) {
-    <div class="transaction-item" (click)="openTransactionModal(transaction)">
-      <div class="transaction-icon" [class]="transaction.type">
-        @if (transaction.type === 'income') {
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2v20M5 9l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+    <button
+      type="button"
+      class="tx-row"
+      (click)="openTransactionModal(transaction)">
+      <div class="tx-row__avatar" [class]="'tx-row__avatar--' + iconClass(transaction)" aria-hidden="true">
+        @if (transaction.kind === 'buy_usd' || transaction.kind === 'sell_usd') {
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
             stroke-linejoin="round" />
         </svg>
-        } @else if (transaction.type === 'expense') {
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 22V2M19 15l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round" />
-        </svg>
+        } @else {
+        <span>{{ initials(transaction) }}</span>
         }
       </div>
 
-      <div class="transaction-details">
-        <h4 class="transaction-description">{{transaction.description}}</h4>
-        <p class="transaction-date">{{formatDate(transaction.date)}}</p>
-        @if (transaction.status === 'FAILED') {
-        <span class="transaction-status failed">Fallida</span>
-        }
-      </div>
-
-      <div class="transaction-amount" [class]="transaction.type">
-        <span class="amount-value">
-          {{transaction.type === 'income' ? '+' : '-'}}{{formatAmount(transaction.amount)}}
+      <div class="tx-row__body">
+        <strong class="tx-row__title">{{ transaction.description }}</strong>
+        <span class="tx-row__meta">
+          {{ formatDate(transaction.date) }}
+          @if (transaction.subtitle) {
+          · {{ transaction.subtitle }}
+          }
         </span>
+        @if (transaction.status === 'FAILED') {
+        <span class="tx-row__badge">Fallida</span>
+        }
       </div>
-    </div>
+
+      <div class="tx-row__amount" [class]="'tx-row__amount--' + transaction.type">
+        {{ amountLabel(transaction) }}
+      </div>
+    </button>
+    }
     }
   </div>
 </section>
 
-@if (currentModal === 'transaction') {
-<div class="modal" (click)="onModalBackdropClick($event, 'transaction')">
-  <div class="modal-content">
-    <span class="close-button" (click)="closeTransactionModal()">&times;</span>
-    <h2>Detalle de la Transferencia</h2>
-    @if (selectedTransaction) {
-    <ul class="transfer-details">
-      <li><b>ID Operación:</b> <span>{{selectedTransaction.id}}</span></li>
-      <li><b>Origen:</b> <span>{{getTransactionOrigin(selectedTransaction)}}</span></li>
-      <li><b>Destino:</b> <span>{{getTransactionDestination(selectedTransaction)}}</span></li>
-      <li><b>Monto:</b> <span [class]="selectedTransaction.type">
-          {{selectedTransaction.type === 'income' ? '+' : '-'}}{{formatAmount(selectedTransaction.amount)}}
-        </span></li>
-      <li><b>Estado:</b> <span
-          [class]="'estado-' + selectedTransaction.status?.toLowerCase()">{{selectedTransaction.status}}</span></li>
-      <li><b>Fecha y hora:</b> <span>{{formatDateDetailed(selectedTransaction.date)}}</span></li>
+@if (currentModal === 'transaction' && selectedTransaction) {
+<div class="tx-modal" (click)="onModalBackdropClick($event, 'transaction')" role="presentation">
+  <div
+    class="tx-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="tx-detail-title"
+    (click)="$event.stopPropagation()">
+
+    <button type="button" class="tx-modal__close" (click)="closeTransactionModal()" aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="tx-modal__header">
+      <div
+        class="tx-modal__icon"
+        [class]="'tx-modal__icon--' + iconClass(selectedTransaction)"
+        aria-hidden="true">
+        @if (selectedTransaction.kind === 'buy_usd' || selectedTransaction.kind === 'sell_usd') {
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        } @else {
+        <span>{{ initials(selectedTransaction) }}</span>
+        }
+      </div>
+      <div>
+        <h2 id="tx-detail-title">{{ detailTitle(selectedTransaction) }}</h2>
+        <p>{{ selectedTransaction.description }}</p>
+      </div>
+    </header>
+
+    <div
+      class="tx-modal__hero"
+      [class]="'tx-modal__hero--' + selectedTransaction.type">
+      {{ amountLabel(selectedTransaction) }}
+    </div>
+
+    <ul class="tx-modal__facts">
+      <li>
+        <span>Fecha</span>
+        <strong>{{ formatDateDetailed(selectedTransaction.date) }}</strong>
+      </li>
+      <li>
+        <span>Estado</span>
+        <strong [class]="'tx-modal__state--' + (selectedTransaction.status || '').toLowerCase()">
+          {{ selectedTransaction.status === 'FAILED' ? 'Fallida' : 'Completada' }}
+        </strong>
+      </li>
+      @if (selectedTransaction.kind === 'transfer' || selectedTransaction.kind === 'loan_credit' || selectedTransaction.kind === 'loan_payment') {
+      <li>
+        <span>Origen</span>
+        <strong>{{ getTransactionOrigin(selectedTransaction) }}</strong>
+      </li>
+      <li>
+        <span>Destino</span>
+        <strong>{{ getTransactionDestination(selectedTransaction) }}</strong>
+      </li>
+      }
+      @if (selectedTransaction.exchangeRate) {
+      <li>
+        <span>Cotización</span>
+        <strong>${{ formatAmount(selectedTransaction.exchangeRate) }} ARS</strong>
+      </li>
+      }
+      @if (selectedTransaction.taxAmount) {
+      <li>
+        <span>Comisión{{ selectedTransaction.taxPercentage ? ' (' + selectedTransaction.taxPercentage + '%)' : '' }}</span>
+        <strong>${{ formatAmount(selectedTransaction.taxAmount) }}</strong>
+      </li>
+      }
+      @if (selectedTransaction.idOperation) {
+      <li>
+        <span>ID operación</span>
+        <strong class="tx-modal__mono">{{ selectedTransaction.idOperation }}</strong>
+      </li>
+      }
     </ul>
-    }
+
+    <div class="tx-modal__actions">
+      <button
+        type="button"
+        class="tx-modal__action"
+        (click)="downloadReceipt()"
+        [disabled]="receiptBusy || selectedTransaction.status === 'FAILED'">
+        {{ receiptBusy ? 'Generando…' : 'Descargar comprobante' }}
+      </button>
+      <button
+        type="button"
+        class="tx-modal__action tx-modal__action--secondary"
+        (click)="shareReceipt()"
+        [disabled]="receiptBusy || selectedTransaction.status === 'FAILED'">
+        Compartir comprobante
+      </button>
+    </div>
+
+    <button type="button" class="tx-modal__done" (click)="closeTransactionModal()">
+      Cerrar
+    </button>
   </div>
 </div>
 }
 
 @if (currentModal === 'allTransactions') {
-<div class="modal" (click)="onModalBackdropClick($event, 'allTransactions')">
-  <div class="modal-content all-transactions-modal">
-    <span class="close-button" (click)="closeAllTransactionsModal()">&times;</span>
-    <h2>Todas las Transacciones</h2>
+<div class="tx-all-modal" (click)="onModalBackdropClick($event, 'allTransactions')" role="presentation">
+  <div
+    class="tx-all-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="tx-all-title"
+    (click)="$event.stopPropagation()">
 
-    <div class="all-transactions-container">
+    <button type="button" class="tx-all-modal__close" (click)="closeAllTransactionsModal()" aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="tx-all-modal__header">
+      <h2 id="tx-all-title">Todos los movimientos</h2>
+      <p>Cuenta en {{ currency }}</p>
+    </header>
+
+    <div class="tx-all-modal__body">
       @if (allTransactions.length === 0) {
-      <div class="no-transactions-message">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-          <path d="M8 12h8" stroke="currentColor" stroke-width="2" />
-          <path d="M12 8v8" stroke="currentColor" stroke-width="2" />
-        </svg>
-        <p>No hay transacciones para mostrar</p>
+      <div class="tx-empty tx-empty--modal">
+        <p>No hay movimientos para mostrar</p>
       </div>
       } @else {
-      <div class="transactions-list">
+      <div class="tx-list tx-list--modal">
         @for (transaction of displayedTransactions; track trackTransaction($index, transaction)) {
-        <div class="transaction-item-modal">
-          <div class="transaction-icon-modal" [class]="transaction.type">
-            @if (transaction.type === 'income') {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" />
-              <path d="M19 12H5" stroke="currentColor" stroke-width="2" />
+        <button
+          type="button"
+          class="tx-row"
+          (click)="openTransactionModal(transaction)">
+          <div class="tx-row__avatar" [class]="'tx-row__avatar--' + iconClass(transaction)" aria-hidden="true">
+            @if (transaction.kind === 'buy_usd' || transaction.kind === 'sell_usd') {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
-            }
-            @if (transaction.type === 'expense') {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" />
-              <path d="M5 12h14" stroke="currentColor" stroke-width="2" />
-            </svg>
-            }
-          </div>
-
-          <div class="transaction-info-modal">
-            <h4 class="transaction-description-modal">{{transaction.description}}</h4>
-            <p class="transaction-date-modal">{{formatDate(transaction.date)}}</p>
-            @if (transaction.status === 'FAILED') {
-            <span class="transaction-status-modal failed">Fallida</span>
-            }
-          </div>
-
-          <div class="transaction-amount-modal" [class]="transaction.type">
-            <span class="amount-value-modal">
-              {{transaction.type === 'income' ? '+' : '-'}}{{formatAmount(transaction.amount)}}
-            </span>
-          </div>
-        </div>
-        }
-
-        @if (hasMoreTransactions && !hasLoadedAllTransactions) {
-        <div class="load-more-container">
-          <button class="load-more-btn"
-                  (click)="loadMoreTransactions()"
-                  [disabled]="isLoadingMoreTransactions"
-                  [class.loading]="isLoadingMoreTransactions">
-            @if (isLoadingMoreTransactions) {
-              <div class="button-loading">
-                <div class="spinner"></div>
-                Cargando...
-              </div>
             } @else {
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2v20M5 9l7-7 7 7" stroke="currentColor" stroke-width="2" />
-              </svg>
-              Cargar más transacciones
+            <span>{{ initials(transaction) }}</span>
             }
-          </button>
-        </div>
-        }
-
-        @if (hasLoadedAllTransactions && displayedTransactions.length > 0) {
-        <div class="all-transactions-loaded">
-          <p>Has visto todas las transacciones</p>
-        </div>
+          </div>
+          <div class="tx-row__body">
+            <strong class="tx-row__title">{{ transaction.description }}</strong>
+            <span class="tx-row__meta">
+              {{ formatDate(transaction.date) }}
+              @if (transaction.subtitle) {
+              · {{ transaction.subtitle }}
+              }
+            </span>
+            @if (transaction.status === 'FAILED') {
+            <span class="tx-row__badge">Fallida</span>
+            }
+          </div>
+          <div class="tx-row__amount" [class]="'tx-row__amount--' + transaction.type">
+            {{ amountLabel(transaction) }}
+          </div>
+        </button>
         }
       </div>
+
+      @if (hasMoreTransactions && !hasLoadedAllTransactions) {
+      <button
+        type="button"
+        class="tx-all-modal__more"
+        (click)="loadMoreTransactions()"
+        [disabled]="isLoadingMoreTransactions">
+        {{ isLoadingMoreTransactions ? 'Cargando...' : 'Cargar más' }}
+      </button>
+      }
+
+      @if (hasLoadedAllTransactions && displayedTransactions.length > 0) {
+      <p class="tx-all-modal__end">Viste todos los movimientos</p>
+      }
       }
     </div>
   </div>

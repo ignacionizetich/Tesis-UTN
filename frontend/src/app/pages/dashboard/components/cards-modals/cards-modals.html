@@ -1,0 +1,29 @@
+@if (currentModal === 'cards') {
+<app-cards-list-modal
+  [cards]="cards"
+  [pinConfigured]="pinConfigured"
+  [loading]="loading"
+  (closed)="closeAll()"
+  (cardSelected)="onSelectCard($event)"
+  (reissueRequested)="onReissueFromList($event)"
+/>
+}
+
+@if (currentModal === 'cardPin' && selectedCard) {
+<app-card-pin-modal
+  [pinConfigured]="pinConfigured"
+  [cardLabel]="selectedCard.currency"
+  (closed)="onBackToList()"
+  (unlocked)="onPinUnlocked()"
+  (pinCreated)="pinConfigured = true"
+/>
+}
+
+@if (currentModal === 'cardDetail' && selectedCard) {
+<app-card-detail-modal
+  [card]="selectedCard"
+  (closed)="closeAll()"
+  (back)="onBackToList()"
+  (cardUpdated)="onCardUpdated($event)"
+/>
+}

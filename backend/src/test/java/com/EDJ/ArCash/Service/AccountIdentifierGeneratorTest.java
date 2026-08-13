@@ -1,4 +1,5 @@
 package com.EDJ.ArCash.Service;
+import com.EDJ.ArCash.Service.support.AccountIdentifierGenerator;
 
 import com.EDJ.ArCash.Repository.AccountRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,11 +14,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Congela el formato de los identificadores que se le asignan a una cuenta.
- * Es lo mas delicado de todo el modulo: son datos que quedan persistidos y que
- * los usuarios comparten para recibir transferencias.
- */
 class AccountIdentifierGeneratorTest {
 
     private AccountRepository accountRepository;

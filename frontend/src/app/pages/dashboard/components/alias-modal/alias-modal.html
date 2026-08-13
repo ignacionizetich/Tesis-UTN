@@ -1,43 +1,87 @@
-<div class="modal" (click)="backdropClick.emit($event)">
-  <div class="modal-content alias-modal">
-    <span class="close-button" (click)="closed.emit()">&times;</span>
-    <h2>Mi Alias y CVU</h2>
+<div class="alias-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="alias-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="alias-title"
+    (click)="$event.stopPropagation()">
 
-    <div class="info-alias-cvu">
-      <div class="info-line">
-        <div class="info-text">
-          <strong>Alias:</strong> <span>{{ alias }}</span>
+    <button
+      type="button"
+      class="alias-modal__close"
+      (click)="close()"
+      aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="alias-modal__header">
+      <div class="alias-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+            stroke="currentColor"
+            stroke-width="2" />
+          <path d="M22 6l-10 7L2 6" stroke="currentColor" stroke-width="2" />
+        </svg>
+      </div>
+      <div>
+        <h2 id="alias-title">Mi CVU y Alias</h2>
+        <p>Datos para recibir en {{ currencyLabel }}</p>
+      </div>
+    </header>
+
+    <div class="alias-fields">
+      <div class="alias-field">
+        <div class="alias-field__text">
+          <span class="alias-field__label">Alias</span>
+          <strong class="alias-field__value">{{ alias || '—' }}</strong>
         </div>
         <button
-          class="copy-button"
-          (click)="copy.emit({ value: alias, type: 'Alias' })"
+          type="button"
+          class="alias-copy"
+          (click)="copyAlias()"
+          [disabled]="!alias"
           title="Copiar Alias"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          aria-label="Copiar alias">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path
-              d="M20 9h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zm0 11h-9v-9h9v9zm-4-17H6c-1.1 0-2 .9-2 2v9h2V5h10V3z"
-              fill="currentColor"
-            />
+              d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
           </svg>
         </button>
       </div>
-      <div class="info-line">
-        <div class="info-text">
-          <strong>CVU:</strong> <span>{{ cvu }}</span>
+
+      <div class="alias-field">
+        <div class="alias-field__text">
+          <span class="alias-field__label">CVU</span>
+          <strong class="alias-field__value alias-field__value--mono">{{ formattedCvu || '—' }}</strong>
         </div>
         <button
-          class="copy-button"
-          (click)="copy.emit({ value: cvu, type: 'CVU' })"
+          type="button"
+          class="alias-copy"
+          (click)="copyCvu()"
+          [disabled]="!cvu"
           title="Copiar CVU"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          aria-label="Copiar CVU">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path
-              d="M20 9h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h9c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2zm0 11h-9v-9h9v9zm-4-17H6c-1.1 0-2 .9-2 2v9h2V5h10V3z"
-              fill="currentColor"
-            />
+              d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
           </svg>
         </button>
       </div>
     </div>
+
+    <p class="alias-hint">
+      Compartí estos datos para que te envíen dinero. Al copiar, el CVU va sin espacios.
+    </p>
+
+    <button type="button" class="alias-btn" (click)="close()">Listo</button>
   </div>
 </div>

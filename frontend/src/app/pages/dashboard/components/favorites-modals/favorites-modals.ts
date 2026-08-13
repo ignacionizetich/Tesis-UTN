@@ -119,17 +119,23 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
 
   openEditFavoriteModal(favorite: FavoriteContact): void {
     this.favoriteService.selectFavorite(favorite);
-    this.modalService.closeModal();
     this.modalService.openModal('editFavorite');
   }
 
+  /** Cancelar edición → volver al detalle del contacto. */
   closeEditFavoriteModal(): void {
-    this.modalService.closeModal();
-    this.favoriteService.clearSelectedFavorite();
+    this.modalService.openModal('favoriteDetails');
   }
 
   onEditFavoriteSaved(): void {
-    this.closeEditFavoriteModal();
+    const selected = this.favoriteService.getSelectedFavorite();
+    if (selected) {
+      const updated = this.favoriteContacts.find((f) => f.id === selected.id);
+      if (updated) {
+        this.favoriteService.selectFavorite(updated);
+      }
+    }
+    this.modalService.openModal('favoriteDetails');
   }
 
   openDeleteFavoriteModal(favorite: FavoriteContact): void {
@@ -137,13 +143,16 @@ export class FavoritesModalsComponent implements OnInit, OnDestroy {
     this.modalService.openModal('deleteFavorite');
   }
 
+  /** Cancelar eliminación → volver al detalle. */
   closeDeleteFavoriteModal(): void {
-    this.modalService.closeModal();
+    this.modalService.openModal('favoriteDetails');
     this.favoriteToDelete = null;
   }
 
   onDeleteFavoriteDeleted(): void {
-    this.closeDeleteFavoriteModal();
+    this.favoriteToDelete = null;
+    this.favoriteService.clearSelectedFavorite();
+    this.modalService.openModal('favorites');
   }
 
   onBackdropClose(modalType: string): void {

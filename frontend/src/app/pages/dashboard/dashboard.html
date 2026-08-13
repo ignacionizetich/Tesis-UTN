@@ -10,13 +10,16 @@
     </div>
     <div class="loading-brand">
       <h1>AR<span>Cash</span></h1>
-      <p class="brand-tagline">The best virtual wallet</p>
+      <p class="brand-tagline">BEST VIRTUAL WALLET</p>
       <p class="loading-text">Cargando tu billetera...</p>
     </div>
   </div>
 </div>
 
-<div class="dashboard-container" [class.loaded]="!isLoading">
+<div
+  class="dashboard-container"
+  [class.loaded]="!isLoading"
+  [class.dashboard-container--usd]="activeCurrency === 'USD'">
 
   <nav class="top-nav">
     <div class="nav-brand">
@@ -29,22 +32,19 @@
         <div class="nav-title">
           <span class="brand-primary">AR</span><span class="brand-secondary">Cash</span>
         </div>
-        <div class="nav-tagline">The best virtual wallet</div>
+        <div class="nav-tagline">BEST VIRTUAL WALLET</div>
       </div>
     </div>
 
     <div class="nav-actions">
-      @if(isAdmin){
-
+      @if (isAdmin) {
       <button
         class="admin-panel-btn"
         (click)="goToAdminPanel()"
         title="Acceder al Panel de Administración">
         Panel de Administración
       </button>
-
       }
-
 
       <button class="theme-toggle" (click)="toggleTheme()" type="button">
         <svg width="20" height="20" viewBox="0 0 24 24">
@@ -79,38 +79,67 @@
   <main class="main-content">
 
     <section class="welcome-section">
-      <div class="welcome-content">
-        <h1 class="welcome-title">
-          Bienvenido/a, <span class="highlight">{{userData.name}}</span>
-        </h1>
-        
-      </div>
+      <h1 class="welcome-title">
+        Hola, <span class="highlight">{{userData.name}}</span>
+      </h1>
     </section>
 
     <section class="balance-section">
-      <div class="balance-card" [class.balance-updated]="isBalanceUpdating"
+      <div
+        class="balance-card"
+        [class.balance-card--usd]="activeCurrency === 'USD'"
+        [class.balance-updated]="isBalanceUpdating"
         [class.balance-decreased]="isBalanceDecreasing">
+
         <div class="balance-header">
-          <h2>Saldo Disponible</h2>
-          <button class="balance-toggle" (click)="toggleBalance()" [title]="balanceVisible ? 'Ocultar saldo' : 'Mostrar saldo'">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              @if (balanceVisible) {
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" />
-              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
-              } @else {
-              <path
-                d="m1 1 22 22M6.5 6.5C5.2 7.8 4 10 4 12s2.8 5.2 8 5.2c1.7 0 3.2-.5 4.5-1.3M17.5 17.5C18.8 16.2 20 14 20 12s-2.8-5.2-8-5.2c-1.7 0-3.2.5-4.5 1.3"
-                stroke="currentColor" stroke-width="2" />
-              }
-            </svg>
-          </button>
+          <h2>Saldo disponible</h2>
+          <div class="balance-header-actions">
+            <button
+              type="button"
+              class="currency-chip"
+              (click)="toggleCurrency()"
+              [attr.aria-label]="'Cambiar a ' + otherCurrency"
+              [attr.title]="'Ver saldo en ' + otherCurrency">
+              {{ activeCurrency }}
+            </button>
+            <button
+              class="balance-toggle"
+              (click)="toggleBalance()"
+              [title]="balanceVisible ? 'Ocultar saldo' : 'Mostrar saldo'">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                @if (balanceVisible) {
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" />
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
+                } @else {
+                <path
+                  d="m1 1 22 22M6.5 6.5C5.2 7.8 4 10 4 12s2.8 5.2 8 5.2c1.7 0 3.2-.5 4.5-1.3M17.5 17.5C18.8 16.2 20 14 20 12s-2.8-5.2-8-5.2c-1.7 0-3.2.5-4.5 1.3"
+                  stroke="currentColor" stroke-width="2" />
+                }
+              </svg>
+            </button>
+          </div>
         </div>
 
+        @if (activeCurrency === 'USD' && !usdAccount) {
+        <div class="usd-empty">
+          <p class="usd-empty__title">Todavía no tenés cuenta en dólares</p>
+          <p class="usd-empty__text">Abrila para ahorrar en USD, transferir y comprar o vender desde acá.</p>
+          <button
+            type="button"
+            class="usd-empty__cta"
+            (click)="createUsdAccount()"
+            [disabled]="isCreatingUsdAccount">
+            {{ isCreatingUsdAccount ? 'Creando...' : 'Abrir cuenta USD' }}
+          </button>
+        </div>
+        } @else {
         <div class="balance-amount">
-          <span class="currency">$</span>
+          <span class="currency">{{ currencySymbol }}</span>
           @if (balanceVisible) {
-          <span class="amount" [class.updating]="isBalanceUpdating"
-            [class.decreasing]="isBalanceDecreasing">{{formatMoney(userData.balance)}}</span>
+          <span
+            class="amount"
+            [class.updating]="isBalanceUpdating"
+            [class.decreasing]="isBalanceDecreasing">{{ formatMoney(displayBalance) }}</span>
           } @else {
           <span class="amount-hidden">•••••••</span>
           }
@@ -119,82 +148,59 @@
         <div class="account-info">
           <div class="account-detail">
             <span class="label">Alias</span>
-            <span class="value">{{userData.alias}}</span>
+            <span class="value">{{ displayAlias }}</span>
           </div>
           <div class="account-detail">
             <span class="label">CVU</span>
-            <span class="value">{{userData.cvu}}</span>
+            <span class="value">{{ displayCvu }}</span>
           </div>
         </div>
+
+        @if (activeCurrency === 'USD' && usdAccount) {
+        <div class="trade-row">
+          <button type="button" class="trade-chip" (click)="openBuyUsd()">Comprar</button>
+          <button type="button" class="trade-chip trade-chip--ghost" (click)="openSellUsd()">Vender</button>
+        </div>
+        }
+        }
       </div>
     </section>
 
     <section class="actions-section">
-      <h2 class="section-title">Acciones Rápidas</h2>
-      <div class="actions-grid">
-
-        <div class="action-card" (click)="openIngresarModal()">
-          <div class="action-icon deposit">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <div class="actions-rail" role="toolbar" aria-label="Acciones rápidas">
+        @if (activeCurrency === 'ARS') {
+        <button type="button" class="rail-action" (click)="openIngresarModal()">
+          <span class="rail-icon rail-icon--deposit" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path d="M12 2v20M5 9l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                 stroke-linejoin="round" />
             </svg>
-          </div>
-          <h3>Ingresar Dinero</h3>
-          <p>Agregar fondos a tu cuenta</p>
-        </div>
+          </span>
+          <span class="rail-label">Ingresar</span>
+        </button>
+        }
 
-
-
-        <div class="action-card" (click)="openTransferModal()">
-          <div class="action-icon transfer">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <button
+          type="button"
+          class="rail-action"
+          (click)="openTransferModal()"
+          [disabled]="activeCurrency === 'USD' && !usdAccount">
+          <span class="rail-icon rail-icon--transfer" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path d="M21 12H3M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                 stroke-linejoin="round" />
             </svg>
-          </div>
-          <h3>Transferir</h3>
-          <p>Enviar dinero a otros usuarios</p>
-        </div>
+          </span>
+          <span class="rail-label">Transferir</span>
+        </button>
 
-        <div class="action-card" (click)="openAliasModal()">
-          <div class="action-icon info">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor"
-                stroke-width="2" />
-              <path d="M22 6l-10 7L2 6" stroke="currentColor" stroke-width="2" />
-            </svg>
-          </div>
-          <h3>Mi CVU</h3>
-          <p>Ver datos de la cuenta</p>
-        </div>
-
-        <div class="action-card" (click)="openFavoritesModal()">
-          <div class="action-icon favorites">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <h3>Favoritos</h3>
-          <p>Mis contactos favoritos</p>
-        </div>
-
-        <div class="action-card" (click)="openTaxModal()">
-          <div class="action-icon calculator">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" stroke-width="2" />
-              <path d="M8 6h8M8 10h8M8 14h8M8 18h8" stroke="currentColor" stroke-width="2" />
-            </svg>
-          </div>
-          <h3>Calculadora</h3>
-          <p>Calcular impuestos</p>
-        </div>
-
-        <div class="action-card" (click)="openMyQrModal()">
-          <div class="action-icon QR">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <button
+          type="button"
+          class="rail-action"
+          (click)="openReceiveAction()"
+          [disabled]="activeCurrency === 'USD' && !usdAccount">
+          <span class="rail-icon rail-icon--qr" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
               <rect x="3" y="3" width="7" height="7" rx="1" />
               <rect x="14" y="3" width="7" height="7" rx="1" />
               <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -203,29 +209,102 @@
               <rect x="12" y="17" width="2" height="2" rx="1" />
               <rect x="12" y="12" width="2" height="2" rx="1" />
             </svg>
-          </div>
-          <h3>Mi QR</h3>
-          <p>Recibir transferencia por QR</p>
-        </div>
+          </span>
+          <span class="rail-label">{{ activeCurrency === 'USD' ? 'Recibir' : 'QR' }}</span>
+        </button>
 
-        <div class="action-card usd-card" (click)="goToUsdAccount()">
-          <div class="action-icon usd">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" 
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <button type="button" class="rail-action" (click)="openMoreMenu()">
+          <span class="rail-icon rail-icon--more" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <circle cx="5" cy="12" r="1.75" fill="currentColor" />
+              <circle cx="12" cy="12" r="1.75" fill="currentColor" />
+              <circle cx="19" cy="12" r="1.75" fill="currentColor" />
             </svg>
-          </div>
-          <h3>Cuenta en USD</h3>
-          <p>Ahorrá en dólares</p>
-        </div>
-
+          </span>
+          <span class="rail-label">Más</span>
+        </button>
       </div>
     </section>
 
-    <app-transactions-panel></app-transactions-panel>
+    <app-transactions-panel
+      [accountId]="activeAccountId"
+      [currency]="activeCurrency"
+    ></app-transactions-panel>
 
   </main>
 </div>
+
+@if (moreMenuOpen) {
+<div class="more-sheet" (click)="closeMoreMenu()" role="presentation">
+  <div class="more-sheet__panel" (click)="$event.stopPropagation()" role="dialog" aria-label="Más opciones">
+    <div class="more-sheet__handle" aria-hidden="true"></div>
+    <h2 class="more-sheet__title">Más opciones</h2>
+    <div class="more-sheet__list">
+      <button type="button" class="more-item" (click)="onMoreAction('alias')">
+        <span class="more-item__icon">CVU</span>
+        <span class="more-item__text">
+          <strong>Mi CVU / Alias</strong>
+          <small>Datos de la cuenta {{ activeCurrency }}</small>
+        </span>
+      </button>
+      <button type="button" class="more-item" (click)="onMoreAction('favorites')">
+        <span class="more-item__icon">★</span>
+        <span class="more-item__text">
+          <strong>Favoritos</strong>
+          <small>Contactos frecuentes</small>
+        </span>
+      </button>
+      <button type="button" class="more-item" (click)="onMoreAction('cards')">
+        <span class="more-item__icon">▤</span>
+        <span class="more-item__text">
+          <strong>Tarjetas</strong>
+          <small>Prepagas virtuales ARS / USD</small>
+        </span>
+      </button>
+      <button type="button" class="more-item" (click)="onMoreAction('loans')">
+        <span class="more-item__icon">$</span>
+        <span class="more-item__text">
+          <strong>Préstamos</strong>
+          <small>Simular y pagar cuotas en ARS</small>
+        </span>
+      </button>
+      <button type="button" class="more-item" (click)="onMoreAction('tax')">
+        <span class="more-item__icon">%</span>
+        <span class="more-item__text">
+          <strong>Calculadora</strong>
+          <small>Impuestos estimados</small>
+        </span>
+      </button>
+      @if (activeCurrency === 'ARS') {
+      <button type="button" class="more-item" (click)="onMoreAction('buy')">
+        <span class="more-item__icon">U$</span>
+        <span class="more-item__text">
+          <strong>Comprar dólares</strong>
+          <small>Convertir ARS a USD</small>
+        </span>
+      </button>
+      }
+      @if (activeCurrency === 'USD' && usdAccount) {
+      <button type="button" class="more-item" (click)="onMoreAction('buy')">
+        <span class="more-item__icon">+</span>
+        <span class="more-item__text">
+          <strong>Comprar más USD</strong>
+          <small>Con tu saldo en pesos</small>
+        </span>
+      </button>
+      <button type="button" class="more-item" (click)="onMoreAction('sell')">
+        <span class="more-item__icon">−</span>
+        <span class="more-item__text">
+          <strong>Vender USD</strong>
+          <small>Convertir a pesos</small>
+        </span>
+      </button>
+      }
+    </div>
+    <button type="button" class="more-sheet__close" (click)="closeMoreMenu()">Cerrar</button>
+  </div>
+</div>
+}
 
 <app-favorites-modals
   #favoritesModals
@@ -233,6 +312,10 @@
   (transferRequested)="onFavoriteTransferRequested($event)"
   (transferFlowFinished)="onFavoriteTransferFlowFinished()"
 />
+
+<app-cards-modals />
+
+<app-loans-modals />
 
 @if (currentModal === 'ingresar') {
 <app-deposit-modal
@@ -245,6 +328,7 @@
 <app-transfer-wizard
   [arsAccount]="arsAccount"
   [usdAccount]="usdAccount"
+  [preferredCurrency]="activeCurrency"
   [seed]="transferSeed"
   (closed)="onTransferClosed()"
   (transferCompleted)="onTransferCompleted($event)"
@@ -258,11 +342,11 @@
 
 @if (currentModal === 'alias') {
 <app-alias-modal
-  [alias]="userData.alias"
-  [cvu]="userData.cvu"
+  [alias]="displayAlias"
+  [cvu]="displayCvu"
+  [currency]="activeCurrency"
   (closed)="closeAliasModal()"
   (copy)="copyToClipboard($event.value, $event.type)"
-  (backdropClick)="onModalBackdropClick($event, 'alias')"
 />
 }
 
@@ -273,7 +357,44 @@
 @if (currentModal === 'profile') {
 <app-profile-modal />
 }
+
 @if (currentModal === 'myQr') {
 <app-receive-qr-modal />
 }
 
+@if (showBuyUsd) {
+<app-buy-usd-panel
+  [arsAccountId]="arsAccountId"
+  [usdAccountId]="usdAccountId"
+  [arsBalance]="arsBalance"
+  [usdBalance]="usdBalance"
+  [taxRate]="taxRate"
+  [taxPercentage]="taxPercentage"
+  [exchangeRate]="exchangeRate"
+  (closed)="closeBuyUsd()"
+  (success)="onTradeSuccess($event)"
+  (quoteLoaded)="exchangeRate = $event"
+/>
+}
+
+@if (showSellUsd) {
+<app-sell-usd-panel
+  [arsAccountId]="arsAccountId"
+  [usdAccountId]="usdAccountId"
+  [arsBalance]="arsBalance"
+  [usdBalance]="usdBalance"
+  [taxRate]="taxRate"
+  [taxPercentage]="taxPercentage"
+  [exchangeRate]="exchangeRate"
+  (closed)="closeSellUsd()"
+  (success)="onTradeSuccess($event)"
+/>
+}
+
+@if (showReceiveUsd) {
+<app-receive-usd-modal
+  [alias]="displayAlias"
+  [cvu]="displayCvu"
+  (closed)="closeReceiveUsd()"
+/>
+}

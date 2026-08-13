@@ -1,7 +1,8 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.Service.AuthService;
-import com.EDJ.ArCash.Service.UserService;
+import com.EDJ.ArCash.Service.result.ResendEmailResult;
+import com.EDJ.ArCash.Service.interfaces.AuthService;
+import com.EDJ.ArCash.Service.interfaces.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +19,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Anti-enumeration: misma respuesta HTTP aunque el email no exista o ya esté validado.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -43,20 +41,22 @@ class ResendControllerTest {
     @Test
     @DisplayName("Validation: email enviado → 200 mensaje generico")
     void validationEnviadoDevuelveMensajeGenerico() throws Exception {
-        when(userService.resendValidationEmail("ok@mail.com")).thenReturn(true);
+        when(userService.resendValidationEmailRequest("ok@mail.com"))
+                .thenReturn(ResendEmailResult.ok(VALIDATION_MESSAGE));
 
         mockMvc.perform(post("/api/resend/validation").param("email", "ok@mail.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value(VALIDATION_MESSAGE));
 
-        verify(userService).resendValidationEmail("ok@mail.com");
+        verify(userService).resendValidationEmailRequest("ok@mail.com");
     }
 
     @Test
     @DisplayName("Validation: email inexistente o ya validado → mismo 200 (anti-enum)")
     void validationFallidoTambienDevuelveMensajeGenerico() throws Exception {
-        when(userService.resendValidationEmail(anyString())).thenReturn(false);
+        when(userService.resendValidationEmailRequest(anyString()))
+                .thenReturn(ResendEmailResult.ok(VALIDATION_MESSAGE));
 
         mockMvc.perform(post("/api/resend/validation").param("email", "ghost@mail.com"))
                 .andExpect(status().isOk())
@@ -67,6 +67,9 @@ class ResendControllerTest {
     @Test
     @DisplayName("Validation: email vacio → 400")
     void validationEmailVacio() throws Exception {
+        when(userService.resendValidationEmailRequest(anyString()))
+                .thenReturn(ResendEmailResult.emailRequired());
+
         mockMvc.perform(post("/api/resend/validation").param("email", "  "))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
@@ -76,7 +79,8 @@ class ResendControllerTest {
     @Test
     @DisplayName("Password recovery: inexistente → mismo 200 (anti-enum)")
     void passwordRecoveryFallidoTambienDevuelveMensajeGenerico() throws Exception {
-        when(authService.resendPasswordRecovery(anyString())).thenReturn(false);
+        when(authService.resendPasswordRecoveryEmail(anyString()))
+                .thenReturn(ResendEmailResult.ok(PASSWORD_RECOVERY_MESSAGE));
 
         mockMvc.perform(post("/api/resend/password-recovery").param("email", "ghost@mail.com"))
                 .andExpect(status().isOk())
@@ -87,7 +91,8 @@ class ResendControllerTest {
     @Test
     @DisplayName("Password recovery: enviado → 200 mensaje generico")
     void passwordRecoveryEnviadoDevuelveMensajeGenerico() throws Exception {
-        when(authService.resendPasswordRecovery("ok@mail.com")).thenReturn(true);
+        when(authService.resendPasswordRecoveryEmail("ok@mail.com"))
+                .thenReturn(ResendEmailResult.ok(PASSWORD_RECOVERY_MESSAGE));
 
         mockMvc.perform(post("/api/resend/password-recovery").param("email", "ok@mail.com"))
                 .andExpect(status().isOk())

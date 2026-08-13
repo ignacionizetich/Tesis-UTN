@@ -1,0 +1,220 @@
+<div class="card-detail-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="card-detail-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="card-detail-title"
+    (click)="$event.stopPropagation()">
+
+    <div class="card-detail-modal__top">
+      <button type="button" class="card-detail-modal__nav" (click)="back.emit()" aria-label="Volver">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+      <h2 id="card-detail-title">Prepaga {{ card.currency }}</h2>
+      <button type="button" class="card-detail-modal__close" (click)="closed.emit()" aria-label="Cerrar">
+        &times;
+      </button>
+    </div>
+
+    @if (isCancelled) {
+    <section class="card-panel">
+      <div class="card-cancelled">
+        <strong>Tarjeta dada de baja</strong>
+        <p>•••• {{ card.last4 }} · vence {{ expLabel }}</p>
+        @if (card.canReissue) {
+        <button type="button" class="card-ctrl" (click)="reissueCard()" [disabled]="busy">
+          Solicitar nueva prepaga
+        </button>
+        } @else {
+        <p class="card-limit-hint">{{ card.reissueMessage }}</p>
+        }
+      </div>
+
+      <h3 class="card-audit-title">Actividad reciente</h3>
+      @if (audit.length === 0) {
+      <p class="card-audit-empty">Sin eventos todavía</p>
+      } @else {
+      <ul class="card-audit">
+        @for (event of audit.slice(0, 8); track event.id) {
+        <li>
+          <strong>{{ auditLabel(event.type) }}</strong>
+          <span>{{ event.createdAt }}</span>
+        </li>
+        }
+      </ul>
+      }
+    </section>
+    } @else if (loadingReveal) {
+    <p class="card-detail-modal__loading">Cargando datos seguros…</p>
+    } @else if (reveal) {
+    <div class="card-stage">
+      <div
+        #tiltShell
+        class="card-tilt"
+        [class.card-tilt--active]="tiltActive"
+        (pointermove)="onTiltMove($event)"
+        (pointerenter)="onTiltEnter()"
+        (pointerleave)="onTiltLeave()">
+        <div class="card-3d" [class.card-3d--flipped]="flipped" [class.card-3d--usd]="isUsd">
+          <div class="card-3d__face card-3d__face--front">
+            <div class="card-3d__top">
+              <div class="card-3d__brand">Arcash</div>
+              <div class="card-3d__currency">{{ reveal.currency }}</div>
+            </div>
+            <div class="card-3d__chip" aria-hidden="true"></div>
+            <div class="card-3d__pan">{{ reveal.pan }}</div>
+            <div class="card-3d__row">
+              <div>
+                <span>Vence</span>
+                <strong>{{ expLabel }}</strong>
+              </div>
+              <div>
+                <span>Titular</span>
+                <strong>{{ reveal.holderName }}</strong>
+              </div>
+            </div>
+          </div>
+          <div class="card-3d__face card-3d__face--back">
+            <div class="card-3d__stripe" aria-hidden="true"></div>
+            <div class="card-3d__cvc-block">
+              <span>CVC</span>
+              <strong>{{ reveal.cvc }}</strong>
+            </div>
+            <p class="card-3d__back-note">Solo para uso dentro de Arcash (demo)</p>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="card-flip-btn" (click)="flip()">
+        {{ flipped ? 'Ver frente' : 'Ver CVC' }}
+      </button>
+    </div>
+
+    <section class="card-panel">
+      <h3>Datos de la tarjeta</h3>
+      <ul class="card-facts">
+        <li>
+          <span>Número</span>
+          <button type="button" class="card-copy" (click)="copy(reveal.pan, 'Número')">
+            {{ reveal.pan }}
+          </button>
+        </li>
+        <li>
+          <span>Vencimiento</span>
+          <strong>{{ expLabel }}</strong>
+        </li>
+        <li>
+          <span>CVC</span>
+          <button type="button" class="card-copy" (click)="copy(reveal.cvc, 'CVC')">
+            {{ reveal.cvc }}
+          </button>
+        </li>
+        <li>
+          <span>Estado</span>
+          <strong>{{ statusLabel }}</strong>
+        </li>
+      </ul>
+
+      <div class="card-controls">
+        <button type="button" class="card-ctrl" (click)="togglePause()" [disabled]="busy">
+          {{ card.status === 'PAUSED' ? 'Reactivar' : 'Pausar' }}
+        </button>
+        <button type="button" class="card-ctrl" (click)="startEditLimit()" [disabled]="busy">
+          Límite diario
+        </button>
+        @if (card.canReissue) {
+        <button type="button" class="card-ctrl" (click)="reissueCard()" [disabled]="busy">
+          Solicitar nueva
+        </button>
+        }
+        <button type="button" class="card-ctrl card-ctrl--ghost" (click)="hideData()">
+          Ocultar datos
+        </button>
+        <button type="button" class="card-ctrl card-ctrl--danger" (click)="askCancelCard()" [disabled]="busy">
+          Dar de baja
+        </button>
+      </div>
+
+      @if (editingLimit) {
+      <div class="card-limit-edit">
+        <label for="card-limit">Límite diario ({{ card.currency }})</label>
+        <input id="card-limit" type="number" min="0" step="1" [(ngModel)]="limitDraft" />
+        <div class="card-limit-edit__actions">
+          <button type="button" class="card-ctrl card-ctrl--ghost" (click)="cancelEditLimit()">Cancelar</button>
+          <button type="button" class="card-ctrl" (click)="saveLimit()" [disabled]="busy">Guardar</button>
+        </div>
+      </div>
+      } @else {
+      <p class="card-limit-hint">
+        Límite diario: ${{ formatMoney(card.dailyLimit) }} {{ card.currency }}
+        <small>(persistido; sin débitos reales en esta demo)</small>
+      </p>
+      }
+
+      <h3 class="card-audit-title">Actividad reciente</h3>
+      @if (audit.length === 0) {
+      <p class="card-audit-empty">Sin eventos todavía</p>
+      } @else {
+      <ul class="card-audit">
+        @for (event of audit.slice(0, 8); track event.id) {
+        <li>
+          <strong>{{ auditLabel(event.type) }}</strong>
+          <span>{{ event.createdAt }}</span>
+        </li>
+        }
+      </ul>
+      }
+    </section>
+    }
+
+    @if (confirmingCancel) {
+    <div class="card-cancel-confirm" (click)="dismissCancelConfirm()" role="presentation">
+      <div
+        class="card-cancel-confirm__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="card-cancel-title"
+        (click)="$event.stopPropagation()">
+        <header class="card-cancel-confirm__header">
+          <div class="card-cancel-confirm__icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div>
+            <h3 id="card-cancel-title">Dar de baja la prepaga</h3>
+            <p>Prepaga {{ card.currency }} · •••• {{ card.last4 }}</p>
+          </div>
+        </header>
+        <p class="card-cancel-confirm__hint">
+          No vas a poder usarla. Si no está vencida, para pedir otra hay que esperar
+          <strong>7 días</strong>.
+        </p>
+        <div class="card-cancel-confirm__actions">
+          <button
+            type="button"
+            class="card-ctrl card-ctrl--ghost"
+            (click)="dismissCancelConfirm()"
+            [disabled]="busy">
+            Volver
+          </button>
+          <button
+            type="button"
+            class="card-ctrl card-ctrl--danger-solid"
+            (click)="confirmCancelCard()"
+            [disabled]="busy">
+            {{ busy ? 'Dando de baja…' : 'Sí, dar de baja' }}
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</div>

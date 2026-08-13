@@ -1,4 +1,11 @@
 package com.EDJ.ArCash.Service;
+import com.EDJ.ArCash.Service.result.UsdDebitPreview;
+import com.EDJ.ArCash.Service.result.UsdToArsConversion;
+import com.EDJ.ArCash.Service.interfaces.CotizationUsdService;
+import com.EDJ.ArCash.Service.interfaces.TaxService;
+import com.EDJ.ArCash.Service.interfaces.UsdToArsConversionService;
+import com.EDJ.ArCash.Service.impl.TaxServiceImpl;
+import com.EDJ.ArCash.Service.impl.UsdToArsConversionServiceImpl;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,9 +17,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Clava la formula USD→ARS (comision en USD, credito ARS solo sobre la base).
- */
 class UsdToArsConversionServiceTest {
 
     private static final double DELTA = 1e-9;
@@ -23,8 +27,8 @@ class UsdToArsConversionServiceTest {
     @BeforeEach
     void setUp() {
         cotizationUsdService = mock(CotizationUsdService.class);
-        conversionService = new UsdToArsConversionService(
-                new TaxService(cotizationUsdService),
+        conversionService = new UsdToArsConversionServiceImpl(
+                new TaxServiceImpl(cotizationUsdService),
                 cotizationUsdService
         );
     }

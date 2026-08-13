@@ -3,12 +3,12 @@ package com.EDJ.ArCash.Controller.api;
 import com.EDJ.ArCash.DTO.AuthDTO.*;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Service.AccountBalanceView;
-import com.EDJ.ArCash.Service.AccountService;
-import com.EDJ.ArCash.Service.AliasChangeResult;
-import com.EDJ.ArCash.Service.DepositResult;
-import com.EDJ.ArCash.Service.OpenUsdResult;
-import com.EDJ.ArCash.Service.QrDataResult;
+import com.EDJ.ArCash.Service.result.AccountBalanceView;
+import com.EDJ.ArCash.Service.interfaces.AccountService;
+import com.EDJ.ArCash.Service.result.AliasChangeResult;
+import com.EDJ.ArCash.Service.result.DepositResult;
+import com.EDJ.ArCash.Service.result.OpenUsdResult;
+import com.EDJ.ArCash.Service.result.QrDataResult;
 import com.EDJ.ArCash.factory.AliasResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 
 @RestController
 @RequestMapping(value = "/api/accounts", produces = "application/json")
@@ -208,7 +207,6 @@ public class AccountController {
         };
     }
 
-
     @Operation(
             summary = "Listar las cuentas del usuario",
             description = "Devuelve todas las cuentas del usuario autenticado, en cualquiera de sus monedas."
@@ -230,7 +228,6 @@ public class AccountController {
 
         return ResponseEntity.ok(UserAccountsResponse.from(cuentas));
     }
-
 
     @PostMapping("/usd")
     public ResponseEntity<?> openUsdAccount(@AuthenticationPrincipal CustomUserDetails principal) {

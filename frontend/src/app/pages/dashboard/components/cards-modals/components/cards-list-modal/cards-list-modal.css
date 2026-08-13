@@ -1,0 +1,237 @@
+:host {
+  display: contents;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+}
+
+.cards-list-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+  backdrop-filter: blur(6px);
+  animation: cardsFade 0.22s ease-out both;
+}
+
+.cards-list-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lift);
+  padding: 1.35rem 1.25rem 1.25rem;
+  color: var(--text-primary);
+  animation: cardsRise 0.28s ease-out both;
+}
+
+.cards-list-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.35rem;
+  cursor: pointer;
+  box-shadow: none !important;
+}
+
+.cards-list-modal__close:hover {
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  transform: none;
+}
+
+.cards-list-modal__header {
+  display: flex;
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
+  padding-right: 2rem;
+}
+
+.cards-list-modal__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text-accent) 12%, transparent);
+  color: var(--text-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cards-list-modal__header h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: none;
+  -webkit-text-fill-color: unset;
+  text-align: left;
+  color: var(--text-primary);
+}
+
+.cards-list-modal__header p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+}
+
+.cards-list-modal__loading,
+.cards-list-modal__empty {
+  margin: 0;
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.cards-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.85rem;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0a66ff 0%, #3b82f6 100%);
+  color: #fff;
+  box-shadow: none !important;
+}
+
+.cards-list__item--usd {
+  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+}
+
+.cards-list__item--paused {
+  filter: grayscale(0.35);
+  opacity: 0.88;
+}
+
+.cards-list__item--cancelled {
+  filter: grayscale(0.7);
+  opacity: 0.82;
+}
+
+.cards-list__main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.15rem 0.15rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: none !important;
+}
+
+.cards-list__main:hover {
+  transform: none;
+  filter: brightness(1.05);
+}
+
+.cards-list__chip {
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.45rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.cards-list__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.cards-list__body strong {
+  font-size: 0.95rem;
+}
+
+.cards-list__body span {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  letter-spacing: 0.08em;
+}
+
+.cards-list__badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.45rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.cards-list__reissue {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 650;
+  font-size: 0.82rem;
+  cursor: pointer;
+  box-shadow: none !important;
+}
+
+.cards-list__reissue:hover {
+  background: rgba(255, 255, 255, 0.28);
+  transform: none;
+}
+
+.cards-list__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  opacity: 0.92;
+}
+
+@keyframes cardsFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cardsRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cards-list-modal,
+  .cards-list-modal__panel {
+    animation: none !important;
+  }
+}

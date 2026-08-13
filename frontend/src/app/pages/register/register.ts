@@ -1,12 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-// Importar componentes
 import { ThemeToggleComponent } from '../../components/ui/theme-toggle/theme-toggle';
 import { BackButtonComponent } from '../../components/ui/back-button/back-button';
 import { BrandLogoComponent } from '../../components/ui/brand-logo/brand-logo';
 import { RegisterFormComponent } from '../../components/forms/register-form/register-form';
-import { GlobalFooterComponent } from '../../components/ui/global-footer/global-footer';
+import { Footer } from '../../components/footer/footer';
 import { logger } from '../../shared/utils/logger';
 
 @Component({
@@ -18,13 +17,12 @@ import { logger } from '../../shared/utils/logger';
     BackButtonComponent,
     BrandLogoComponent,
     RegisterFormComponent,
-    GlobalFooterComponent
+    Footer,
   ],
   templateUrl: './register.html',
-  styleUrl: './register.css'
+  styleUrl: './register.css',
 })
 export class RegisterComponent {
-  
   onRegisterSuccess(email: string): void {
     logger.debug('Usuario registrado exitosamente:', email);
   }

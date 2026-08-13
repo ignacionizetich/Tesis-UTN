@@ -9,7 +9,7 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.TransactionRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
-import com.EDJ.ArCash.Service.TransactionService;
+import com.EDJ.ArCash.Service.interfaces.TransactionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +71,9 @@ class ArCashApplicationTests {
         assertEquals(destino.getAccountNickname(), dto.getDestinationAlias());
         assertEquals(origen.getUser().getAlias(), dto.getOriginUsername());
         assertEquals(destino.getUser().getAlias(), dto.getDestinationUsername());
+        assertEquals("Juan Perez", dto.getOriginFullName());
+        assertEquals("Juan Perez", dto.getDestinationFullName());
+        assertFalse(dto.getSameOwner());
         assertFalse(dto.getConverted());
         assertNotNull(dto.getIdOperation());
         assertNotNull(dto.getDate());

@@ -20,9 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Caracterizacion de la validacion de credenciales (sin tokens ni cuenta).
- */
 class UserAuthenticationServiceTest {
 
     private static final long ID_USUARIO = 5L;

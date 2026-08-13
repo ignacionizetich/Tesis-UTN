@@ -1,13 +1,12 @@
 package com.EDJ.ArCash.observer;
 
 import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Service.EmailService;
+import com.EDJ.ArCash.Service.interfaces.EmailService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
-
 
 @Component
 public class EmailEventObserver implements EventObserver {
@@ -94,10 +93,6 @@ public class EmailEventObserver implements EventObserver {
         }
     }
 
-    /**
-     * Maneja el evento de recuperación de contraseña
-     * @param event Evento con datos del usuario y token
-     */
     private void handlePasswordRecovery(Event event) {
         User user = (User) event.getData("user");
         String token = (String) event.getData("token");
@@ -110,10 +105,6 @@ public class EmailEventObserver implements EventObserver {
         }
     }
 
-    /**
-     * Maneja el evento de transacción completada
-     * @param event Evento con datos del usuario, monto y alias destino
-     */
     private void handleTransactionCompleted(Event event) {
         User user = (User) event.getData("user");
         Double amount = (Double) event.getData("amount");
@@ -165,10 +156,6 @@ public class EmailEventObserver implements EventObserver {
         }
     }
 
-    /**
-     * Maneja el evento de cambio de alias
-     * @param event Evento con datos del usuario, alias viejo y nuevo
-     */
     private void handleAliasChanged(Event event) {
         User user = (User) event.getData("user");
         String oldAlias = (String) event.getData("oldAlias");

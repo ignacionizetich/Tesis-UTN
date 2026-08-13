@@ -1,171 +1,160 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ThemeService } from '../../services/theme/theme.service';
+import { FormsModule } from '@angular/forms';
+import { ThemeToggleComponent } from '../../components/ui/theme-toggle/theme-toggle';
+import { BrandLogoComponent } from '../../components/ui/brand-logo/brand-logo';
+import { Footer } from '../../components/footer/footer';
 import { ToastService } from '../../services/toast/toast.service';
-import { ValidationService, type ValidationResponse } from '../../services/validation/validation.service';
-import { ResendNavigationService } from '../../services/resend-navigation/resend-navigation.service';
+import {
+  ValidationService,
+  type ValidationResponse,
+} from '../../services/validation/validation.service';
 import { ResendService } from '../../services/resend/resend.service';
-import { Subscription } from 'rxjs';
 import { maskEmail } from '../../shared/utils/email-mask';
 import { logger } from '../../shared/utils/logger';
 
 @Component({
   selector: 'app-validate',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, ThemeToggleComponent, BrandLogoComponent, Footer],
   templateUrl: './validate.html',
-  styleUrls: ['./validate.css']
+  styleUrls: ['./validate.css'],
 })
 export class ValidateComponent implements OnInit, OnDestroy {
   validationResult: ValidationResponse | null = null;
   isLoading = true;
-  currentTheme: string = 'light';
   isResending = false;
-  private themeSubscription: Subscription;
+  showResendForm = false;
+  resendEmail = '';
+
+  private loadSub?: { unsubscribe(): void };
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private themeService: ThemeService,
     private toast: ToastService,
     private validationService: ValidationService,
-    private resendNavigationService: ResendNavigationService,
     private resendService: ResendService
-  ) {
-    // Suscribirse a los cambios de tema
-    this.themeSubscription = this.themeService.theme$.subscribe(theme => {
-      this.currentTheme = theme;
-    });
-  }
+  ) {}
 
-  ngOnInit() {
-    // Obtener el token desde la URL y validarlo
-    this.route.queryParams.subscribe(params => {
+  ngOnInit(): void {
+    this.loadSub = this.route.queryParams.subscribe((params) => {
       const token = params['token'];
-      
-      // El guard ya verificó que existe el token, ahora validamos su estado
       this.validateToken(token);
     });
   }
 
-  private validateToken(token: string) {
-    // Usar el ValidationService para la validación real
+  private validateToken(token: string): void {
     this.validationService.validateEmailToken(token).subscribe({
       next: (response: ValidationResponse) => {
         this.validationResult = response;
         this.isLoading = false;
-        
-        // Mostrar mensaje de toast apropiado
+
         if (response.success) {
-          this.toast.show('¡Cuenta verificada exitosamente! Ya puedes iniciar sesión.', 'success');
+          this.toast.show('¡Cuenta verificada! Ya podés iniciar sesión.', 'success');
+        } else if (response.message.includes('ya fue utilizado')) {
+          this.toast.show('Esta cuenta ya está activada.', 'info');
+        } else if (response.message.includes('expirado')) {
+          this.toast.show('El enlace expiró. Pedí uno nuevo.', 'warning');
         } else {
-          // Determinar el tipo de toast según el mensaje
-          if (response.message.includes('ya fue utilizado')) {
-            this.toast.show('Esta cuenta ya está activada.', 'info');
-          } else if (response.message.includes('expirado')) {
-            this.toast.show('El enlace ha expirado. Solicita un nuevo enlace de activación.', 'warning');
-          } else {
-            this.toast.show(response.message, 'error');
-          }
+          this.toast.show(response.message, 'error');
         }
       },
-      error: (error: any) => {
+      error: (error: { status?: number }) => {
         logger.error('Error validating token:', error);
-        
-        // Si es un error 404 o de token inválido, redirigir a 404
+
         if (error.status === 404 || error.status === 400) {
           this.router.navigate(['/404']);
           return;
         }
-        
-        // Para otros errores (conexión, etc.), mostrar mensaje de error
+
         this.validationResult = {
           success: false,
-          message: 'Error al validar el token. Por favor, inténtalo de nuevo.'
+          message: 'No pudimos validar el enlace. Intentá de nuevo.',
         };
         this.toast.show('Error de conexión', 'error');
         this.isLoading = false;
-      }
+      },
     });
   }
 
-  getMessage(): string {
+  get title(): string {
     if (this.isLoading) {
-      return 'Validando tu cuenta...';
+      return 'Validando tu cuenta';
     }
-    return this.validationResult?.message || 'Token no proporcionado en la URL.';
-  }
-
-  getBtnClass(): string {
-    if (!this.validationResult) {
-      return 'btn-error';
+    if (this.validationResult?.success) {
+      return 'Cuenta activada';
     }
-    return this.validationResult.success ? 'btn-success' : 'btn-error';
+    return 'No se pudo validar';
   }
 
-  goToHome() {
-    this.router.navigate(['/']);
+  get message(): string {
+    if (this.isLoading) {
+      return 'Estamos confirmando tu email. Un momento…';
+    }
+    return this.validationResult?.message || 'No encontramos un token válido en el enlace.';
   }
 
-  goToResend() {
-    this.resendNavigationService.navigateFromValidation();
+  get isSuccess(): boolean {
+    return !!this.validationResult?.success;
   }
 
   showResendOption(): boolean {
     return this.validationResult?.success === false && !this.isLoading;
   }
 
-  /**
-   * Reenvía el correo de validación directamente desde esta página
-   */
-  resendValidationEmail(): void {
-    if (this.isResending) return;
+  openResendForm(): void {
+    this.showResendForm = true;
+  }
 
-    // Solicitar al usuario su email a través de un prompt simple
-    const email = prompt('Ingresa tu correo electrónico para reenviar el enlace de validación:');
-    
-    if (!email || email.trim() === '') {
-      this.toast.show('Operación cancelada.', 'info');
+  resendValidationEmail(): void {
+    if (this.isResending) {
       return;
     }
 
-    // Validación básica de email
+    const email = this.resendEmail.trim();
+    if (!email) {
+      this.toast.show('Ingresá tu correo para reenviar el enlace.', 'warning');
+      return;
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      this.toast.show('Por favor ingresa un correo electrónico válido.', 'warning');
+      this.toast.show('Ingresá un correo válido.', 'warning');
       return;
     }
 
     this.isResending = true;
 
     this.resendService.resendValidationEmail(email).subscribe({
-      next: (response) => {
-        const censurado = maskEmail(email);
-        this.toast.show(`Correo reenviado exitosamente a ${censurado}.`, 'success');
+      next: () => {
+        this.toast.show(`Correo reenviado a ${maskEmail(email)}.`, 'success');
+        this.isResending = false;
+        this.showResendForm = false;
+        this.resendEmail = '';
+      },
+      error: (error: { status?: number }) => {
+        logger.error('Error al reenviar:', error);
+        if (error.status === 429) {
+          this.toast.show('Demasiados intentos. Esperá un momento.', 'warning');
+        } else {
+          this.toast.show('No se pudo reenviar. Intentá más tarde.', 'error');
+        }
         this.isResending = false;
       },
-      error: (error) => {
-        logger.error('Error al reenviar:', error);
-        
-        if (error.status === 429) {
-          this.toast.show('Demasiados intentos: Espera un momento antes de solicitar otro reenvío.', 'warning');
-        } else {
-          this.toast.show('Error al reenviar: Intenta nuevamente en unos momentos.', 'error');
-        }
-        
-        this.isResending = false;
-      }
     });
   }
 
-  toggleTheme() {
-    this.themeService.toggleTheme();
+  goToLogin(): void {
+    this.router.navigate(['/login']);
   }
 
-  ngOnDestroy() {
-    if (this.themeSubscription) {
-      this.themeSubscription.unsubscribe();
-    }
+  goToHome(): void {
+    this.router.navigate(['/']);
+  }
+
+  ngOnDestroy(): void {
+    this.loadSub?.unsubscribe();
   }
 }

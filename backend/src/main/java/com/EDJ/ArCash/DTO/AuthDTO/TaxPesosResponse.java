@@ -1,4 +1,3 @@
-
 package com.EDJ.ArCash.DTO.AuthDTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -16,6 +15,9 @@ public class TaxPesosResponse {
 
     @Schema(description = "Moneda utilizada", example = "ARS")
     private String moneda;
+
+    @Schema(description = "Alicuota de IVA aplicada (porcentaje)", example = "21.0")
+    private double alicuotaIva;
 
     @Schema(description = "IVA calculado", example = "2100.00")
     private double IVA;

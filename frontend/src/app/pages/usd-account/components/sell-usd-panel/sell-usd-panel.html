@@ -1,82 +1,149 @@
-<div class="modal-overlay" (click)="closed.emit()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Vender Dólares</h2>
-      <button class="close-btn" type="button" (click)="closed.emit()">&times;</button>
-    </div>
+<div class="sell-usd-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="sell-usd-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="sell-usd-title"
+    (click)="$event.stopPropagation()">
 
-    <div class="modal-body">
-      <div class="info-cards">
-        <div class="info-card">
-          <span class="label">Tu saldo en dólares:</span>
-          <span class="value">${{ formatMoney(usdBalance) }} USD</span>
-        </div>
-        <div class="info-card">
-          <span class="label">Tu saldo en pesos:</span>
-          <span class="value">${{ formatMoney(arsBalance) }} ARS</span>
-        </div>
-      </div>
+    <button
+      type="button"
+      class="sell-usd-modal__close"
+      (click)="close()"
+      [disabled]="isSellingUsd"
+      aria-label="Cerrar">
+      &times;
+    </button>
 
-      <div class="warning-box">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <header class="sell-usd-modal__header">
+      <div class="sell-usd-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           <path
-            d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            stroke="var(--text-secondary)"
+            d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+            stroke="currentColor"
             stroke-width="2"
-          />
+            stroke-linecap="round"
+            stroke-linejoin="round" />
         </svg>
-        <span>Se aplicará una comisión del {{ taxPercentage }}% por el servicio</span>
+      </div>
+      <div>
+        <h2 id="sell-usd-title">Vender dólares</h2>
+        <p>Convertí USD a pesos con cotización oficial</p>
+      </div>
+    </header>
+
+    <div class="sell-usd-balances">
+      <div class="sell-usd-balances__item">
+        <span>Saldo USD</span>
+        <strong>${{ formatMoney(usdBalance) }}</strong>
+      </div>
+      <div class="sell-usd-balances__item">
+        <span>Saldo ARS</span>
+        <strong>${{ formatMoney(arsBalance) }}</strong>
+      </div>
+    </div>
+
+    <section class="sell-usd-quote" aria-live="polite">
+      @if (isLoadingQuote) {
+      <p class="sell-usd-quote__loading">Cargando cotización oficial…</p>
+      } @else {
+      <div class="sell-usd-quote__top">
+        <span class="sell-usd-quote__badge">
+          {{ quote?.nombre || 'Dólar oficial' }}
+        </span>
+        @if (quote?.casa) {
+        <span class="sell-usd-quote__casa">{{ quote?.casa }}</span>
+        }
+        @if (quoteError) {
+        <span class="sell-usd-quote__warn">Estimación local</span>
+        }
       </div>
 
-      <form (ngSubmit)="submit()">
-        <div class="form-group">
-          <input
-            type="number"
-            [ngModel]="amountToSellUsd"
-            (ngModelChange)="onAmountChange($event)"
-            name="amountToSellUsd"
-            placeholder=" "
-            required
-            min="1"
-            step="0.01"
-            [disabled]="isSellingUsd"
-          />
-          <label>Monto en dólares (USD)</label>
+      <div class="sell-usd-quote__rates">
+        <div class="sell-usd-quote__rate sell-usd-quote__rate--active">
+          <span>Compra</span>
+          <strong>${{ formatMoney(activeRate) }}</strong>
         </div>
+        <div class="sell-usd-quote__rate">
+          <span>Venta</span>
+          <strong>${{ formatMoney(quote?.venta || 0) }}</strong>
+        </div>
+      </div>
 
-        @if (amountToSellUsd && amountToSellUsd > 0) {
-        <div class="conversion-preview">
-          <div class="preview-label">Estimación:</div>
-          <div class="preview-amount">
-            <span class="currency-symbol">$</span>
-            <span>≈ {{ formatMoney(estimatedArsAmount) }} ARS</span>
-          </div>
-          <div class="preview-note">
-            Comisión ({{ taxPercentage }}%): ${{ formatMoney(estimatedTaxAmount) }} USD · Total a
-            debitar: ${{ formatMoney(estimatedTotalDebitado) }} USD
-          </div>
-        </div>
-        }
+      @if (quote?.fechaActualizacion) {
+      <p class="sell-usd-quote__updated">
+        Actualizado: {{ formatQuoteDate(quote?.fechaActualizacion) }}
+      </p>
+      }
 
-        <div class="modal-actions">
-          <button
-            type="submit"
-            class="primary"
-            [disabled]="!amountToSellUsd || amountToSellUsd <= 0 || isSellingUsd"
-            [class.loading]="isSellingUsd"
-          >
-            <span class="button-text">
-              {{ isSellingUsd ? 'Procesando...' : 'Vender' }}
-            </span>
-            @if (isSellingUsd) {
-            <div class="progress-bar"></div>
-            }
-          </button>
-          @if (!isSellingUsd) {
-          <button type="button" class="secondary" (click)="closed.emit()">Cancelar</button>
-          }
-        </div>
-      </form>
-    </div>
+      <p class="sell-usd-quote__note">
+        Al vender USD usamos la cotización de <em>compra</em>
+        (USD × {{ formatMoney(activeRate) }}).
+      </p>
+
+      @if (quoteError) {
+      <button type="button" class="sell-usd-quote__retry" (click)="loadQuote()" [disabled]="isSellingUsd">
+        Reintentar cotización
+      </button>
+      }
+      }
+    </section>
+
+    <form class="sell-usd-form" (ngSubmit)="submit()">
+      <label class="sell-usd-label" for="sell-usd-amount">Monto a vender (USD)</label>
+      <div class="sell-usd-field" [class.sell-usd-field--active]="!!amountToSellUsd">
+        <span class="sell-usd-field__prefix">$</span>
+        <input
+          id="sell-usd-amount"
+          type="number"
+          name="amountToSellUsd"
+          [ngModel]="amountToSellUsd"
+          (ngModelChange)="onAmountChange($event)"
+          min="1"
+          step="0.01"
+          placeholder="0,00"
+          inputmode="decimal"
+          required
+          [disabled]="isSellingUsd"
+        />
+      </div>
+
+      @if (amountToSellUsd && amountToSellUsd > 0) {
+      <ul class="sell-usd-breakdown">
+        <li>
+          <span>Monto base</span>
+          <strong>${{ formatMoney(amountToSellUsd) }} USD</strong>
+        </li>
+        <li>
+          <span>Comisión ({{ taxPercentage }}%)</span>
+          <strong>${{ formatMoney(estimatedTaxAmount) }} USD</strong>
+        </li>
+        <li>
+          <span>Total a debitar</span>
+          <strong>${{ formatMoney(estimatedTotalDebitado) }} USD</strong>
+        </li>
+        <li class="sell-usd-breakdown__total">
+          <span>Vas a recibir</span>
+          <strong>≈ ${{ formatMoney(estimatedArsAmount) }} ARS</strong>
+        </li>
+      </ul>
+      }
+
+      <div class="sell-usd-actions">
+        <button
+          type="button"
+          class="sell-usd-btn sell-usd-btn--ghost"
+          (click)="close()"
+          [disabled]="isSellingUsd">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="sell-usd-btn sell-usd-btn--primary"
+          [disabled]="!canSubmit">
+          {{ isSellingUsd ? 'Vendiendo...' : 'Vender USD' }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>

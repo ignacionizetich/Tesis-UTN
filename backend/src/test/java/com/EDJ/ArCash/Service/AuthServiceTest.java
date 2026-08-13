@@ -1,4 +1,9 @@
 package com.EDJ.ArCash.Service;
+import com.EDJ.ArCash.Service.result.RefreshAccessResult;
+import com.EDJ.ArCash.Service.interfaces.AccountService;
+import com.EDJ.ArCash.Service.interfaces.AuthService;
+import com.EDJ.ArCash.Service.interfaces.RefreshTokenCleanupService;
+import com.EDJ.ArCash.Service.impl.AuthServiceImpl;
 
 import com.EDJ.ArCash.DTO.AuthDTO.LoginRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.LoginResponse;
@@ -33,9 +38,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Login orquestado por AuthService: cuenta ARS antes de emitir/persistir tokens.
- */
 class AuthServiceTest {
 
     private static final long ID_USUARIO = 5L;
@@ -58,7 +60,7 @@ class AuthServiceTest {
         accountService = mock(AccountService.class);
         refreshTokenCleanupService = mock(RefreshTokenCleanupService.class);
 
-        authService = new AuthService();
+        authService = new AuthServiceImpl();
         ReflectionTestUtils.setField(authService, "authenticationStrategy", authenticationStrategy);
         ReflectionTestUtils.setField(authService, "tokenManagementStrategy", tokenManagementStrategy);
         ReflectionTestUtils.setField(authService, "passwordRecoveryStrategy", passwordRecoveryStrategy);

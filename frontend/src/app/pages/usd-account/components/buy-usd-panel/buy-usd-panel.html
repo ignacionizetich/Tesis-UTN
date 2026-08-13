@@ -1,90 +1,149 @@
-<div class="modal-overlay" (click)="closed.emit()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Comprar Dólares</h2>
-      <button class="close-btn" type="button" (click)="closed.emit()">&times;</button>
-    </div>
+<div class="buy-usd-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="buy-usd-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="buy-usd-title"
+    (click)="$event.stopPropagation()">
 
-    <div class="modal-body">
-      <div class="info-cards">
-        <div class="info-card">
-          <span class="label">Tu saldo en pesos:</span>
-          <span class="value">${{ formatMoney(arsBalance) }} ARS</span>
-        </div>
-        <div class="info-card">
-          <span class="label">Tu saldo en dólares:</span>
-          <span class="value">${{ formatMoney(usdBalance) }} USD</span>
-        </div>
-      </div>
+    <button
+      type="button"
+      class="buy-usd-modal__close"
+      (click)="close()"
+      [disabled]="isBuyingUsd"
+      aria-label="Cerrar">
+      &times;
+    </button>
 
-      <div class="warning-box">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <header class="buy-usd-modal__header">
+      <div class="buy-usd-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           <path
-            d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            stroke="var(--text-secondary)"
+            d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+            stroke="currentColor"
             stroke-width="2"
-          />
+            stroke-linecap="round"
+            stroke-linejoin="round" />
         </svg>
-        <span>Se aplicará una comisión del {{ taxPercentage }}% por el servicio</span>
+      </div>
+      <div>
+        <h2 id="buy-usd-title">Comprar dólares</h2>
+        <p>Convertí pesos a USD con cotización oficial</p>
+      </div>
+    </header>
+
+    <div class="buy-usd-balances">
+      <div class="buy-usd-balances__item">
+        <span>Saldo ARS</span>
+        <strong>${{ formatMoney(arsBalance) }}</strong>
+      </div>
+      <div class="buy-usd-balances__item">
+        <span>Saldo USD</span>
+        <strong>${{ formatMoney(usdBalance) }}</strong>
+      </div>
+    </div>
+
+    <section class="buy-usd-quote" aria-live="polite">
+      @if (isLoadingQuote) {
+      <p class="buy-usd-quote__loading">Cargando cotización oficial…</p>
+      } @else {
+      <div class="buy-usd-quote__top">
+        <span class="buy-usd-quote__badge">
+          {{ quote?.nombre || 'Dólar oficial' }}
+        </span>
+        @if (quote?.casa) {
+        <span class="buy-usd-quote__casa">{{ quote?.casa }}</span>
+        }
+        @if (quoteError) {
+        <span class="buy-usd-quote__warn">Estimación local</span>
+        }
       </div>
 
-      <form (ngSubmit)="submit()">
-        <div class="form-group">
-          <input
-            type="number"
-            [ngModel]="amountToBuyUsd"
-            (ngModelChange)="onAmountChange($event)"
-            name="amountToBuyUsd"
-            placeholder=" "
-            required
-            min="1"
-            step="0.01"
-            [disabled]="isBuyingUsd"
-          />
-          <label>Monto en pesos (ARS)</label>
+      <div class="buy-usd-quote__rates">
+        <div class="buy-usd-quote__rate">
+          <span>Compra</span>
+          <strong>${{ formatMoney(quote?.compra || 0) }}</strong>
         </div>
+        <div class="buy-usd-quote__rate buy-usd-quote__rate--active">
+          <span>Venta</span>
+          <strong>${{ formatMoney(activeRate) }}</strong>
+        </div>
+      </div>
 
-        @if (amountToBuyUsd && amountToBuyUsd > 0) {
-        <div class="conversion-preview">
-          <div class="preview-label">Estimación:</div>
-          <div class="preview-amount">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
-                stroke="var(--text-accent)"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-            <span>≈ {{ formatMoney(estimatedUsdAmount) }} USD</span>
-          </div>
-          <div class="preview-note">
-            Comisión ({{ taxPercentage }}%): ${{ formatMoney(estimatedTaxAmount) }} ARS · Total a
-            debitar: ${{ formatMoney(estimatedTotalDebitado) }} ARS
-          </div>
-        </div>
-        }
+      @if (quote?.fechaActualizacion) {
+      <p class="buy-usd-quote__updated">
+        Actualizado: {{ formatQuoteDate(quote?.fechaActualizacion) }}
+      </p>
+      }
 
-        <div class="modal-actions">
-          <button
-            type="submit"
-            class="primary"
-            [disabled]="!amountToBuyUsd || amountToBuyUsd <= 0 || isBuyingUsd"
-            [class.loading]="isBuyingUsd"
-          >
-            <span class="button-text">
-              {{ isBuyingUsd ? 'Procesando...' : 'Comprar' }}
-            </span>
-            @if (isBuyingUsd) {
-            <div class="progress-bar"></div>
-            }
-          </button>
-          @if (!isBuyingUsd) {
-          <button type="button" class="secondary" (click)="closed.emit()">Cancelar</button>
-          }
-        </div>
-      </form>
-    </div>
+      <p class="buy-usd-quote__note">
+        Al comprar USD usamos la cotización de <em>venta</em>
+        (ARS ÷ {{ formatMoney(activeRate) }}).
+      </p>
+
+      @if (quoteError) {
+      <button type="button" class="buy-usd-quote__retry" (click)="loadQuote()" [disabled]="isBuyingUsd">
+        Reintentar cotización
+      </button>
+      }
+      }
+    </section>
+
+    <form class="buy-usd-form" (ngSubmit)="submit()">
+      <label class="buy-usd-label" for="buy-usd-amount">Monto a convertir (ARS)</label>
+      <div class="buy-usd-field" [class.buy-usd-field--active]="!!amountToBuyUsd">
+        <span class="buy-usd-field__prefix">$</span>
+        <input
+          id="buy-usd-amount"
+          type="number"
+          name="amountToBuyUsd"
+          [ngModel]="amountToBuyUsd"
+          (ngModelChange)="onAmountChange($event)"
+          min="1"
+          step="0.01"
+          placeholder="0,00"
+          inputmode="decimal"
+          required
+          [disabled]="isBuyingUsd"
+        />
+      </div>
+
+      @if (amountToBuyUsd && amountToBuyUsd > 0) {
+      <ul class="buy-usd-breakdown">
+        <li>
+          <span>Monto base</span>
+          <strong>${{ formatMoney(amountToBuyUsd) }} ARS</strong>
+        </li>
+        <li>
+          <span>Comisión ({{ taxPercentage }}%)</span>
+          <strong>${{ formatMoney(estimatedTaxAmount) }} ARS</strong>
+        </li>
+        <li>
+          <span>Total a debitar</span>
+          <strong>${{ formatMoney(estimatedTotalDebitado) }} ARS</strong>
+        </li>
+        <li class="buy-usd-breakdown__total">
+          <span>Vas a recibir</span>
+          <strong>≈ ${{ formatMoney(estimatedUsdAmount) }} USD</strong>
+        </li>
+      </ul>
+      }
+
+      <div class="buy-usd-actions">
+        <button
+          type="button"
+          class="buy-usd-btn buy-usd-btn--ghost"
+          (click)="close()"
+          [disabled]="isBuyingUsd">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="buy-usd-btn buy-usd-btn--primary"
+          [disabled]="!canSubmit">
+          {{ isBuyingUsd ? 'Comprando...' : 'Comprar USD' }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>

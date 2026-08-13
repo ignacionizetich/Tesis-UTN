@@ -1,0 +1,265 @@
+/* Favorite details modal — rebrand limpio */
+
+:host {
+  display: contents;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+}
+
+.fav-details-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+  backdrop-filter: blur(6px);
+  animation: favDetailsFade 0.22s ease-out both;
+}
+
+.fav-details-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lift);
+  padding: 1.1rem 1.25rem 1.25rem;
+  color: var(--text-primary);
+  animation: favDetailsRise 0.28s ease-out both;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.fav-details-modal__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.fav-details-modal__nav,
+.fav-details-modal__close {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.fav-details-modal__nav:hover,
+.fav-details-modal__close:hover {
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  transform: none;
+}
+
+.fav-details-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.1rem;
+}
+
+.fav-details-profile__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--text-accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.fav-details-profile__text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.fav-details-profile__text h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  background: none;
+  -webkit-text-fill-color: unset;
+  text-align: left;
+  word-break: break-word;
+}
+
+.fav-details-profile__text p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.fav-details-badge {
+  align-self: flex-start;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.fav-details-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.95rem;
+  margin-bottom: 1.1rem;
+  background: var(--canvas);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+}
+
+.fav-details-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.fav-details-row span {
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+}
+
+.fav-details-row strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+  word-break: break-word;
+}
+
+.fav-details-row__mono {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  font-size: 0.82rem !important;
+  line-height: 1.35;
+}
+
+.fav-details-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.fav-details-actions__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.fav-details-btn {
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  box-shadow: none !important;
+  text-transform: none;
+  letter-spacing: 0;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.fav-details-btn--primary {
+  background: var(--text-accent) !important;
+  color: #fff !important;
+}
+
+.fav-details-btn--primary:hover {
+  background: var(--brand-hover) !important;
+  transform: none;
+}
+
+.fav-details-btn--ghost {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.fav-details-btn--ghost:hover {
+  background: var(--brand-soft) !important;
+  transform: none;
+}
+
+.fav-details-btn--danger {
+  background: color-mix(in srgb, var(--danger) 10%, transparent) !important;
+  color: var(--danger) !important;
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border-color)) !important;
+}
+
+.fav-details-btn--danger:hover {
+  background: color-mix(in srgb, var(--danger) 16%, transparent) !important;
+  transform: none;
+}
+
+@keyframes favDetailsFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes favDetailsRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 420px) {
+  .fav-details-actions__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fav-details-modal,
+  .fav-details-modal__panel {
+    animation: none !important;
+  }
+}

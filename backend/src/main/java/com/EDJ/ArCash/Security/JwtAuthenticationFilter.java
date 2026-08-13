@@ -1,7 +1,7 @@
 package com.EDJ.ArCash.Security;
 
 import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Service.SessionService;
+import com.EDJ.ArCash.Service.interfaces.SessionService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;

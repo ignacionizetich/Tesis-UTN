@@ -2,8 +2,8 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
-import com.EDJ.ArCash.Service.UserDataView;
-import com.EDJ.ArCash.Service.UserService;
+import com.EDJ.ArCash.Service.result.UserDataView;
+import com.EDJ.ArCash.Service.interfaces.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

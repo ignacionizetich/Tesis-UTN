@@ -29,11 +29,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Proteccion de /api/admin/** via SecurityConfig (ROLE_ADMIN)
- * y @PreAuthorize(hasRole('ADMIN')) con method security habilitado.
- * Cubre los cinco endpoints x anon 401 / USER 403 / ADMIN 200.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

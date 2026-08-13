@@ -1,14 +1,12 @@
-/* Shared modal base (dashboard split) */
-/* ====================================
-   MODAL STYLES
-   ==================================== */
+/* Shared modal base — alineado al rebrand limpio */
+
 .modal {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -17,16 +15,19 @@
 }
 
 .modal-content {
-  background: var(--bg-primary);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1.75rem 1.5rem;
   width: 100%;
   max-width: 450px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
   contain: layout style paint;
+  box-shadow: var(--shadow-lift);
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+  color: var(--text-primary);
 }
 
 .modal-content p > span {
@@ -35,95 +36,88 @@
 
 .modal-content h2 {
   color: var(--text-primary);
-  font-size: clamp(1.25rem, 4vw, 1.5rem);
-  font-weight: 600;
-  margin-bottom: 1.25rem;
+  font-size: clamp(1.2rem, 4vw, 1.4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.15rem;
   text-align: center;
-  background: linear-gradient(135deg, var(--text-primary), var(--text-accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  background: none;
+  -webkit-text-fill-color: unset;
 }
 
 .close-button {
   position: absolute;
   top: 12px;
-  right: 15px;
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--love-red);
+  right: 12px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.3s ease;
-  width: 30px;
-  height: 30px;
+  transition: background 0.2s ease, color 0.2s ease;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 10px;
   flex-shrink: 0;
-  padding: 1rem;
+  padding: 0;
 }
 
-/*
-Boton de cerrar el modal de taxes
-*/
-.close-tax-button{
+.close-tax-button {
   position: absolute;
-  top: -25px;
-  right: -20px;
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--love-red);
+  top: 12px;
+  right: 12px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.3s ease;
-  width: 30px;
-  height: 30px;
+  transition: background 0.2s ease, color 0.2s ease;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 10px;
   flex-shrink: 0;
-  padding: 1rem;
+  padding: 0;
 }
 
-.close-tax-button:hover{
-  background-color: rgba(80, 80, 80, 0.068);
-  transform: translateY(-2px);
-  transition: all 0.3s ease;
+.close-tax-button:hover {
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  transform: none;
 }
 
-.close-button-favorite{
-    position: absolute;
-  top: -25px;
-  right: -20px;
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--love-red);
+.close-button-favorite {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.3s ease;
-  width: 30px;
-  height: 30px;
+  transition: background 0.2s ease, color 0.2s ease;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 10px;
   flex-shrink: 0;
-  padding: 1rem;
+  padding: 0;
 }
 
-.close-button-favorite:hover{
-    background-color: rgba(80, 80, 80, 0.068);
-  transform: translateY(-2px);
-  transition: all 0.3s ease;
+.close-button-favorite:hover {
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  transform: none;
 }
 
-
-
-
-.close-button:hover{
-  background-color: rgba(80, 80, 80, 0.068);
-  transform: translateY(-2px);
-  transition: all 0.3s ease;
+.close-button:hover {
+  background: var(--brand-soft);
+  color: var(--text-accent);
+  transform: none;
 }
 
 
@@ -155,8 +149,9 @@ Boton de cerrar el modal de taxes
 
 .back-button:hover,
 .back-button-list:hover {
-  transform: translateX(-2px);
-  box-shadow: 0 4px 15px rgba(139, 95, 191, 0.3);
+  transform: none;
+  background: var(--brand-soft);
+  box-shadow: none;
 }
 
 .back-button:active,
@@ -198,101 +193,108 @@ Boton de cerrar el modal de taxes
 }
 
 .modal-header-info button {
-  background: linear-gradient(135deg, var(--text-accent) 0%, var(--text-secondary) 100%) !important;
+  background: var(--text-accent) !important;
+  color: #fff !important;
+  box-shadow: none !important;
 }
 
 .modal-content input[type='text'],
 .modal-content input[type='number'],
 .modal-content input[type='email'] {
   width: 100%;
-  padding: 12px 15px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  color: #ffffff;
+  padding: 12px 14px;
+  background: var(--canvas);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: 'Manrope', sans-serif;
   font-size: 14px;
   margin-bottom: 1rem;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 :not([data-theme="dark"]) .modal-content input[type='text'],
 :not([data-theme="dark"]) .modal-content input[type='number'],
 :not([data-theme="dark"]) .modal-content input[type='email'] {
-  color: #1a1a1a;
-  background: rgba(255, 255, 255, 0.9);
-  border-color: #ddd;
+  color: var(--text-primary);
+  background: var(--canvas);
+  border-color: var(--border-color);
 }
 
 :not([data-theme="dark"]) .modal-content input::placeholder {
-  color: rgba(26, 26, 26, 0.6);
+  color: var(--text-secondary);
 }
 
 [data-theme="dark"] .modal-content input[type='text'],
 [data-theme="dark"] .modal-content input[type='number'],
 [data-theme="dark"] .modal-content input[type='email'] {
-  color: #1a1a1a !important;
+  color: var(--text-primary) !important;
+  background: var(--canvas) !important;
+  border-color: var(--border-color) !important;
 }
 
 [data-theme="dark"] .modal-content input::placeholder {
-  color: rgba(26, 26, 26, 0.6) !important;
+  color: var(--text-secondary) !important;
 }
 
 .modal-content input:focus {
   outline: none;
-  border-color: var(--cyber-blue);
-  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
-  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-accent) 18%, transparent);
+  background: var(--surface);
 }
 
 .modal-content input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
 }
 
 .modal-content button {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, var(--text-accent) 0%, var(--text-secondary) 100%);
-  color: var(--text-primary);
+  background: var(--text-accent);
+  color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
+  font-family: 'Manrope', sans-serif;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.2s ease;
   margin-bottom: 0.75rem;
   position: relative;
   overflow: hidden;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .modal-content button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
+  display: none;
 }
 
 .modal-content button:hover {
-  transform: translateX(-2px);
-  box-shadow: 0 4px 15px rgba(139, 95, 191, 0.3);
-  background: linear-gradient(135deg, var(--text-secondary) 0%, var(--text-accent) 100%);
+  transform: none;
+  box-shadow: none;
+  background: var(--brand-hover);
 }
 
 .modal-content button:hover::before {
-  left: 100%;
+  display: none;
 }
 
 .modal-content button:active {
-  transform: translateY(0);
-  transition: transform 0.1s;
+  transform: none;
 }
 
 .modal-content button.secondary {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.modal-content button.secondary:hover {
+  background: var(--brand-soft);
+  color: var(--text-accent);
 }
 
 .modal-content button:disabled {
@@ -305,8 +307,8 @@ Boton de cerrar el modal de taxes
   position: relative;
   overflow: hidden;
   pointer-events: none;
-  background: linear-gradient(45deg, #2a3441, #3a4651) !important;
-  color: white;
+  background: color-mix(in srgb, var(--text-secondary) 55%, var(--surface)) !important;
+  color: #fff;
 }
 
 .modal-content button .button-text {
@@ -325,26 +327,14 @@ Boton de cerrar el modal de taxes
   left: 0;
   height: 100%;
   width: 0;
-  background: linear-gradient(45deg, var(--cyber-blue), var(--electric-purple));
+  background: var(--text-accent);
   border-radius: 10px;
   animation: fillProgress 4s ease-in-out forwards;
   z-index: 1;
 }
 
 .progress-bar::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    transparent 100%
-  );
-  animation: shimmer 2s infinite;
+  display: none;
 }
 
 @keyframes fillProgress {
@@ -368,32 +358,32 @@ Boton de cerrar el modal de taxes
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(26, 31, 46, 0.85);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .search-loading-content {
   text-align: center;
-  color: white;
+  color: var(--text-primary);
 }
 
 .search-loading-content p {
   margin-top: 1rem;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .search-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.2);
-  border-top: 3px solid var(--cyber-blue);
+  border: 3px solid var(--border-light);
+  border-top: 3px solid var(--text-accent);
   border-radius: 50%;
   animation: searchSpin 1s linear infinite;
   margin: 0 auto;
@@ -413,21 +403,22 @@ Boton de cerrar el modal de taxes
 .form-group input {
   width: 100%;
   padding: 16px 12px 8px 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
+  background: var(--canvas);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
   font-size: 14px;
-  transition: all 0.3s ease;
+  color: var(--text-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 :not([data-theme="dark"]) .form-group input {
-  color: #1a1a1a;
-  background: rgba(255, 255, 255, 0.9);
-  border-color: #ddd;
+  color: var(--text-primary);
+  background: var(--canvas);
+  border-color: var(--border-color);
 }
 
 [data-theme="dark"] .form-group input {
-  color: var(--obsidian) !important;
+  color: var(--text-primary) !important;
 }
 
 .form-group label {
@@ -454,10 +445,10 @@ Boton de cerrar el modal de taxes
 }
 
 .info-alias-cvu {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--canvas);
   border-radius: 12px;
   padding: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-light);
 }
 
 .info-line {
@@ -465,7 +456,7 @@ Boton de cerrar el modal de taxes
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-light);
   flex-wrap: wrap;
   gap: 0.5rem;
 }
@@ -476,7 +467,7 @@ Boton de cerrar el modal de taxes
 
 .info-text {
   flex: 1;
-  color: #ffffff;
+  color: var(--text-primary);
   min-width: 0;
 }
 
@@ -487,10 +478,11 @@ Boton de cerrar el modal de taxes
 
 .info-text span {
   color: var(--text-primary);
-  font-family: 'Courier New', monospace;
-  background: rgba(255, 255, 255, 0.1);
+  font-family: 'Manrope', sans-serif;
+  background: var(--surface);
   padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
   font-size: 12px;
   word-break: break-all;
 }
@@ -500,18 +492,21 @@ Boton de cerrar el modal de taxes
   height: 35px;
   padding: 0 !important;
   margin: 0 !important;
-  background: rgba(0, 212, 255, 0.2) !important;
-  border-radius: 50% !important;
+  background: var(--brand-soft) !important;
+  border: 1px solid color-mix(in srgb, var(--text-accent) 25%, var(--border-light)) !important;
+  border-radius: 10px !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: background 0.2s ease;
   flex-shrink: 0;
+  color: var(--text-accent) !important;
+  box-shadow: none !important;
 }
 
 .copy-button:hover {
-  background: rgba(0, 212, 255, 0.4) !important;
-  transform: scale(1.1);
+  background: color-mix(in srgb, var(--text-accent) 18%, transparent) !important;
+  transform: none;
 }
 
 .copy-button svg {
@@ -533,12 +528,15 @@ Boton de cerrar el modal de taxes
 .currency-button {
   width: 48% !important;
   margin: 0 1% !important;
-  background: linear-gradient(135deg, var(--text-accent) 0%, var(--text-secondary) 100%) !important;
+  background: var(--text-accent) !important;
+  color: #fff !important;
+  box-shadow: none !important;
 }
 
 .currency-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(139, 95, 191, 0.4);
+  transform: none;
+  background: var(--brand-hover) !important;
+  box-shadow: none;
 }
 
 #tax-form label {
@@ -566,25 +564,25 @@ Boton de cerrar el modal de taxes
 
 #tax-form input[type='number']:focus {
   outline: none;
-  border-color: var(--cyber-blue);
-  box-shadow: 0 0 0 3px rgba(var(--cyber-blue-rgb), 0.3);
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-accent) 18%, transparent);
 }
 
 #tax-result {
   margin-top: 1.25rem;
   padding: 1rem;
-  background: rgba(57, 255, 204, 0.1);
-  border: 1px solid rgba(57, 255, 204, 0.3);
-  border-radius: 10px;
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 28%, transparent);
+  border-radius: 12px;
   color: var(--text-primary);
   font-size: 0.9rem;
 }
 
 .profile-details {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--canvas);
   border-radius: 12px;
   padding: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-light);
 }
 
 .profile-photo {
@@ -596,7 +594,7 @@ Boton de cerrar el modal de taxes
   border-radius: 50%;
   border: 2px solid var(--text-accent);
   padding: 8px;
-  background: rgba(0, 212, 255, 0.1);
+  background: var(--brand-soft);
   width: 80px;
   height: 80px;
 }
@@ -606,8 +604,8 @@ Boton de cerrar el modal de taxes
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
   flex-wrap: wrap;
   gap: 0.5rem;
 }
@@ -632,55 +630,53 @@ Boton de cerrar el modal de taxes
   flex: 1;
   margin: 0 !important;
   text-align: right;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
+  background: var(--canvas);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   padding: 4px 8px;
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 0.9rem;
 }
 
 :not([data-theme="dark"]) .profile-details input {
-  color: #1a1a1a;
-  background: rgba(255, 255, 255, 0.9);
-  border-color: #ddd;
+  color: var(--text-primary);
+  background: var(--canvas);
+  border-color: var(--border-color);
 }
 
 [data-theme="dark"] .profile-details input {
-  color: #1a1a1a !important;
+  color: var(--text-primary) !important;
 }
 
 .profile-details button {
   width: auto !important;
   padding: 4px 8px !important;
   margin: 0 0 0 0.5rem !important;
-  background: rgba(0, 212, 255, 0.2) !important;
+  background: var(--brand-soft) !important;
+  color: var(--text-accent) !important;
+  border: 1px solid color-mix(in srgb, var(--text-accent) 25%, var(--border-light)) !important;
   font-size: 12px !important;
+  box-shadow: none !important;
 }
 
 .transfer-details {
   list-style: none;
-  padding: 0;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--canvas);
   border-radius: 12px;
   padding: 1.25rem;
-  border: none;
+  border: 1px solid var(--border-light);
 }
-
-
 
 .transfer-details li {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-light);
   color: var(--text-primary);
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-
-
 
 .transfer-details li:last-child {
   border-bottom: none;
@@ -694,7 +690,7 @@ Boton de cerrar el modal de taxes
 
 .transfer-details span {
   text-align: right;
-  font-family: 'Courier New', monospace;
+  font-family: 'Manrope', sans-serif;
   font-size: 0.9rem;
   word-break: break-word;
 }
@@ -731,10 +727,10 @@ Boton de cerrar el modal de taxes
 }
 
 #amount-step input[type='number'] {
-  color: var(--bg-primary);
-  background-color: rgba(var(--platinum-rgb), 0.8);
+  color: var(--text-primary);
+  background-color: var(--canvas);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 12px;
   width: 100%;
   margin-top: 0.75rem;
   padding: 10px 12px;
@@ -742,21 +738,21 @@ Boton de cerrar el modal de taxes
 }
 
 #amount-step input[type='number']::placeholder {
-  color: rgba(var(--carbon-rgb), 0.4);
+  color: var(--text-secondary);
 }
 
 #amount-step input[type='number']:focus {
   outline: none;
-  border-color: var(--cyber-blue);
-  box-shadow: 0 0 0 3px rgba(var(--cyber-blue-rgb), 0.3);
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-accent) 18%, transparent);
 }
 
 #account-details {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
+  background: var(--canvas);
+  border-radius: 12px;
   padding: 1rem;
   margin: 1rem 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-light);
 }
 
 #account-details p {
@@ -767,7 +763,7 @@ Boton de cerrar el modal de taxes
 }
 
 #account-details strong {
-  color: var(--cyber-blue);
+  color: var(--text-accent);
 }
 
 /* ====================================

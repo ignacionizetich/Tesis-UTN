@@ -1,0 +1,226 @@
+<div class="metrics">
+  <div class="metrics__toolbar">
+    <div class="metrics__toolbar-text">
+      <p class="metrics__eyebrow">Resumen operativo</p>
+      @if (metrics) {
+      <span class="metrics__updated">Actualizado {{ metrics.generatedAt }}</span>
+      }
+    </div>
+    <button type="button" class="metrics__refresh" (click)="refresh()" [disabled]="loading">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M1 4v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        <path
+          d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </svg>
+      Actualizar
+    </button>
+  </div>
+
+  @if (loading) {
+  <div class="metrics__loading" role="status">
+    <div class="metrics__spinner"></div>
+    <p>Cargando métricas...</p>
+  </div>
+  }
+
+  @if (!loading && error) {
+  <div class="metrics__error">
+    <p>{{ error }}</p>
+    <button type="button" class="metrics__refresh" (click)="refresh()">Reintentar</button>
+  </div>
+  }
+
+  @if (!loading && metrics) {
+  <section class="kpi-grid" aria-label="Indicadores principales">
+    <article class="kpi">
+      <span class="kpi__label">Usuarios</span>
+      <strong class="kpi__value">{{ metrics.summary.totalUsers }}</strong>
+      <span class="kpi__hint">{{ metrics.summary.activeUsers }} activos · {{ metrics.summary.newUsersToday }} hoy</span>
+    </article>
+    <article class="kpi">
+      <span class="kpi__label">Transacciones</span>
+      <strong class="kpi__value">{{ metrics.summary.totalTransactions }}</strong>
+      <span class="kpi__hint">{{ metrics.summary.transactionsToday }} hoy</span>
+    </article>
+    <article class="kpi">
+      <span class="kpi__label">Volumen ARS</span>
+      <strong class="kpi__value">${{ formatMoney(metrics.summary.totalVolumeArs) }}</strong>
+      <span class="kpi__hint">Saldo sistema ${{ formatMoney(metrics.summary.totalBalanceArs) }}</span>
+    </article>
+    <article class="kpi">
+      <span class="kpi__label">Volumen USD</span>
+      <strong class="kpi__value">U$S {{ formatMoney(metrics.summary.totalVolumeUsd) }}</strong>
+      <span class="kpi__hint">Saldo sistema U$S {{ formatMoney(metrics.summary.totalBalanceUsd) }}</span>
+    </article>
+    <article class="kpi">
+      <span class="kpi__label">Préstamos activos</span>
+      <strong class="kpi__value">{{ metrics.summary.activeLoans }}</strong>
+      <span class="kpi__hint">Capital ${{ formatMoney(metrics.summary.loanPrincipalOutstanding) }}</span>
+    </article>
+    <article class="kpi">
+      <span class="kpi__label">Tarjetas</span>
+      <strong class="kpi__value">{{ metrics.summary.totalCards }}</strong>
+      <span class="kpi__hint">{{ metrics.summary.activeCards }} activas</span>
+    </article>
+  </section>
+
+  <section class="charts-grid charts-grid--wide">
+    <article class="chart-card">
+      <header class="chart-card__head">
+        <h3>Altas de usuarios</h3>
+        <p>Últimos 14 días</p>
+      </header>
+      <div class="chart-card__body">
+        <canvas #chartCanvas data-chart="registrations"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <header class="chart-card__head">
+        <h3>Movimientos</h3>
+        <p>Cantidad por día</p>
+      </header>
+      <div class="chart-card__body">
+        <canvas #chartCanvas data-chart="transactions"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card chart-card--span2">
+      <header class="chart-card__head">
+        <h3>Volumen operado</h3>
+        <p>Monto diario (todas las monedas)</p>
+      </header>
+      <div class="chart-card__body chart-card__body--tall">
+        <canvas #chartCanvas data-chart="volume"></canvas>
+      </div>
+    </article>
+  </section>
+
+  <section class="charts-grid">
+    <article class="chart-card">
+      <header class="chart-card__head">
+        <h3>Operaciones por tipo</h3>
+        <p>Cantidad acumulada</p>
+      </header>
+      <div class="chart-card__body">
+        <canvas #chartCanvas data-chart="txTypes"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <header class="chart-card__head">
+        <h3>Volumen por tipo</h3>
+        <p>Monto acumulado</p>
+      </header>
+      <div class="chart-card__body">
+        <canvas #chartCanvas data-chart="volumeTypes"></canvas>
+      </div>
+    </article>
+  </section>
+
+  <section class="charts-grid charts-grid--donuts">
+    <article class="chart-card">
+      <header class="chart-card__head">
+        <h3>Usuarios por estado</h3>
+      </header>
+      <div class="chart-card__body chart-card__body--donut">
+        <canvas #chartCanvas data-chart="usersStatus"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <header class="chart-card__head">
+        <h3>Usuarios por rol</h3>
+      </header>
+      <div class="chart-card__body chart-card__body--donut">
+        <canvas #chartCanvas data-chart="usersRole"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <header class="chart-card__head">
+        <h3>Cuentas por moneda</h3>
+      </header>
+      <div class="chart-card__body chart-card__body--donut">
+        <canvas #chartCanvas data-chart="accounts"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <header class="chart-card__head">
+        <h3>Préstamos</h3>
+      </header>
+      <div class="chart-card__body chart-card__body--donut">
+        <canvas #chartCanvas data-chart="loans"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <header class="chart-card__head">
+        <h3>Tarjetas virtuales</h3>
+      </header>
+      <div class="chart-card__body chart-card__body--donut">
+        <canvas #chartCanvas data-chart="cards"></canvas>
+      </div>
+    </article>
+  </section>
+
+  <section class="detail-grid" aria-label="Detalle de préstamos y cuentas">
+    <article class="detail-card">
+      <h3>Préstamos</h3>
+      <ul>
+        <li>
+          <span>Total</span>
+          <strong>{{ metrics.loans.total }}</strong>
+        </li>
+        <li>
+          <span>Activos</span>
+          <strong>{{ metrics.loans.active }}</strong>
+        </li>
+        <li>
+          <span>Cancelados</span>
+          <strong>{{ metrics.loans.paidOff }}</strong>
+        </li>
+        <li>
+          <span>Capital activo</span>
+          <strong>${{ formatMoney(metrics.loans.principalActive) }}</strong>
+        </li>
+        <li>
+          <span>Interés estimado activo</span>
+          <strong>${{ formatMoney(metrics.loans.estimatedInterestActive) }}</strong>
+        </li>
+      </ul>
+    </article>
+
+    <article class="detail-card">
+      <h3>Cuentas y usuarios</h3>
+      <ul>
+        <li>
+          <span>Cuentas ARS</span>
+          <strong>{{ metrics.summary.arsAccounts }}</strong>
+        </li>
+        <li>
+          <span>Cuentas USD</span>
+          <strong>{{ metrics.summary.usdAccounts }}</strong>
+        </li>
+        <li>
+          <span>Usuarios habilitados</span>
+          <strong>{{ metrics.summary.enabledUsers }}</strong>
+        </li>
+        <li>
+          <span>Administradores</span>
+          <strong>{{ metrics.summary.adminUsers }}</strong>
+        </li>
+        <li>
+          <span>Inactivos</span>
+          <strong>{{ metrics.summary.inactiveUsers }}</strong>
+        </li>
+      </ul>
+    </article>
+  </section>
+  }
+</div>

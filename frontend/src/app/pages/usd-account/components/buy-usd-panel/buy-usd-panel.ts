@@ -2,15 +2,18 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnInit,
   Output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountService } from '../../../../services/account/account.service';
+import { CotizationApi, CotizacionDolar } from '../../../../services/cotization-api/cotization.api';
 import { ToastService } from '../../../../services/toast/toast.service';
 import { formatMoney } from '../../../../shared/utils/money-format';
 import { errorMessage } from '../../../../shared/utils/error-message';
 import { logger } from '../../../../shared/utils/logger';
+import { firstValueFrom } from 'rxjs';
 
 export interface UsdTradeSuccess {
   newBalanceArs: number;
@@ -23,22 +26,28 @@ export interface UsdTradeSuccess {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './buy-usd-panel.html',
-  styleUrls: ['../../styles/usd-modals.css'],
+  styleUrls: ['./buy-usd-panel.css'],
 })
-export class BuyUsdPanelComponent {
+export class BuyUsdPanelComponent implements OnInit {
   @Input() arsAccountId = '';
   @Input() usdAccountId = '';
   @Input() arsBalance = 0;
   @Input() usdBalance = 0;
   @Input() taxRate = 0.03;
   @Input() taxPercentage = 3;
+  /** Fallback mientras carga la cotización real. */
   @Input() exchangeRate = 1100;
 
   @Output() closed = new EventEmitter<void>();
   @Output() success = new EventEmitter<UsdTradeSuccess>();
+  @Output() quoteLoaded = new EventEmitter<number>();
 
   amountToBuyUsd: number | null = null;
   isBuyingUsd = false;
+  isLoadingQuote = true;
+  quoteError = false;
+  quote: CotizacionDolar | null = null;
+
   estimatedUsdAmount = 0;
   estimatedTaxAmount = 0;
   estimatedTotalDebitado = 0;
@@ -47,16 +56,72 @@ export class BuyUsdPanelComponent {
 
   constructor(
     private accountService: AccountService,
+    private cotizationApi: CotizationApi,
     private toast: ToastService
   ) {}
 
+  ngOnInit(): void {
+    void this.loadQuote();
+  }
+
+  get activeRate(): number {
+    return this.quote?.venta && this.quote.venta > 0
+      ? this.quote.venta
+      : this.exchangeRate;
+  }
+
+  get canSubmit(): boolean {
+    return (
+      !!this.amountToBuyUsd &&
+      this.amountToBuyUsd > 0 &&
+      !this.isBuyingUsd &&
+      !this.isLoadingQuote &&
+      this.activeRate > 0
+    );
+  }
+
+  async loadQuote(): Promise<void> {
+    this.isLoadingQuote = true;
+    this.quoteError = false;
+    try {
+      this.quote = await this.cotizationApi.getDolarOficial();
+      this.quoteLoaded.emit(this.quote.venta);
+      this.recalculate();
+    } catch (error) {
+      logger.error('No se pudo cargar la cotización:', error);
+      this.quoteError = true;
+      this.toast.show('No se pudo cargar la cotización. Usamos una estimación local.', 'error');
+    } finally {
+      this.isLoadingQuote = false;
+    }
+  }
+
+  formatQuoteDate(iso: string | null | undefined): string {
+    if (!iso) {
+      return '';
+    }
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) {
+      return iso;
+    }
+    return new Intl.DateTimeFormat('es-AR', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(date);
+  }
+
   onAmountChange(value: number | null): void {
     this.amountToBuyUsd = value;
+    this.recalculate();
+  }
+
+  private recalculate(): void {
+    const value = this.amountToBuyUsd;
     if (value && value > 0) {
       this.estimatedTaxAmount = value * this.taxRate;
       this.estimatedTotalDebitado = value + this.estimatedTaxAmount;
       this.estimatedUsdAmount =
-        this.exchangeRate > 0 ? value / this.exchangeRate : 0;
+        this.activeRate > 0 ? value / this.activeRate : 0;
     } else {
       this.estimatedUsdAmount = 0;
       this.estimatedTaxAmount = 0;
@@ -64,9 +129,22 @@ export class BuyUsdPanelComponent {
     }
   }
 
+  close(): void {
+    if (this.isBuyingUsd) {
+      return;
+    }
+    this.closed.emit();
+  }
+
+  onBackdrop(event: MouseEvent): void {
+    if ((event.target as HTMLElement).classList.contains('buy-usd-modal')) {
+      this.close();
+    }
+  }
+
   async submit(): Promise<void> {
     if (!this.amountToBuyUsd || this.amountToBuyUsd <= 0) {
-      this.toast.show('Por favor ingrese un monto válido', 'error');
+      this.toast.show('Ingresá un monto válido', 'error');
       return;
     }
 
@@ -82,9 +160,13 @@ export class BuyUsdPanelComponent {
     this.isBuyingUsd = true;
 
     try {
-      const response = await this.accountService
-        .buyUsd(this.arsAccountId, this.usdAccountId, this.amountToBuyUsd)
-        .toPromise();
+      const response = await firstValueFrom(
+        this.accountService.buyUsd(
+          this.arsAccountId,
+          this.usdAccountId,
+          this.amountToBuyUsd
+        )
+      );
 
       if (response?.success) {
         this.toast.show(`Compra exitosa: $${response.amountUsd.toFixed(2)} USD`, 'success');

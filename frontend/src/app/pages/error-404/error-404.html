@@ -1,18 +1,31 @@
 <app-theme-toggle></app-theme-toggle>
 
-<main class="error-container">
-    
-    <section class="error-content">
-        
-        <div class="error-number" aria-hidden="true">404</div>
-        
-        <h1 class="error-title">¡Ups! Página no encontrada</h1>
-        <p class="error-message">El recurso que buscas no existe o ha sido movido.</p>
-        
-        <div class="error-actions">
-            <button type="button" (click)="goToHome()" class="error-btn secondary">
-                Ir a la Página de Inicio
-            </button>
-        </div>
+<div class="error-page">
+  <main class="error-page__main">
+    <section class="error-card" aria-labelledby="error-title">
+      <div class="error-card__brand">
+        <app-brand-logo></app-brand-logo>
+      </div>
+
+      <p class="error-card__code" aria-hidden="true">404</p>
+
+      <header class="error-card__header">
+        <h1 id="error-title">Página no encontrada</h1>
+        <p>
+          El enlace no existe o ya no está disponible. Volvé al inicio o ingresá a tu cuenta.
+        </p>
+      </header>
+
+      <div class="error-card__actions">
+        <button type="button" class="error-btn error-btn--primary" (click)="goToHome()">
+          Volver al inicio
+        </button>
+        <button type="button" class="error-btn error-btn--ghost" (click)="goToLogin()">
+          Ir a ingresar
+        </button>
+      </div>
     </section>
-</main>
+  </main>
+
+  <app-footer></app-footer>
+</div>

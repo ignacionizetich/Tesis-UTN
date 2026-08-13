@@ -10,6 +10,7 @@ import qrData from '../../../../models/qrData';
 import { QrApi } from '../../../../services/qr-api/qr.api';
 import { SessionStore } from '../../../../core/session/session.store';
 import { ModalService } from '../../../../services/modal/modal.service';
+import { formatDni } from '../../../../shared/utils/dni-format';
 import { logger } from '../../../../shared/utils/logger';
 
 @Component({
@@ -17,10 +18,11 @@ import { logger } from '../../../../shared/utils/logger';
   standalone: true,
   imports: [CommonModule, QRCodeComponent],
   templateUrl: './receive-qr-modal.html',
-  styleUrls: ['../../styles/modals-shared.css', '../../styles/receive-qr.css'],
+  styleUrls: ['./receive-qr-modal.css'],
 })
 export class ReceiveQrModalComponent implements OnInit {
   isLoadingQr = true;
+  loadError = false;
   qrCodeDataString: string | null = null;
   qrCodeDataObject: qrData | null = null;
 
@@ -33,6 +35,15 @@ export class ReceiveQrModalComponent implements OnInit {
     private modalService: ModalService
   ) {}
 
+  get currencyLabel(): string {
+    const currency = this.qrCodeDataObject?.currency;
+    return currency === 'USD' ? 'dólares (USD)' : 'pesos (ARS)';
+  }
+
+  get formattedDni(): string {
+    return formatDni(this.qrCodeDataObject?.dni);
+  }
+
   ngOnInit(): void {
     const accountId = this.sessionStore.getAccountId();
     if (!accountId) {
@@ -43,6 +54,7 @@ export class ReceiveQrModalComponent implements OnInit {
 
     const accountIdNumber = parseInt(accountId, 10);
     this.isLoadingQr = true;
+    this.loadError = false;
 
     this.qrApi.getMyQrData(accountIdNumber).subscribe({
       next: (data) => {
@@ -53,7 +65,7 @@ export class ReceiveQrModalComponent implements OnInit {
       error: (err) => {
         logger.error('Error al obtener los datos del QR', err);
         this.isLoadingQr = false;
-        this.close();
+        this.loadError = true;
       },
     });
   }
@@ -65,7 +77,7 @@ export class ReceiveQrModalComponent implements OnInit {
   }
 
   onBackdrop(event: MouseEvent): void {
-    if ((event.target as HTMLElement).classList.contains('modal')) {
+    if ((event.target as HTMLElement).classList.contains('qr-modal')) {
       this.close();
     }
   }

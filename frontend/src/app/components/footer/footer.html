@@ -1,14 +1,83 @@
-<div class="global-footer">
-    <span>ArCash™  Virtual Wallet</span>
-    <span class="separator">|</span>
-    <a href="https://github.com/ValeroTomas" target="_blank" class="autor-link">Tomás Valero</a>
-    <span class="separator">|</span>
-    <a href="https://github.com/ignacionizetich" target="_blank" class="autor-link">Ignacio Nizetich</a>
-    <span class="separator">|</span>
-    <a href="https://github.com/#" target="_blank" class="autor-link">Nahuel Fornillo</a>
-    <span class="separator">|</span>
-    <a href="https://github.com/Arshichak" target="_blank" class="autor-link">Lautaro Arschak</a>
-    <span class="separator">|</span>
-    <a href="https://github.com/Rufinofg2" target="_blank" class="autor-link">Rufino Figueroa</a>
-    
-</div>
+<footer class="site-footer" aria-label="Pie de página Arcash">
+  <div class="site-footer__inner">
+    <div class="site-footer__grid">
+      <!-- Marca: forma + Unna/Manrope intactos -->
+      <div class="site-footer__brand">
+        <div class="site-footer__logo">
+          <svg class="brand-mark" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M60 20 L100 40 V80 L60 100 L20 80 V40 Z" class="vault-shape" />
+            <circle cx="60" cy="60" r="18" class="security-core" />
+            <path d="M60 42 L60 78 M48 60 L72 60" class="access-cross" />
+          </svg>
+          <div class="site-footer__wordmark">
+            <p class="brand-wordmark">
+              <span class="brand-name">AR</span><span class="brand-name-sub">Cash</span>
+            </p>
+            <p class="brand-tagline">BEST VIRTUAL WALLET</p>
+          </div>
+        </div>
+        <p class="site-footer__blurb">
+          Billetera virtual para enviar, recibir y administrar pesos y dólares
+          con una experiencia simple, clara y confiable.
+        </p>
+      </div>
+
+      <nav class="site-footer__col" aria-labelledby="footer-product">
+        <h2 id="footer-product" class="site-footer__heading">Producto</h2>
+        <ul>
+          <li><a routerLink="/login">Ingresar</a></li>
+          <li><a routerLink="/register">Crear cuenta</a></li>
+          <li><a routerLink="/" fragment="home-product-title">Qué es Arcash</a></li>
+          <li><a routerLink="/forgot">Recuperar acceso</a></li>
+        </ul>
+      </nav>
+
+      <nav class="site-footer__col" aria-labelledby="footer-features">
+        <h2 id="footer-features" class="site-footer__heading">Funciones</h2>
+        <ul>
+          <li>Transferencias con alias o CVU</li>
+          <li>Cobro y pago con QR</li>
+          <li>Cuenta en dólares</li>
+          <li>Contactos favoritos</li>
+          <li>Historial de movimientos</li>
+        </ul>
+      </nav>
+
+      <div class="site-footer__col" aria-labelledby="footer-contact">
+        <h2 id="footer-contact" class="site-footer__heading">Contacto</h2>
+        <p class="site-footer__muted">
+          ¿Dudas o soporte? Escribinos y te ayudamos.
+        </p>
+        <a
+          class="site-footer__email"
+          href="https://mail.google.com/mail/?view=cm&fs=1&to=helparcash2025@gmail.com"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          helparcash2025@gmail.com
+        </a>
+      </div>
+    </div>
+
+    <div class="site-footer__team" aria-labelledby="footer-team">
+      <h2 id="footer-team" class="site-footer__heading">Equipo</h2>
+      <p class="site-footer__muted">
+        Proyecto académico desarrollado por el equipo EDJ.
+      </p>
+      <ul class="site-footer__authors">
+        @for (author of authors; track author.name) {
+          <li>
+            <a [href]="author.url" target="_blank" rel="noopener noreferrer" class="autor-link">
+              {{ author.name }}
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <div class="site-footer__bottom">
+      <p>© {{ year }} Arcash™ · Virtual Wallet</p>
+      <p class="site-footer__bottom-note">Hecho con foco en claridad y confianza.</p>
+    </div>
+  </div>
+</footer>

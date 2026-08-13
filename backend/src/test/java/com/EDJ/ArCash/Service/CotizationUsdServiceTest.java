@@ -1,7 +1,9 @@
 package com.EDJ.ArCash.Service;
+import com.EDJ.ArCash.Service.interfaces.CotizationUsdService;
+import com.EDJ.ArCash.Service.impl.CotizationUsdServiceImpl;
 
 import com.EDJ.ArCash.DTO.ApiCalloutDTO.ApiUsdResponse;
-import com.EDJ.ArCash.exception.ExchangeRateUnavailableException;
+import com.EDJ.ArCash.exception.personalizated.ExchangeRateUnavailableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +29,7 @@ class CotizationUsdServiceTest {
     @BeforeEach
     void setUp() {
         restTemplate = mock(RestTemplate.class);
-        cotizationUsdService = new CotizationUsdService(restTemplate, "https://proveedor.test/dolar");
+        cotizationUsdService = new CotizationUsdServiceImpl(restTemplate, "https://proveedor.test/dolar");
     }
 
     @Test
@@ -160,5 +162,29 @@ class CotizationUsdServiceTest {
         assertEquals(950.0, cotizationUsdService.obtenerCotizacionVenta());
 
         verify(restTemplate, times(1)).getForEntity(anyString(), eq(ApiUsdResponse.class));
+    }
+
+    @Test
+    @DisplayName("obtenerSnapshot incluye metadatos de dolarapi")
+    void obtenerSnapshotIncluyeMetadatos() {
+        ApiUsdResponse respuesta = ApiUsdResponse.builder()
+                .moneda("USD")
+                .casa("oficial")
+                .nombre("Oficial")
+                .compra(1465.0)
+                .venta(1515.0)
+                .fechaActualizacion("2026-08-13T16:00:00.000Z")
+                .build();
+        when(restTemplate.getForEntity(anyString(), eq(ApiUsdResponse.class)))
+                .thenReturn(ResponseEntity.ok(respuesta));
+
+        ApiUsdResponse snap = cotizationUsdService.obtenerSnapshot();
+
+        assertEquals("USD", snap.getMoneda());
+        assertEquals("oficial", snap.getCasa());
+        assertEquals("Oficial", snap.getNombre());
+        assertEquals(1465.0, snap.getCompra());
+        assertEquals(1515.0, snap.getVenta());
+        assertEquals("2026-08-13T16:00:00.000Z", snap.getFechaActualizacion());
     }
 }

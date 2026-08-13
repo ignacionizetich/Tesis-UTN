@@ -142,6 +142,23 @@
         </div>
       </div>
 
+      <div class="receipt-actions">
+        <button
+          class="primary"
+          type="button"
+          (click)="downloadReceipt()"
+          [disabled]="receiptBusy || selectedTransaction.status === 'FAILED'">
+          {{ receiptBusy ? 'Generando…' : 'Descargar comprobante' }}
+        </button>
+        <button
+          class="secondary"
+          type="button"
+          (click)="shareReceipt()"
+          [disabled]="receiptBusy || selectedTransaction.status === 'FAILED'">
+          Compartir comprobante
+        </button>
+      </div>
+
       <button class="primary full-width" type="button" (click)="closeTransactionDetail()">Cerrar</button>
     </div>
   </div>

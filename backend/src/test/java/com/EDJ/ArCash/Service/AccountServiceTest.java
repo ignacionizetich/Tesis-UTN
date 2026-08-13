@@ -1,4 +1,12 @@
 package com.EDJ.ArCash.Service;
+import com.EDJ.ArCash.Service.result.AliasChangeResult;
+import com.EDJ.ArCash.Service.result.DepositResult;
+import com.EDJ.ArCash.Service.result.OpenUsdResult;
+import com.EDJ.ArCash.Service.support.AccountIdentifierGenerator;
+import com.EDJ.ArCash.Service.support.AliasFormatValidator;
+import com.EDJ.ArCash.Service.interfaces.AccountService;
+import com.EDJ.ArCash.Service.interfaces.VirtualCardService;
+import com.EDJ.ArCash.Service.impl.AccountServiceImpl;
 
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Imp.Currency;
@@ -25,11 +33,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Tests de caracterizacion: describen el comportamiento ACTUAL de AccountService.
- * Incluye el formato de los identificadores generados, que es lo mas delicado de
- * congelar porque queda persistido en la base.
- */
 class AccountServiceTest {
 
     private static final long ID_USUARIO = 1L;
@@ -40,12 +43,14 @@ class AccountServiceTest {
 
     private AccountRepository accountRepository;
     private EventPublisher eventPublisher;
+    private VirtualCardService virtualCardService;
     private AccountService accountService;
 
     @BeforeEach
     void setUp() {
         accountRepository = mock(AccountRepository.class);
         eventPublisher = mock(EventPublisher.class);
+        virtualCardService = mock(VirtualCardService.class);
 
         AccountIdentifierGenerator identifierGenerator = mock(AccountIdentifierGenerator.class);
         when(identifierGenerator.generateUniqueNickname()).thenReturn(ALIAS_GENERADO);
@@ -53,8 +58,12 @@ class AccountServiceTest {
 
         // El validador es una funcion pura sin dependencias: usarlo de verdad hace
         // que los tests de formato verifiquen la regla real y no la de un mock.
-        accountService = new AccountService(
-                accountRepository, eventPublisher, identifierGenerator, new AliasFormatValidator());
+        accountService = new AccountServiceImpl(
+                accountRepository,
+                eventPublisher,
+                identifierGenerator,
+                new AliasFormatValidator(),
+                virtualCardService);
     }
 
     // --- alta de cuentas ---
@@ -78,6 +87,7 @@ class AccountServiceTest {
         assertEquals(user, evento.getData("user"));
         assertEquals(ALIAS_GENERADO, evento.getData("accountAlias"));
         assertEquals(CVU_GENERADO, evento.getData("accountCvu"));
+        verify(virtualCardService).createForAccount(guardada);
     }
 
     @Test
@@ -92,6 +102,7 @@ class AccountServiceTest {
         assertEquals(0.0, guardada.getBalance());
         assertEquals(guardada, devuelta);
         assertEquals(EventType.USD_ACCOUNT_CREATED, capturarEventoPublicado().getEventType());
+        verify(virtualCardService).createForAccount(guardada);
     }
 
     @Test

@@ -78,12 +78,14 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
   /** Estimación local hasta que el backend exponga cotización. */
   currentExchangeRate = 1100;
 
-  get arsAccountView(): { balance: number } | null {
-    return this.arsAccountId ? { balance: this.arsBalance } : null;
+  get arsAccountView(): { id: string; balance: number } | null {
+    return this.arsAccountId ? { id: this.arsAccountId, balance: this.arsBalance } : null;
   }
 
-  get usdAccountView(): { balance: number } | null {
-    return this.hasUsdAccount ? { balance: this.usdBalance } : null;
+  get usdAccountView(): { id: string; balance: number } | null {
+    return this.hasUsdAccount
+      ? { id: this.usdAccountId, balance: this.usdBalance }
+      : null;
   }
 
   constructor(

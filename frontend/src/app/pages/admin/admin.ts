@@ -1,41 +1,79 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BackButtonComponent } from '../../components/ui/back-button/back-button';
-import { ThemeToggleComponent } from '../../components/ui/theme-toggle/theme-toggle';
-import { BrandLogoComponent } from '../../components/ui/brand-logo/brand-logo';
+import { Router } from '@angular/router';
+import { ThemeService } from '../../services/theme/theme.service';
 import { CreateAdminFormComponent } from './components/create-admin-form/create-admin-form';
 import { UsersListComponent } from './components/users-list/users-list';
+import { MetricsPanelComponent } from './components/metrics-panel/metrics-panel';
+import { LoanRatesPanelComponent } from './components/loan-rates-panel/loan-rates-panel';
 
-/**
- * Shell del panel admin: navegación entre vistas.
- * Formulario y listado viven en componentes hijos.
- */
+type AdminView = 'main' | 'users-list' | 'create-admin' | 'metrics' | 'loan-rates';
+
 @Component({
   selector: 'app-admin',
   standalone: true,
   imports: [
     CommonModule,
-    BackButtonComponent,
-    ThemeToggleComponent,
-    BrandLogoComponent,
     CreateAdminFormComponent,
     UsersListComponent,
+    MetricsPanelComponent,
+    LoanRatesPanelComponent,
   ],
   templateUrl: './admin.html',
   styleUrls: ['./admin.css'],
 })
 export class AdminComponent {
-  currentView: 'main' | 'create-admin' | 'users-list' = 'main';
+  currentView: AdminView = 'main';
 
-  showCreateAdminView(): void {
-    this.currentView = 'create-admin';
+  constructor(
+    private router: Router,
+    private themeService: ThemeService
+  ) {}
+
+  get sectionTitle(): string {
+    switch (this.currentView) {
+      case 'users-list':
+        return 'Usuarios autenticados';
+      case 'create-admin':
+        return 'Crear administrador';
+      case 'metrics':
+        return 'Métricas';
+      case 'loan-rates':
+        return 'Tasas de préstamos';
+      default:
+        return 'Panel de administración';
+    }
+  }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
+  goBack(): void {
+    if (this.currentView === 'main') {
+      this.goToDashboard();
+      return;
+    }
+    this.currentView = 'main';
+  }
+
+  openView(view: AdminView): void {
+    this.currentView = view;
+  }
+
+  showMainView(): void {
+    this.currentView = 'main';
   }
 
   showUsersListView(): void {
     this.currentView = 'users-list';
   }
 
-  showMainView(): void {
-    this.currentView = 'main';
+  showCreateAdminView(): void {
+    this.currentView = 'create-admin';
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 }

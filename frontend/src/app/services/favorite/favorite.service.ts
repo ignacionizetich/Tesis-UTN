@@ -16,10 +16,6 @@ import { environment } from '../../../environments/environment';
 import { httpStatus } from '../../shared/utils/error-message';
 import { logger } from '../../shared/utils/logger';
 
-/**
- * Favoritos: HTTP + caché local + estado en memoria.
- * Sin toasts — la UI (modales / páginas) notifica al usuario.
- */
 @Injectable({
   providedIn: 'root',
 })

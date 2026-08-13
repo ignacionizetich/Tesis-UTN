@@ -1,8 +1,11 @@
 package com.EDJ.ArCash.Service;
+import com.EDJ.ArCash.Service.interfaces.CotizationUsdService;
+import com.EDJ.ArCash.Service.interfaces.TaxService;
+import com.EDJ.ArCash.Service.impl.TaxServiceImpl;
 
 import com.EDJ.ArCash.DTO.AuthDTO.TaxPesosResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TaxUsdResponse;
-import com.EDJ.ArCash.exception.ExchangeRateUnavailableException;
+import com.EDJ.ArCash.exception.personalizated.ExchangeRateUnavailableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,10 +18,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-/**
- * Tests de caracterizacion: describen el comportamiento ACTUAL de TaxService,
- * no el deseado. Sirven de red de seguridad para el refactor posterior.
- */
 class TaxServiceTest {
 
     /** 0.21 y 0.03 no son exactos en binario, asi que las comparaciones van con tolerancia. */
@@ -30,7 +29,7 @@ class TaxServiceTest {
     @BeforeEach
     void setUp() {
         cotizationUsdService = mock(CotizationUsdService.class);
-        taxService = new TaxService(cotizationUsdService);
+        taxService = new TaxServiceImpl(cotizationUsdService);
     }
 
     @Test
@@ -40,6 +39,7 @@ class TaxServiceTest {
 
         assertEquals(10000.0, resultado.getMontoOriginal(), DELTA);
         assertEquals("ARS", resultado.getMoneda());
+        assertEquals(21.0, resultado.getAlicuotaIva(), DELTA);
         assertEquals(2100.0, resultado.getIVA(), DELTA);
         assertEquals(12100.0, resultado.getTotalFinal(), DELTA);
         verifyNoInteractions(cotizationUsdService);
@@ -59,14 +59,25 @@ class TaxServiceTest {
     @DisplayName("calcularUSD devuelve montoOriginal ya convertido a pesos pero con moneda USD")
     void calcularUsdDevuelveElMontoEnPesosEtiquetadoComoUsd() {
         when(cotizationUsdService.obtenerCotizacionVenta()).thenReturn(1000.0);
+        when(cotizationUsdService.obtenerCotizacionCompra()).thenReturn(950.0);
+        when(cotizationUsdService.obtenerNombreCotizacion()).thenReturn("Oficial");
+        when(cotizationUsdService.obtenerCasaCotizacion()).thenReturn("oficial");
+        when(cotizationUsdService.obtenerFechaActualizacion()).thenReturn("2026-08-13T16:00:00.000Z");
 
         TaxUsdResponse resultado = taxService.calcularUSD(100);
 
         // Comportamiento actual conocido: montoOriginal esta en ARS (100 USD * 1000),
         // mientras que moneda dice "USD". El dashboard depende de que venga en pesos.
+        assertEquals(100.0, resultado.getMontoUsd(), DELTA);
         assertEquals(100000.0, resultado.getMontoOriginal(), DELTA);
         assertEquals("USD", resultado.getMoneda());
         assertEquals(1000.0, resultado.getPrecioDolar(), DELTA);
+        assertEquals(1000.0, resultado.getDolarVenta(), DELTA);
+        assertEquals(950.0, resultado.getDolarCompra(), DELTA);
+        assertEquals("Oficial", resultado.getNombreCotizacion());
+        assertEquals("oficial", resultado.getCasa());
+        assertEquals("2026-08-13T16:00:00.000Z", resultado.getFechaActualizacion());
+        assertEquals(21.0, resultado.getAlicuotaIva(), DELTA);
         assertEquals(21000.0, resultado.getIVA(), DELTA);
         assertEquals(121000.0, resultado.getTotalFinal(), DELTA);
     }

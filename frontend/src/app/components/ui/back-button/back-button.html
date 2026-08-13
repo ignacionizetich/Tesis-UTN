@@ -1,8 +1,15 @@
-<div>
-    <button id="back-button" aria-label="Volver" (click)="goBack()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" class="back-circle"/>
-            <path d="M14 8L10 12L14 16" class="back-arrow" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-    </button>
-</div>
+@if (variant === 'fab') {
+  <button type="button" id="back-button" class="back-fab" aria-label="Volver" (click)="goBack()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" class="back-circle" />
+      <path d="M14 8L10 12L14 16" class="back-arrow" stroke-width="2" stroke-linecap="round" />
+    </svg>
+  </button>
+} @else {
+  <button type="button" class="back-inline" (click)="goBack()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M19 12H5M5 12l6 6M5 12l6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <span>{{ label }}</span>
+  </button>
+}

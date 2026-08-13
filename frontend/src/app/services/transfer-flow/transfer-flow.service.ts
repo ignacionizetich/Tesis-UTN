@@ -39,6 +39,8 @@ export interface ExecuteTransferParams {
   amount: number | null;
   balance: number;
   currency: 'ARS' | 'USD';
+  /** Cuenta origen (ARS/USD). Si falta, usa accountId de sesión. */
+  originAccountId?: string | number | null;
 }
 
 export interface ExecuteTransferResult {
@@ -217,7 +219,8 @@ export class TransferFlowService {
       await this.transferApi.realizarTransferencia(
         id,
         params.amount!,
-        params.currency
+        params.currency,
+        params.originAccountId != null ? String(params.originAccountId) : null
       );
     } catch (error: unknown) {
       throw new TransferFlowError(

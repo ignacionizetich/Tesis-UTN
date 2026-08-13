@@ -1,30 +1,118 @@
-<div class="modal" (click)="onBackdrop($event)">
-  <div class="modal-content">
-    <span class="close-button" (click)="close()">&times;</span>
-    <h2>Ingresar dinero</h2>
-    <form (ngSubmit)="submit()" #ingresarForm="ngForm">
-      <input
-        type="number"
-        [(ngModel)]="montoIngresar"
-        name="montoIngresar"
-        placeholder="Monto a ingresar"
-        required
-        min="1"
-        step="0.01"
-        [disabled]="isIngresandoDinero"
-      />
-      <button
-        type="submit"
-        [disabled]="!ingresarForm.valid || isIngresandoDinero"
-        [class.loading]="isIngresandoDinero"
-      >
-        <span class="button-text">
-          {{ isIngresandoDinero ? 'Procesando...' : 'Confirmar' }}
-        </span>
-        @if (isIngresandoDinero) {
-        <div class="progress-bar"></div>
+<div class="deposit-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="deposit-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="deposit-title"
+    (click)="$event.stopPropagation()">
+
+    @if (phase === 'form') {
+    <button
+      type="button"
+      class="deposit-modal__close"
+      (click)="close()"
+      aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="deposit-modal__header">
+      <div class="deposit-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 2v20M5 9l7-7 7 7"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </div>
+      <div>
+        <h2 id="deposit-title">Ingresar dinero</h2>
+        <p>Agregá fondos a tu cuenta en pesos</p>
+      </div>
+    </header>
+
+    <form class="deposit-modal__form" (ngSubmit)="submit()" #ingresarForm="ngForm">
+      <label class="deposit-modal__label" for="deposit-amount">Monto</label>
+
+      <div class="deposit-modal__amount" [class.deposit-modal__amount--active]="!!montoIngresar">
+        <span class="deposit-modal__currency">$</span>
+        <input
+          id="deposit-amount"
+          type="number"
+          [(ngModel)]="montoIngresar"
+          name="montoIngresar"
+          placeholder="0"
+          required
+          min="1"
+          step="0.01"
+          inputmode="decimal"
+          autocomplete="off"
+          aria-describedby="deposit-hint"
+        />
+      </div>
+
+      <p id="deposit-hint" class="deposit-modal__hint">
+        Elegí un monto rápido o escribí el que necesites.
+      </p>
+
+      <div class="deposit-modal__chips" role="group" aria-label="Montos sugeridos">
+        @for (amount of quickAmounts; track amount) {
+        <button
+          type="button"
+          class="deposit-chip"
+          [class.deposit-chip--active]="isQuickSelected(amount)"
+          (click)="selectQuickAmount(amount)">
+          ${{ formatQuick(amount) }}
+        </button>
         }
-      </button>
+      </div>
+
+      <div class="deposit-modal__summary">
+        <span>Vas a ingresar</span>
+        <strong>${{ formattedAmount }}</strong>
+      </div>
+
+      <div class="deposit-modal__actions">
+        <button type="button" class="deposit-btn deposit-btn--ghost" (click)="close()">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="deposit-btn deposit-btn--primary"
+          [disabled]="!canSubmit || !ingresarForm.valid">
+          Confirmar ingreso
+        </button>
+      </div>
     </form>
+    }
+
+    @if (phase === 'crediting') {
+    <div class="deposit-status" aria-live="polite">
+      <div class="deposit-status__spinner" aria-hidden="true"></div>
+      <h2 id="deposit-title">Acreditando tu dinero</h2>
+      <p>Estamos sumando <strong>${{ formattedCredited }}</strong> a tu cuenta en pesos. Esto puede tardar unos segundos.</p>
+      <div class="deposit-status__bar" aria-hidden="true">
+        <span></span>
+      </div>
+    </div>
+    }
+
+    @if (phase === 'success') {
+    <div class="deposit-status deposit-status--success" aria-live="polite">
+      <div class="deposit-status__check" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M20 6L9 17l-5-5"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </div>
+      <h2 id="deposit-title">¡Listo!</h2>
+      <p>Ya acreditamos <strong>${{ formattedCredited }}</strong> en tu saldo.</p>
+    </div>
+    }
   </div>
 </div>

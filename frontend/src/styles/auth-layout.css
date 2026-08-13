@@ -1,145 +1,59 @@
-/* Shared auth page layout + footer (main.auth-shell) */
+/* Shared auth page layout + footer (main.auth-shell)
+   Nota: body scrolleable — formularios largos (register) no deben quedar cortados. */
 
 html,
 body {
-  height: 100%;
+  min-height: 100%;
   overflow-x: hidden;
 }
 
 body {
-  height: 100vh;
   margin: 0;
   padding: 0;
   position: relative;
-  overflow: hidden;
 }
 
 main.auth-shell {
   display: grid;
   grid-template-columns: 1fr 1fr;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   position: relative;
   z-index: 1;
-  min-height: 100vh;
 }
 
 main.auth-shell .left-panel {
   display: grid;
   place-items: center;
-  height: 100vh;
   text-align: center;
   padding: 2rem;
   min-width: 0;
+  min-height: 100vh;
 }
 
 main.auth-shell .right-panel {
   display: grid;
   place-items: center;
-  height: 100vh;
   padding: 2rem;
   min-width: 0;
-}
-
-/* Footer sibling of auth main */
-main.auth-shell ~ footer .global-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 1.25rem 1rem;
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  z-index: 100;
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.1);
-}
-
-:root:not([data-theme='dark']) main.auth-shell ~ footer .global-footer {
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.05);
-}
-
-main.auth-shell ~ footer .global-footer::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.03) 0%,
-    rgba(var(--quantum-violet-rgb, 108, 92, 231), 0.02) 50%,
-    rgba(var(--neon-cyan-rgb, 57, 255, 204), 0.03) 100%
-  );
-  pointer-events: none;
-  z-index: -1;
-}
-
-main.auth-shell ~ footer .global-footer p {
-  margin: 0 0 8px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-  text-align: center;
-}
-
-main.auth-shell ~ footer .global-footer p::before,
-main.auth-shell ~ footer .global-footer p::after {
-  content: '';
-  width: 20px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--text-accent), transparent);
-}
-
-main.auth-shell ~ footer .global-footer a {
-  color: var(--text-accent);
-  text-decoration: none;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 8px;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  background: rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.1);
-  border: 1px solid rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.2);
-  backdrop-filter: blur(10px);
-  letter-spacing: 0.3px;
-  display: inline-block;
-}
-
-main.auth-shell ~ footer .global-footer a.email-link:hover {
-  transform: translateY(-2px) scale(1.05);
-  background: rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.2);
-  border-color: var(--text-accent);
-  box-shadow:
-    0 8px 25px rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.3),
-    0 0 20px rgba(var(--cyber-blue-rgb, 0, 212, 255), 0.2);
+  min-height: 100vh;
 }
 
 @media (max-width: 1024px) {
   main.auth-shell {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
-    height: auto;
     min-height: 100vh;
   }
 
   main.auth-shell .left-panel {
-    height: auto;
-    padding: 2rem 1rem;
-    min-height: 30vh;
+    min-height: auto;
+    padding: 2rem 1rem 1rem;
   }
 
   main.auth-shell .right-panel {
-    height: auto;
-    padding: 1rem;
-    min-height: 70vh;
+    min-height: auto;
+    padding: 1rem 1rem 5rem;
   }
 }
 
@@ -147,14 +61,5 @@ main.auth-shell ~ footer .global-footer a.email-link:hover {
   main.auth-shell .left-panel,
   main.auth-shell .right-panel {
     padding: 1.5rem 1rem;
-  }
-
-  main.auth-shell ~ footer .global-footer {
-    position: static;
-    padding: 1rem;
-    font-size: 0.8rem;
-    flex-direction: column;
-    gap: 0.5rem;
-    background: transparent;
   }
 }

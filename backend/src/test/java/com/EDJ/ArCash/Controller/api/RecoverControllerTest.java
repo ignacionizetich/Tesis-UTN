@@ -1,9 +1,9 @@
 package com.EDJ.ArCash.Controller.api;
 
-import com.EDJ.ArCash.Service.AuthService;
-import com.EDJ.ArCash.Service.CredentialsService;
-import com.EDJ.ArCash.Service.RecoveryTokenValidationResult;
-import com.EDJ.ArCash.Service.ResetPasswordResult;
+import com.EDJ.ArCash.Service.interfaces.AuthService;
+import com.EDJ.ArCash.Service.interfaces.CredentialsService;
+import com.EDJ.ArCash.Service.result.RecoveryTokenValidationResult;
+import com.EDJ.ArCash.Service.result.ResetPasswordResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +19,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Caracterizacion HTTP de RecoverController (validate-recovery-token + reset-password).
- * Mapping por Kind tipado (sin heuristica de substrings en el controller).
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

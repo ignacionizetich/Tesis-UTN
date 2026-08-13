@@ -1,4 +1,17 @@
 package com.EDJ.ArCash.Service;
+import com.EDJ.ArCash.Service.result.BuyUsdResult;
+import com.EDJ.ArCash.Service.result.SellUsdResult;
+import com.EDJ.ArCash.Service.result.TransferOperationResult;
+import com.EDJ.ArCash.Service.interfaces.ArsToUsdConversionService;
+import com.EDJ.ArCash.Service.interfaces.CotizationUsdService;
+import com.EDJ.ArCash.Service.interfaces.FavoriteContactService;
+import com.EDJ.ArCash.Service.interfaces.TaxService;
+import com.EDJ.ArCash.Service.interfaces.TransactionService;
+import com.EDJ.ArCash.Service.interfaces.UsdToArsConversionService;
+import com.EDJ.ArCash.Service.impl.ArsToUsdConversionServiceImpl;
+import com.EDJ.ArCash.Service.impl.TaxServiceImpl;
+import com.EDJ.ArCash.Service.impl.TransactionServiceImpl;
+import com.EDJ.ArCash.Service.impl.UsdToArsConversionServiceImpl;
 
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.Imp.Currency;
@@ -26,9 +39,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Caracterizacion del comportamiento ACTUAL de TransactionService (saldos, conversion, eventos).
- */
 class TransactionServiceTest {
 
     private static final double DELTA = 1e-9;
@@ -62,13 +72,13 @@ class TransactionServiceTest {
         transactionRepository = mock(TransactionRepository.class);
         eventPublisher = mock(EventPublisher.class);
         cotizationUsdService = mock(CotizationUsdService.class);
-        TaxService taxService = new TaxService(cotizationUsdService);
+        TaxService taxService = new TaxServiceImpl(cotizationUsdService);
         ArsToUsdConversionService arsToUsdConversionService =
-                new ArsToUsdConversionService(taxService, cotizationUsdService);
+                new ArsToUsdConversionServiceImpl(taxService, cotizationUsdService);
         UsdToArsConversionService usdToArsConversionService =
-                new UsdToArsConversionService(taxService, cotizationUsdService);
+                new UsdToArsConversionServiceImpl(taxService, cotizationUsdService);
 
-        transactionService = new TransactionService(
+        transactionService = new TransactionServiceImpl(
                 accountRepository,
                 transactionRepository,
                 eventPublisher,

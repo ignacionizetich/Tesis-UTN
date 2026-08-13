@@ -76,11 +76,15 @@ export class TransferApi {
       const response = await lastValueFrom(
         this.http.put(`${this.baseUrl}/accounts/${accountId}/balance`, { balance })
       );
-      this.userDataStore.load(true).subscribe();
+      await lastValueFrom(this.userDataStore.load(true));
       return response;
     } catch (error) {
       logger.error('Error ingresando dinero:', error);
-      this.userDataStore.load(true).subscribe();
+      try {
+        await lastValueFrom(this.userDataStore.load(true));
+      } catch {
+        /* ignore refresh errors after failed deposit */
+      }
       throw error;
     }
   }
@@ -88,18 +92,22 @@ export class TransferApi {
   async realizarTransferencia(
     idDestino: string,
     monto: number,
-    currency: 'ARS' | 'USD'
+    currency: 'ARS' | 'USD',
+    idOrigen?: string | null
   ): Promise<any> {
-    const accountId = this.sessionStore.getAccountId();
+    const accountId = idOrigen || this.sessionStore.getAccountId();
     if (!accountId) {
       throw new Error('No hay sesión activa');
     }
     try {
       const response = await lastValueFrom(
-        this.http.post(`${this.baseUrl}/transactions/transfer/${idDestino}`, {
-          balance: monto,
-          currency,
-        })
+        this.http.post(
+          `${this.baseUrl}/transactions/${accountId}/transfer/${idDestino}`,
+          {
+            balance: monto,
+            currency,
+          }
+        )
       );
       this.userDataStore.load(true).subscribe();
       this.transactionHistoryStore

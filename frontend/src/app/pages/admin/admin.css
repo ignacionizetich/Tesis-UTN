@@ -1,1089 +1,514 @@
-html, body {
-    height: 100%;
-    overflow-x: hidden;
-}
-
-body {
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    position: relative;
-    overflow: hidden;
-}
-
-.main {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    width: 100%;
-    height: 100vh;
-    position: relative;
-    z-index: 1;
-}
-
-.left-panel {
-    display: grid;
-    place-items: center start;
-    height: 100vh;
-    text-align: center;
-    padding-left: 10rem;
-}
-
-.right-panel {
-    display: grid;
-    place-items: center;
-    height: 100vh;
-    padding: 2rem;
-}
-
-/* Animaciones mejoradas y optimizadas */
-.formulario {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 25px;
-    border-radius: 24px;
-    width: 100%;
-    max-width: 800px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 
-        0 25px 50px rgba(0, 0, 0, 0.15),
-        0 0 0 1px rgba(255, 255, 255, 0.05);
-    animation: formSlideIn 0.8s ease-out forwards;
-    opacity: 0;
-    transform: translateY(30px);
-    will-change: transform, opacity;
-}
-
-@keyframes formSlideIn {
-    0% {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.formulario::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-}
-
-.formulario::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, 
-        rgba(42, 77, 122, 0.02) 0%, 
-        rgba(22, 38, 62, 0.02) 100%);
-    pointer-events: none;
-}
-
-.formulario h2 {
-    text-align: center;
-    margin-bottom: 30px;
-    font-weight: 600;
-    font-size: 24px;
-    color: var(--text-primary);
-    position: relative;
-    z-index: 1;
-}
-
-/* Gradiente solo para tema oscuro */
-[data-theme="dark"] .formulario h2 {
-    background: linear-gradient(135deg, var(--text-primary), var(--text-accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* Contenedor del formulario con grid */
-.formulario form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px 24px;
-    align-items: start;
-}
-
-/* El título del formulario ocupa toda la fila */
-.formulario h2 {
-    color: var(--text-primary);
-  font-size: clamp(1.25rem, 4vw, 1.5rem);
-  font-weight: 600;
-  margin-bottom: 1.25rem;
-  text-align: center;
-  background: linear-gradient(135deg, var(--text-primary), var(--text-accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-    grid-column: 1 / -1;
-}
-
-/* El botón de envío ocupa toda la fila */
-.formulario button[type="submit"] {
-    grid-column: 1 / -1;
-    margin-top: 10px;
-}
-
-/* Los campos de email mantienen el flujo normal del grid */
-.email-group {
-    display: contents;
-}
-
-/* Los campos de contraseña mantienen el flujo normal del grid */
-.password-group {
-    display: contents;
-}
-
-label {
-    display: block;
-    margin-bottom: 6px;
-    color: var(--text-primary);
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    opacity: 0.8;
-    position: relative;
-    z-index: 1;
-}
-
-input[type="text"],
-input[type="email"],
-input[type="password"] {
-    width: 100%;
-    padding: 12px 0;
-    margin-bottom: 0;
-    background-color: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-size: 18px;
-    outline: none;
-}
-
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus {
-    border-bottom-color: transparent;
-}
-
-button[type="submit"] {
-    width: 100%;
-    padding: 14px;
-    margin-top: 16px;
-    font-size: 15px;
-    font-weight: 600;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 
-        0 4px 20px var(--shadow-primary),
-        0 2px 10px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    animation: buttonSlideIn 0.5s ease-out 1.1s forwards;
-    opacity: 0;
-    transform: translateY(20px);
-    will-change: transform, opacity;
-}
-
-@keyframes buttonSlideIn {
-    0% {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-button[type="submit"]::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.2), 
-        transparent);
-    transition: left 0.5s;
-}
-
-button[type="submit"]:hover {
-    transform: translateY(-3px);
-    box-shadow: 
-        0 8px 30px var(--shadow-primary),
-        0 4px 15px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        0 0 20px var(--text-accent);
-}
-
-button[type="submit"]:hover::before {
-    left: 100%;
-}
-
-button[type="submit"]:active {
-    transform: translateY(0);
-    transition: transform 0.1s;
-}
-
-.input-container {
-    position: relative;
-    margin-bottom: 0;
-    width: 100%;
-}
-
-.input-wrapper {
-    position: relative;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
-}
-
-.input-wrapper::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.input-wrapper:focus-within::before {
-    opacity: 1;
-}
-
-.input-wrapper:focus-within {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--text-accent);
-    box-shadow: 
-        0 0 0 1px rgba(42, 77, 122, 0.3),
-        0 4px 12px rgba(42, 77, 122, 0.1);
-    transform: translateY(-1px);
-}
-
-.effect-1 {
-    border: none;
-    outline: none;
-    background: transparent;
-    width: 100%;
-    padding: 12px 16px;
-    font-size: 15px;
-    color: var(--text-primary);
-    border-radius: 12px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    z-index: 1;
-}
-
-.effect-1::placeholder {
-    color: rgba(128, 128, 128, 0.253);
-    transition: all 0.3s ease;
-}
-
-.effect-1:focus::placeholder {
-    opacity: 0.3;
-    transform: translateY(-2px);
-}
-
-.effect-1:focus {
-    border-bottom-color: transparent;
-}
-
-.focus-border {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--text-accent), var(--cobalt));
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateX(-50%);
-    border-radius: 1px;
-    z-index: 2;
-}
-
-.effect-1:focus ~ .focus-border {
-    width: 100%;
-}
-
-/* Ajuste para input de password con botón */
-.password-wrapper .effect-1 {
-    padding-right: 45px;
-}
-
-.password-wrapper {
-    position: relative;
-}
-
-.error-container {
-    margin-top: 6px;
-    padding: 6px 10px;
-    background: rgba(231, 76, 60, 0.1);
-    border-radius: 8px;
-    border-left: 3px solid #e74c3c;
-    animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.error-message {
-    color: #e74c3c;
-    font-size: 0.8rem;
-    display: block;
-    margin: 1px 0;
-    font-weight: 500;
-}
-
-input[type="text"],
-input[type="email"],
-input[type="password"] {
-    width: 100%;
-    padding: 12px 0;
-    margin-bottom: 0;
-    background-color: transparent;
-    border: none;
-    border-bottom: 2px solid var(--border-color);
-    color: var(--text-primary);
-    font-size: 18px;
-    outline: none;
-}
-
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus {
-    border-bottom-color: transparent;
-}
-
-button:disabled {
-    cursor: not-allowed;
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: none;
-    transform: none;
-    opacity: 0.6;
-}
-
-button:disabled::before {
-    display: none !important;
-}
-
-/* Animaciones adicionales optimizadas */
-.formulario {
-    animation: formSlideIn 0.8s ease-out forwards;
-    opacity: 0;
-    transform: translateY(30px);
-    will-change: transform, opacity;
-}
-
-.logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    animation: logoFadeIn 0.6s ease-out 0.2s forwards;
-    opacity: 0;
-    transform: translateY(-20px);
-    will-change: transform, opacity;
-}
-
-@keyframes logoFadeIn {
-    0% {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.input-container {
-    animation: inputSlideIn 0.4s ease-out forwards;
-    animation-fill-mode: both;
-    opacity: 0;
-    transform: translateX(-20px);
-    will-change: transform, opacity;
-}
-
-.input-container:nth-child(1) { animation-delay: 0.4s; }
-.input-container:nth-child(2) { animation-delay: 0.5s; }
-.input-container:nth-child(3) { animation-delay: 0.6s; }
-.input-container:nth-child(4) { animation-delay: 0.7s; }
-.input-container:nth-child(5) { animation-delay: 0.8s; }
-.input-container:nth-child(6) { animation-delay: 0.9s; }
-.input-container:nth-child(7) { animation-delay: 1.0s; }
-
-@keyframes inputSlideIn {
-    0% {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Efecto de cristal para tema oscuro */
-[data-theme="dark"] .formulario {
-    background: rgba(30, 30, 30, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .input-wrapper {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Efectos específicos para el logo - simplificados como en home */
-[data-theme="dark"] .logo h1 {
-    color: var(--text-primary);
-}
-
-[data-theme="dark"] .logo span {
-    color: var(--laser-green);
-}
-
-[data-theme="dark"] .logo h4 {
-    color: var(--text-primary);
-    opacity: 0.9;
-}
-
-/* ===== NUEVOS ESTILOS PARA PANEL DE ADMIN REDISEÑADO ===== */
-
-/* Vista principal con botones de acceso */
-.admin-main-view {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-    max-width: 400px;
-    width: 100%;
-    margin: 0 auto;
-}
-
-.admin-main-view h2 {
-    text-align: center;
-    color: var(--text-primary);
-  font-size: clamp(1.25rem, 4vw, 1.5rem);
-  font-weight: 600;
-  margin-bottom: 1.25rem;
-  text-align: center;
-  background: linear-gradient(135deg, var(--text-primary), var(--text-accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Botones de acceso base */
-.access-btn {
-    width: 100%;
-    padding: 1.5rem 2rem;
-    margin-bottom: 1rem;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    cursor: pointer;
-    border: 2px solid transparent;
-    outline: none;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    letter-spacing: 0.5px;
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-}
-
-/* Efectos globales desde styles.css */
-.access-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-}
-
-.access-btn:hover::before {
-    left: 100%;
-}
-
-/* Botón de usuarios */
-.users-btn {
-    background: linear-gradient(135deg, var(--text-accent) 0%, var(--quantum-violet) 100%);
-    color: white;
-    border-color: var(--text-accent);
-}
-
-.users-btn:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 
-        0 8px 25px var(--shadow-primary),
-        0 4px 15px rgba(0, 0, 0, 0.2),
-        0 0 20px var(--text-accent);
-}
-
-.access-btn:active {
-    transform: translateY(0) scale(1.01);
-    transition: transform 0.1s;
-}
-
-/* Estados de carga - estilo QR */
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(26, 31, 46, 0.85);
-    backdrop-filter: blur(4px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    border-radius: 12px;
-}
-
-[data-theme="dark"] .loading-overlay {
-    background: rgba(26, 31, 46, 0.85);
-}
-
-:root:not([data-theme="dark"]) .loading-overlay {
-    background: rgba(248, 250, 255, 0.9);
-}
-
-.loading-content {
-    text-align: center;
-    color: white;
-}
-
-:root:not([data-theme="dark"]) .loading-content {
-    color: var(--text-primary);
-}
-
-.loading-content p {
-    margin-top: 20px;
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 500;
-}
-
-:root:not([data-theme="dark"]) .loading-content p {
-    color: var(--text-primary);
-}
-
-.loading-overlay .spinner {
-    width: 50px;
-    height: 50px;
-    border: 3px solid rgba(255, 255, 255, 0.2);
-    border-top: 3px solid var(--cyber-blue);
-    border-radius: 50%;
-    animation: loadingSpin 1s linear infinite;
-    margin: 0 auto;
-}
-
-:root:not([data-theme="dark"]) .loading-overlay .spinner {
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    border-top: 3px solid var(--text-accent);
-}
-
-@keyframes loadingSpin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* Lista de usuarios - más compacta y elegante */
-/* ===== MEJORAS RESPONSIVE ESPECÍFICAS ===== */
-
-
-
-/* Ajustes para móviles en el formulario de administrador */
-@media (max-width: 768px) {
-    .main {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
-        height: auto;
-        min-height: 100vh;
-        padding: 10px;
-    }
-
-    .left-panel {
-        height: auto;
-        padding: 2rem 1rem;
-        place-items: center;
-        padding-left: 0;
-    }
-    
-    .right-panel {
-        height: auto;
-        padding: 1rem;
-        place-items: start center;
-    }
-    
-    /* Logo responsive mejorado */
-    .logo {
-        width: 100%;
-        text-align: center;
-        gap: 10px;
-    }
-    
-    .logo h1 {
-        font-size: 36px;
-        line-height: 1.2;
-    }
-    
-    .logo h4 {
-        font-size: 0.9rem;
-        letter-spacing: 1px;
-    }
-    
-    .brand-mark {
-        width: 80px;
-        height: 80px;
-    }
-    
-    /* Formulario responsive mejorado */
-    .formulario {
-        padding: 20px 15px;
-        margin: 0;
-        max-height: none;
-        overflow-y: visible;
-        border-radius: 16px;
-        max-width: 100%;
-    }
-    
-    .formulario form {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    /* Botones más grandes y accesibles */
-    button[type="submit"] {
-        min-height: 50px;
-        padding: 16px;
-        margin-top: 20px;
-        font-size: 16px;
-    }
-    
-    /* Inputs más grandes para mejor usabilidad táctil */
-    .input-wrapper {
-        min-height: 50px;
-    }
-    
-    .effect-1 {
-        padding: 14px 16px;
-        font-size: 16px; /* Previene zoom en iOS */
-    }
-    
-    /* Ajustes específicos para admin panel en móviles */
-    .admin-main-view {
-        max-width: 100%;
-        padding: 0 10px;
-    }
-    
-    .access-btn {
-        padding: 1.2rem 1.5rem;
-        font-size: 0.95rem;
-        min-height: 60px;
-    }
-    
-    .usuarios-container {
-        max-width: 100%;
-    }
-    
-    .usuarios-lista {
-        max-height: 300px;
-    }
-    
-    .usuario-item {
-        padding: 0.8rem;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-
-    .action-buttons {
-        align-self: flex-end;
-        margin-top: 0.5rem;
-        width: 100%;
-        justify-content: flex-end;
-    }
-    
-    .modal-content {
-        padding: 1.5rem;
-        margin: 1rem;
-        max-width: calc(100vw - 2rem);
-    }
-
-    .user-info-item {
-        grid-template-columns: 1fr;
-        gap: 0.4rem;
-        text-align: left;
-    }
-
-    .confirmation-buttons {
-        flex-direction: column;
-        gap: 0.8rem;
-    }
-
-    .confirm-btn,
-    .cancel-btn {
-        width: 100%;
-        min-height: 50px;
-    }
-    
-    /* NAV-BUTTON RESPONSIVE - Mismo tamaño para ambos botones */
-    .button-nav {
-        gap: 8px;
-        flex-wrap: wrap;
-        justify-content: center;
-        width: 100%;
-    }
-    
-    .nav-button {
-        padding: 10px 14px;
-        font-size: 13px;
-        min-height: 44px;
-        flex: 1;
-        min-width: 0; /* Permite que se reduzcan uniformemente */
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        white-space: nowrap;
-    }
-    
-    /* Asegurar que ambos botones tengan el mismo ancho base */
-    .nav-button:first-child {
-        flex: 1;
-    }
-    
-    .nav-button:last-child {
-        flex: 1.2; /* Un poco más de espacio para el texto más largo */
-    }
-}
-
-/* Ajustes adicionales para pantallas muy pequeñas */
-@media (max-width: 480px) {
-    .main {
-        padding: 5px;
-    }
-    
-    .left-panel, .right-panel {
-        padding: 0.5rem;
-    }
-    
-    .formulario {
-        padding: 15px 10px;
-        border-radius: 12px;
-    }
-    
-    /* Asegurar que el botón ocupe todo el ancho disponible */
-    button[type="submit"] {
-        width: 100%;
-        margin: 20px 0 10px 0;
-        min-height: 55px;
-    }
-    
-    /* Mejorar el logo para móviles muy pequeños */
-    .logo h1 {
-        font-size: 32px;
-    }
-    
-    .logo h4 {
-        font-size: 0.8rem;
-    }
-    
-    .brand-mark {
-        width: 70px;
-        height: 70px;
-    }
-    
-    /* Ajustes para textos pequeños */
-    .formulario h2 {
-        font-size: 1.3rem;
-        margin-bottom: 20px;
-    }
-    
-    label {
-        font-size: 12px;
-    }
-    
-    /* Admin panel en móviles muy pequeños */
-    .access-btn {
-        padding: 1rem 1.2rem;
-        font-size: 0.9rem;
-        min-height: 55px;
-    }
-    
-    .admin-main-view h2 {
-        font-size: 1.3rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    /* NAV-BUTTON RESPONSIVE - Texto normal pero mismo tamaño */
-    .button-nav {
-        gap: 6px;
-        flex-wrap: nowrap;
-    }
-    
-    .nav-button {
-        padding: 9px 12px;
-        font-size: 12px;
-        min-height: 42px;
-        flex: 1;
-    }
-    
-    .nav-button:last-child {
-        flex: 1.3; /* Más espacio para el texto más largo */
-    }
-    
-    .nav-button svg {
-        width: 14px;
-        height: 14px;
-        flex-shrink: 0; /* Evita que el ícono se reduzca */
-    }
-}
-
-/* Ajustes para móviles extra pequeños */
-@media (max-width: 360px) {
-    /* NAV-BUTTON RESPONSIVE - Más compacto pero mismo tamaño */
-    .button-nav {
-        gap: 5px;
-    }
-    
-    .nav-button {
-        padding: 8px 10px;
-        font-size: 11px;
-        min-height: 40px;
-    }
-    
-    .nav-button:last-child {
-        flex: 1.4; /* Aún más espacio para el texto largo */
-    }
-    
-    .nav-button svg {
-        width: 12px;
-        height: 12px;
-    }
-}
-
-/* Ajustes para móviles muy pequeños (320px o menos) */
-@media (max-width: 320px) {
-    /* NAV-BUTTON RESPONSIVE - Botones apilados verticalmente mismo ancho */
-    .button-nav {
-        gap: 8px;
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .nav-button {
-        padding: 10px 12px;
-        font-size: 12px;
-        min-height: 44px;
-        width: 100%;
-        flex: none; /* Reset flex para column layout */
-        justify-content: center;
-    }
-    
-    .nav-button:last-child {
-        flex: none; /* Reset en layout vertical */
-    }
-    
-    .nav-button svg {
-        width: 14px;
-        height: 14px;
-    }
-}
-
-/* Prevenir desbordamiento horizontal en todos los dispositivos */
-html, body {
-    max-width: 100%;
-    overflow-x: hidden;
-}
-
-/* Asegurar que el contenedor principal no cause overflow */
-.main {
-    width: 100%;
-    max-width: 100vw;
-}
-
-/* Estilos del logo responsive */
-.logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-.logo h1 {
-    color: var(--text-primary);
-    font-family: 'Unna', serif;
-    font-size: 48px;
-    font-weight: bold;
-    margin: 0;
-    transition: all 0.4s ease;
-}
-
-.logo span {
-    color: var(--text-accent);
-    transition: all 0.4s ease;
-}
-
-.logo h4 {
-    color: var(--text-primary);
-    font-family: 'Manrope', sans-serif;
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 300;
-    letter-spacing: 2px;
-    opacity: 0.8;
-    transition: all 0.4s ease;
-}
-
-/* Estilos del logo SVG */
-.brand-mark {
-    width: 100px;
-    height: 100px;
-    margin-bottom: 1rem;
+/* Admin dashboard — mismo lenguaje visual que el dashboard de usuario */
+
+:host {
+  display: block;
+  min-height: 100vh;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+.admin-dashboard {
+  min-height: 100vh;
+}
+
+/* ---------- Top nav (dashboard parity) ---------- */
+
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1.25rem;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.nav-logo {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
 }
 
 .vault-shape {
-    fill: none;
-    stroke: var(--text-accent);
-    stroke-width: 2.5;
-    transition: stroke 0.4s ease;
+  fill: none;
+  stroke: var(--text-accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .security-core {
-    fill: var(--text-accent);
-    stroke: var(--bg-primary);
-    stroke-width: 2;
-    transition: fill 0.4s ease, stroke 0.4s ease;
+  fill: var(--text-accent);
+  stroke: var(--canvas);
+  stroke-width: 2;
 }
 
 .access-cross {
-    stroke: var(--bg-primary);
-    stroke-width: 2;
-    stroke-linecap: round;
-    transition: stroke 0.4s ease;
+  stroke: var(--canvas);
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+.nav-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-/* En móviles, aumentar aún más el espacio */
+.nav-title {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.brand-primary {
+  font-family: 'Unna', serif;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.brand-secondary {
+  font-family: 'Unna', serif;
+  font-weight: 700;
+  color: var(--text-accent);
+}
+
+.nav-tagline {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 300;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  opacity: 0.75;
+  margin: 0;
+  line-height: 1;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.nav-back-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.55rem 0.9rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.nav-back-btn:hover {
+  background: var(--brand-soft);
+  border-color: color-mix(in srgb, var(--text-accent) 35%, var(--border-color));
+}
+
+.theme-toggle {
+  background: transparent !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 12px !important;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-accent) !important;
+  box-shadow: none !important;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--brand-soft) !important;
+  transform: none;
+}
+
+.theme-toggle .sun,
+.theme-toggle .sun-ray {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+/* ---------- Main ---------- */
+
+.main-content {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+.welcome-section {
+  margin-bottom: 1.5rem;
+}
+
+.welcome-section--compact {
+  margin-bottom: 1.1rem;
+}
+
+.welcome-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(1.45rem, 3.5vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.highlight {
+  color: var(--text-accent);
+}
+
+.welcome-lead {
+  margin: 0.55rem 0 0;
+  max-width: 42ch;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+/* ---------- Modules grid ---------- */
+
+.modules-section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.module-card {
+  appearance: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  text-align: left;
+  padding: 1.25rem 1.15rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-light);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.module-card:hover {
+  border-color: color-mix(in srgb, var(--text-accent) 40%, var(--border-color));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+.module-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.module-card__icon--users {
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
+  color: var(--brand);
+}
+
+.module-card__icon--create {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+}
+
+.module-card__icon--metrics {
+  background: color-mix(in srgb, #7c3aed 12%, transparent);
+  color: #7c3aed;
+}
+
+.module-card__icon--loans {
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning);
+}
+
+.module-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.module-card__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.module-card__text {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+/* ---------- Panels (form / list / placeholders) ---------- */
+
+.admin-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 1.5rem 1.25rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-panel__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1.1rem;
+}
+
+.admin-toolbar-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--canvas);
+  color: var(--text-primary);
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.admin-toolbar-btn:hover {
+  border-color: color-mix(in srgb, var(--text-accent) 35%, var(--border-color));
+  background: var(--brand-soft);
+  color: var(--text-accent);
+}
+
+.admin-toolbar-btn--primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.admin-toolbar-btn--primary:hover {
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+  color: #fff;
+}
+
+.admin-panel h2 {
+  margin: 0 0 1.1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.placeholder-panel {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.placeholder-panel__icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.1rem;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, #7c3aed 12%, transparent);
+  color: #7c3aed;
+}
+
+.placeholder-panel__icon--loans {
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning);
+}
+
+.placeholder-panel h2 {
+  margin-bottom: 0.55rem;
+}
+
+.placeholder-panel p {
+  margin: 0 auto;
+  max-width: 46ch;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* ---------- Create admin form ---------- */
+
+.admin-panel form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.15rem;
+  align-items: start;
+}
+
+.admin-panel form > button[type='submit'] {
+  grid-column: 1 / -1;
+}
+
+.email-group,
+.password-group {
+  display: contents;
+}
+
+.admin-panel label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.input-container {
+  width: 100%;
+}
+
+.input-wrapper {
+  position: relative;
+  background: var(--canvas);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.12);
+}
+
+.effect-1 {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  padding: 0.8rem 0.95rem;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.password-wrapper .effect-1 {
+  padding-right: 2.75rem;
+}
+
+.password-wrapper .password-toggle {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-wrapper .password-toggle:hover {
+  color: var(--text-accent);
+}
+
+.focus-border {
+  display: none;
+}
+
+.error-container {
+  margin-top: 0.35rem;
+  padding: 0.4rem 0.65rem;
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border-radius: 8px;
+  border-left: 3px solid var(--danger);
+}
+
+.error-message {
+  color: var(--danger);
+  font-size: 0.78rem;
+  display: block;
+  font-weight: 500;
+}
+
+.admin-panel button[type='submit'] {
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.9rem 1.15rem;
+  border: none;
+  border-radius: 12px;
+  background: var(--brand);
+  color: #fff;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.admin-panel button[type='submit']:hover:not(:disabled) {
+  background: var(--brand-hover);
+}
+
+.admin-panel button[type='submit']:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
-    .main {
-        min-height: calc(100vh - 100px);
-        padding-bottom: 30px;
-    }
-    
-    .formulario {
-        margin-bottom: 40px;
-    }
-    
-    .formulario button[type="submit"] {
-        margin-bottom: 20px;
-    }
-    
-    .right-panel {
-        padding-bottom: 20px; /* Espacio extra en el panel derecho */
-    }
-}
+  .modules-section {
+    grid-template-columns: 1fr;
+  }
 
-/* Para pantallas muy pequeñas */
-@media (max-width: 480px) {
-    .main {
-        min-height: calc(100vh - 120px);
-        padding-bottom: 40px;
-    }
-    
-    .formulario {
-        margin-bottom: 50px;
-    }
-}
+  .admin-panel form {
+    grid-template-columns: 1fr;
+  }
 
-/* Asegurar que el footer no sea posicionado de forma absoluta si causa problemas */
-footer {
-    position: relative !important; /* Forzar posición relativa si es necesario */
-    z-index: 1; /* Menor z-index que el contenido */
-}
+  .nav-back-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.78rem;
+  }
 
-/* Si el footer es fixed, ajustar el padding del body */
-body {
-    padding-bottom: 0; /* Resetear cualquier padding existente */
-}
-
-/* Contenedor adicional de seguridad para el botón */
-.button-container {
-    position: relative;
-    z-index: 15;
-    margin-top: 20px;
-    margin-bottom: 30px;
-}
-
-/* Asegurar que el contenido principal tenga suficiente espacio */
-.main {
-    min-height: calc(100vh - 80px); /* Resta la altura aproximada del footer */
-    padding-bottom: 20px; /* Espacio extra en la parte inferior */
-}
-
-/* Contenedor del formulario con margen inferior */
-.formulario {
-    margin-bottom: 30px; /* Espacio extra debajo del formulario */
-}
-
-/* Ajustes específicos para el botón de crear administrador */
-.formulario button[type="submit"] {
-    position: relative;
-    z-index: 10; /* Asegurar que esté por encima del footer */
-    margin-bottom: 10px; /* Espacio extra debajo del botón */
+  .main-content {
+    padding: 1.25rem 1rem 3rem;
+  }
 }

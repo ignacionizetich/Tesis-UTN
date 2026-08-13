@@ -1,76 +1,85 @@
-@if (isLoading) {
-<div id="validation-loader-overlay" role="status" aria-live="polite">
-  <div class="validation-loader-container">
-    <div class="loading-logo-container">
-      <svg class="brand-mark" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M60 20 L100 40 V80 L60 100 L20 80 V40 Z" class="vault-shape" />
-        <circle cx="60" cy="60" r="18" class="security-core" />
-        <path d="M60 42 L60 78 M48 60 L72 60" class="access-cross" />
-      </svg>
-      <div class="spinner-circle"></div>
-    </div>
-    <div class="loading-brand">
-      <h1>AR<span>Cash</span></h1>
-      <p class="brand-tagline">The best virtual wallet</p>
-      <p class="loading-text">Validando tu cuenta...</p>
-    </div>
-  </div>
+<app-theme-toggle></app-theme-toggle>
+
+<div class="validate-page">
+  <main class="validate-page__main">
+    <section class="validate-card" [class.validate-card--loading]="isLoading">
+      <div class="validate-card__brand">
+        <app-brand-logo></app-brand-logo>
+      </div>
+
+      @if (isLoading) {
+        <div class="validate-card__loader" role="status" aria-live="polite">
+          <div class="validate-spinner" aria-hidden="true"></div>
+          <h2>{{ title }}</h2>
+          <p>{{ message }}</p>
+        </div>
+      } @else {
+        <div
+          class="validate-card__status"
+          [class.validate-card__status--ok]="isSuccess"
+          [class.validate-card__status--err]="!isSuccess"
+          aria-hidden="true"
+        >
+          @if (isSuccess) {
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          } @else {
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          }
+        </div>
+
+        <header class="validate-card__header">
+          <h2 id="status" role="status" aria-live="polite">{{ title }}</h2>
+          <p>{{ message }}</p>
+        </header>
+
+        <div class="validate-card__actions">
+          @if (isSuccess) {
+            <button type="button" class="validate-btn validate-btn--primary" (click)="goToLogin()">
+              Ir a ingresar
+            </button>
+            <button type="button" class="validate-btn validate-btn--ghost" (click)="goToHome()">
+              Volver al inicio
+            </button>
+          } @else {
+            <button type="button" class="validate-btn validate-btn--primary" (click)="goToLogin()">
+              Ir a ingresar
+            </button>
+
+            @if (showResendOption()) {
+              @if (!showResendForm) {
+                <button type="button" class="validate-btn validate-btn--ghost" (click)="openResendForm()">
+                  Solicitar nuevo enlace
+                </button>
+              } @else {
+                <div class="validate-resend">
+                  <label for="validate-resend-email">Tu email</label>
+                  <input
+                    id="validate-resend-email"
+                    type="email"
+                    [(ngModel)]="resendEmail"
+                    placeholder="ejemplo@correo.com"
+                    autocomplete="email"
+                  />
+                  <button
+                    type="button"
+                    class="validate-btn validate-btn--primary"
+                    [disabled]="isResending"
+                    (click)="resendValidationEmail()"
+                  >
+                    {{ isResending ? 'Reenviando...' : 'Reenviar enlace' }}
+                  </button>
+                </div>
+              }
+            }
+          }
+        </div>
+      }
+    </section>
+  </main>
+
+  <app-footer></app-footer>
 </div>
-}
-
-@if (!isLoading) {
-<main>
-  <section class="success-container">
-
-    @if (validationResult?.success) {
-    <div class="icon-validate success" aria-hidden="true">
-      <svg viewBox="0 0 48 48" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="24" cy="24" r="22" fill="rgba(255,255,255,0.08)" stroke="none" />
-        <path d="M14 25.5L22 33L34 17" stroke="white" />
-      </svg>
-    </div>
-    }
-
-    @if (validationResult && !validationResult.success) {
-    <div class="icon-validate error" aria-hidden="true">
-      <svg viewBox="0 0 48 48" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="24" cy="24" r="22" fill="rgba(255,255,255,0.08)" stroke="none" />
-        <path d="M16 16L32 32M32 16L16 32" stroke="white" />
-      </svg>
-    </div>
-    }
-
-    @if (!validationResult && !isLoading) {
-    <div class="icon-validate error" aria-hidden="true">
-      <svg viewBox="0 0 48 48" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="24" cy="24" r="22" fill="rgba(255,255,255,0.08)" stroke="none" />
-        <path d="M16 16L32 32M32 16L16 32" stroke="white" />
-      </svg>
-    </div>
-    }
-
-    <h2 id="status" role="status" aria-live="polite">{{ getMessage() }}</h2>
-
-    <button type="button" class="main-btn" [ngClass]="getBtnClass()" (click)="goToHome()" [disabled]="isLoading">
-      @if (!isLoading) {
-      <span>Ir al menú principal</span>
-      } @else {
-      <span>Procesando...</span>
-      }
-    </button>
-
-    @if (showResendOption()) {
-    <button type="button" class="secondary-btn resend-btn" [disabled]="isResending"
-      (click)="resendValidationEmail()">
-      @if (!isResending) {
-      <i class="fas fa-envelope-open-text" aria-hidden="true"></i>
-      Solicitar nuevo enlace
-      } @else {
-      <div class="loading-spinner" aria-hidden="true"></div>
-      Reenviando...
-      }
-    </button>
-    }
-  </section>
-</main>
-}

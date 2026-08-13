@@ -174,3 +174,34 @@
   width: 100%;
   margin-top: 1rem;
 }
+
+.receipt-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.receipt-actions .primary,
+.receipt-actions .secondary {
+  width: 100%;
+  margin-top: 0;
+}
+
+.receipt-actions .secondary {
+  appearance: none;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.8rem 0.75rem;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 650;
+  background: var(--surface);
+  color: var(--text-accent);
+  cursor: pointer;
+  box-shadow: none !important;
+}
+
+.receipt-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

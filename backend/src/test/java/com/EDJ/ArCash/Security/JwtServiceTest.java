@@ -17,9 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Caracterizacion criptografica de JwtService: emitir y parsear con la misma clave.
- */
 class JwtServiceTest {
 
     private static final String SECRET_BASE64 =

@@ -1,72 +1,118 @@
-<div class="modal" (click)="onBackdrop($event)">
-  <div class="modal-content favorite-details-modal">
-    <div class="modal-header-info">
-      <button class="back-button-list" (click)="back.emit()" title="Volver a la lista">
-        <i class="fas fa-arrow-left"></i>
+<div class="fav-details-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="fav-details-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="fav-details-title"
+    (click)="$event.stopPropagation()">
+
+    <div class="fav-details-modal__top">
+      <button
+        type="button"
+        class="fav-details-modal__nav"
+        (click)="back.emit()"
+        title="Volver a la lista"
+        aria-label="Volver a la lista">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M19 12H5M12 19l-7-7 7-7"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
       </button>
-      <span class="close-button" (click)="closed.emit()">&times;</span>
+      <button
+        type="button"
+        class="fav-details-modal__close"
+        (click)="closed.emit()"
+        aria-label="Cerrar">
+        &times;
+      </button>
     </div>
 
-    <div class="favorite-details">
-      <div class="favorite-profile">
-        <div class="favorite-avatar large">
-          <span>{{ initials(favorite.accountOwnerName) }}</span>
-        </div>
-        <div class="favorite-profile-info">
-          <h3>{{ favorite.contactAlias }}</h3>
-          <p class="owner-name">{{ favorite.accountOwnerName }}</p>
-        </div>
+    <header class="fav-details-profile">
+      <div class="fav-details-profile__avatar" aria-hidden="true">
+        {{ initials(favorite.accountOwnerName || favorite.contactAlias) }}
       </div>
-
-      <div class="favorite-account-info">
-        <div class="info-row">
-          <span class="label">Alias de cuenta:</span>
-          <span class="value">{{ favorite.accountAlias }}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">CVU:</span>
-          <span class="value">{{ favorite.accountCbu }}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Tipo de cuenta:</span>
-          <span class="value">{{ favorite.accountType }}</span>
-        </div>
-        @if (favorite.description) {
-        <div class="info-row">
-          <span class="label">Descripción:</span>
-          <span class="value">{{ favorite.description }}</span>
-        </div>
-        }
-        <div class="info-row">
-          <span class="label">Agregado:</span>
-          <span class="value">{{ favorite.creationDate }}</span>
-        </div>
-        @if (favorite.lastUsed) {
-        <div class="info-row">
-          <span class="label">Última transferencia:</span>
-          <span class="value">{{ favorite.lastUsed }}</span>
-        </div>
-        }
+      <div class="fav-details-profile__text">
+        <h2 id="fav-details-title">{{ favorite.contactAlias }}</h2>
+        <p>{{ favorite.accountOwnerName }}</p>
+        <span class="fav-details-badge">{{ accountTypeLabel }}</span>
       </div>
+    </header>
 
-      <div class="favorite-actions-buttons">
-        <button class="primary transfer-btn" (click)="transfer.emit(favorite)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M21 12H3M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" />
-          </svg>
-          Transferir
-        </button>
-        <button class="secondary edit-btn" (click)="edit.emit(favorite)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" />
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" />
+    <div class="fav-details-card">
+      <div class="fav-details-row">
+        <span>Alias de cuenta</span>
+        <strong>{{ favorite.accountAlias || '—' }}</strong>
+      </div>
+      <div class="fav-details-row">
+        <span>CVU</span>
+        <strong class="fav-details-row__mono">{{ formattedCvu }}</strong>
+      </div>
+      @if (favorite.description) {
+      <div class="fav-details-row">
+        <span>Descripción</span>
+        <strong>{{ favorite.description }}</strong>
+      </div>
+      }
+      <div class="fav-details-row">
+        <span>Agregado</span>
+        <strong>{{ favorite.creationDate }}</strong>
+      </div>
+      @if (favorite.lastUsed) {
+      <div class="fav-details-row">
+        <span>Última transferencia</span>
+        <strong>{{ favorite.lastUsed }}</strong>
+      </div>
+      }
+    </div>
+
+    <div class="fav-details-actions">
+      <button
+        type="button"
+        class="fav-details-btn fav-details-btn--primary"
+        (click)="transfer.emit(favorite)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M21 12H3M16 17l5-5-5-5"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        Transferir
+      </button>
+
+      <div class="fav-details-actions__row">
+        <button
+          type="button"
+          class="fav-details-btn fav-details-btn--ghost"
+          (click)="edit.emit(favorite)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+              stroke="currentColor"
+              stroke-width="2" />
+            <path
+              d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+              stroke="currentColor"
+              stroke-width="2" />
           </svg>
           Editar
         </button>
-        <button class="danger remove-btn" (click)="remove.emit(favorite)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-              stroke="currentColor" stroke-width="2" />
+        <button
+          type="button"
+          class="fav-details-btn fav-details-btn--danger"
+          (click)="remove.emit(favorite)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
           </svg>
           Eliminar
         </button>

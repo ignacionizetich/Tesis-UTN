@@ -1,238 +1,356 @@
-<div class="modal" (click)="onBackdrop($event)">
-  <div class="modal-content">
-    @if (isBuscandoCuenta && !isScanning) {
-    <div class="search-loading-overlay">
-      <div class="search-loading-content">
-        <div class="search-spinner"></div>
-        <p>Buscando cuenta...</p>
+<div class="transfer-modal" (click)="onBackdrop($event)" role="presentation">
+  <div
+    class="transfer-modal__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="transfer-title"
+    (click)="$event.stopPropagation()">
+
+    @if (uiPhase === 'flow') {
+    <button
+      type="button"
+      class="transfer-modal__close"
+      (click)="close()"
+      aria-label="Cerrar">
+      &times;
+    </button>
+
+    <header class="transfer-modal__header">
+      <div class="transfer-modal__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M21 12H3M16 17l5-5-5-5"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
       </div>
+      <div class="transfer-modal__heading">
+        <h2 id="transfer-title">Transferir</h2>
+        @if (transferStep < 4) {
+        <p>{{ stepLabel }} · Paso {{ transferStep }} de 3</p>
+        } @else {
+        <p>Transferencia completada</p>
+        }
+      </div>
+    </header>
+
+    @if (transferStep < 4) {
+    <div class="transfer-steps" aria-hidden="true">
+      <span [class.active]="transferStep >= 1" [class.done]="transferStep > 1"></span>
+      <span [class.active]="transferStep >= 2" [class.done]="transferStep > 2"></span>
+      <span [class.active]="transferStep >= 3" [class.done]="transferStep > 3"></span>
     </div>
     }
 
-    <span class="close-button" (click)="close()">&times;</span>
-    <h2>Transferir Dinero</h2>
-
     @if (transferStep === 1) {
     @if (!isScanning) {
-    <div id="search-account-step">
-      <div class="form-group">
+    <div class="transfer-step">
+      <label class="transfer-label" for="transfer-dest">Alias o CVU</label>
+      <div class="transfer-field">
         <input
+          id="transfer-dest"
           type="text"
           [(ngModel)]="destinatarioInput"
-          placeholder=" "
-          required
+          name="destinatarioInput"
+          placeholder="ej. juan.perez o CVU"
+          autocomplete="off"
+          [disabled]="isBuscandoCuenta"
+          (keyup.enter)="buscarCuenta()"
         />
-        <label>Alias o CVU</label>
       </div>
+      <p class="transfer-hint">Buscá por alias o CVU del destinatario.</p>
 
-      <button
-        class="primary"
-        (click)="buscarCuenta()"
-        [disabled]="!destinatarioInput.trim() || isBuscandoCuenta"
-        [class.loading]="isBuscandoCuenta"
-      >
-        <span class="button-text">
+      <div class="transfer-actions">
+        <button
+          type="button"
+          class="transfer-btn transfer-btn--primary"
+          (click)="buscarCuenta()"
+          [disabled]="!canSearch">
           {{ isBuscandoCuenta ? 'Buscando...' : 'Buscar cuenta' }}
-        </span>
-        @if (isBuscandoCuenta) {
-        <div class="progress-bar"></div>
-        }
-      </button>
+        </button>
 
-      @if (showQrScan) {
-      <button class="secondary qr-scan-button" (click)="startScanning()" title="Escanear QR">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M3 7V3h4M17 3h4v4M21 17v4h-4M7 21H3v-4" />
-          <path d="M7 12h10" />
-        </svg>
-        Escanear QR
-      </button>
-      }
+        @if (showQrScan) {
+        <button
+          type="button"
+          class="transfer-btn transfer-btn--ghost"
+          (click)="startScanning()"
+          [disabled]="isBuscandoCuenta">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M3 7V3h4M17 3h4v4M21 17v4h-4M7 21H3v-4" stroke-width="2" stroke-linecap="round" />
+            <path d="M7 12h10" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          Escanear QR
+        </button>
+        }
+      </div>
     </div>
     }
 
     @if (isScanning && showQrScan) {
-    <div class="scanner-view">
-      <h2>Apuntá al código QR</h2>
-      <zxing-scanner
-        (scanSuccess)="handleScanSuccess($event)"
-        (scanError)="handleScanError($event)"
-        (permissionResponse)="handlePermissionResponse($event)"
-      >
-      </zxing-scanner>
+    <div class="transfer-step transfer-scanner">
+      <p class="transfer-scanner__title">Apuntá al código QR</p>
+      <div class="transfer-scanner__frame">
+        <zxing-scanner
+          (scanSuccess)="handleScanSuccess($event)"
+          (scanError)="handleScanError($event)"
+          (permissionResponse)="handlePermissionResponse($event)">
+        </zxing-scanner>
+      </div>
 
       @if (hasPermission === false) {
-      <div class="permission-denied">
-        <p>No diste permiso para usar la cámara.</p>
-        <p>Revisá la configuración del navegador.</p>
+      <div class="transfer-alert transfer-alert--warn">
+        No diste permiso para usar la cámara. Revisá la configuración del navegador.
       </div>
       }
-      <button (click)="cancelScanning()" class="secondary">Ingresar Alias/CVU</button>
+
+      <button type="button" class="transfer-btn transfer-btn--ghost" (click)="cancelScanning()">
+        Ingresar alias / CVU
+      </button>
     </div>
     }
     }
 
     @if (transferStep === 2) {
-    <div id="confirm-account-step">
-      <h3>Datos de la cuenta destino:</h3>
+    <div class="transfer-step">
+      <p class="transfer-label">Cuenta destino</p>
+
       @if (cuentaDestinoData) {
-      <div id="account-details">
-        <p><strong>Alias:</strong> {{ cuentaDestinoData.alias }}</p>
-        @if (cuentaDestinoData.cvu !== 'Obtenido por QR') {
-        <p><strong>CVU:</strong> {{ cuentaDestinoData.cvu }}</p>
+      <div class="transfer-recipient">
+        <div class="transfer-recipient__avatar" aria-hidden="true">
+          {{ (cuentaDestinoData.user.nombre || '?').charAt(0) }}{{ (cuentaDestinoData.user.apellido || '').charAt(0) }}
+        </div>
+        <div class="transfer-recipient__body">
+          <strong>{{ recipientName }}</strong>
+          <span>{{ cuentaDestinoData.alias }}</span>
+          @if (cuentaDestinoData.cvu !== 'Obtenido por QR') {
+          <span class="transfer-recipient__meta">CVU {{ cuentaDestinoData.cvu }}</span>
+          } @else {
+          <span class="transfer-recipient__meta">Obtenido por QR</span>
+          }
+          @if (cuentaDestinoData.currency) {
+          <span class="transfer-recipient__badge">
+            {{ cuentaDestinoData.currency === 'USD' ? 'Cuenta USD' : 'Cuenta ARS' }}
+          </span>
+          }
+        </div>
+      </div>
+
+      <div class="transfer-details-card">
+        @if (cuentaDestinoData.user.dni) {
+        <div><span>DNI</span><strong>{{ formatDni(cuentaDestinoData.user.dni) }}</strong></div>
         }
-        <p>
-          <strong>Titular:</strong> {{ cuentaDestinoData.user.nombre }}
-          {{ cuentaDestinoData.user.apellido }}
-        </p>
-        <p><strong>DNI:</strong> {{ cuentaDestinoData.user.dni }}</p>
-        <p><strong>Email:</strong> {{ cuentaDestinoData.user.email }}</p>
+        @if (cuentaDestinoData.user.email) {
+        <div><span>Email</span><strong>{{ cuentaDestinoData.user.email }}</strong></div>
+        }
       </div>
       } @else {
-      <p>No se encontraron datos.</p>
+      <p class="transfer-hint">No se encontraron datos.</p>
       }
-      <button class="primary" (click)="confirmarCuenta()">Confirmar cuenta</button>
-      <button (click)="cancelarBusqueda()" class="secondary">Cancelar</button>
+
+      <div class="transfer-actions">
+        <button type="button" class="transfer-btn transfer-btn--ghost" (click)="cancelarBusqueda()">
+          Volver
+        </button>
+        <button
+          type="button"
+          class="transfer-btn transfer-btn--primary"
+          (click)="confirmarCuenta()"
+          [disabled]="!cuentaDestinoData">
+          Confirmar
+        </button>
+      </div>
     </div>
     }
 
     @if (transferStep === 3) {
-    <div id="amount-step">
-      <h3>¿Cuánto querés transferir?</h3>
+    <div class="transfer-step">
       @if (cuentaDestinoData) {
-      <p class="transfer-recipient-info">
-        A: {{ cuentaDestinoData.user.nombre }} {{ cuentaDestinoData.user.apellido }}
-        ({{ cuentaDestinoData.alias }})
-      </p>
-
-      @if (cuentaDestinoData.currency) {
-      <p class="transfer-destination-currency">
-        <strong>Cuenta destino:</strong>
-        {{ cuentaDestinoData.currency === 'USD' ? 'Dólares (USD)' : 'Pesos (ARS)' }}
-      </p>
+      <div class="transfer-to-chip">
+        <span>Para</span>
+        <strong>{{ recipientName }}</strong>
+        <small>{{ cuentaDestinoData.alias }}</small>
+      </div>
       }
+
+      <p class="transfer-label">Transferir desde</p>
+      <div class="transfer-currency" role="group" aria-label="Moneda de origen">
+        @if (arsAccount) {
+        <button
+          type="button"
+          class="currency-pill"
+          [class.currency-pill--active]="transferCurrency === 'ARS'"
+          (click)="onCurrencySelected('ARS')">
+          <span>ARS</span>
+          <small>${{ formatBalance(arsAccount.balance) }}</small>
+        </button>
+        }
+        @if (usdAccount) {
+        <button
+          type="button"
+          class="currency-pill"
+          [class.currency-pill--active]="transferCurrency === 'USD'"
+          (click)="onCurrencySelected('USD')">
+          <span>USD</span>
+          <small>U$S {{ formatBalance(usdAccount.balance) }}</small>
+        </button>
+        }
+      </div>
+
+      @if (transferCurrency === 'ARS' && cuentaDestinoData?.currency === 'USD') {
+      <div class="transfer-alert transfer-alert--warn">
+        Se aplicará una conversión de ARS a USD con comisión (~30%).
+      </div>
+      }
+      @if (transferCurrency === 'USD' && cuentaDestinoData?.currency === 'USD') {
+      <div class="transfer-alert transfer-alert--info">
+        Transferencia directa en USD, sin conversión.
+      </div>
       }
 
       <form (ngSubmit)="realizarTransferencia()" #transferForm="ngForm">
-        <div class="form-group currency-selector">
-          <label class="currency-label">Transferir desde:</label>
-          <div class="currency-options">
-            @if (arsAccount) {
-            <label class="currency-option" [class.disabled]="!arsAccount">
-              <input
-                type="radio"
-                name="currency"
-                value="ARS"
-                [ngModel]="transferCurrency"
-                (ngModelChange)="onCurrencySelected($event)"
-                [disabled]="!arsAccount"
-              />
-              <span class="currency-info">
-                <span class="currency-name">Pesos (ARS)</span>
-                <span class="currency-balance"
-                  >Saldo: ${{ arsAccount.balance | number: '1.2-2' }}</span
-                >
-              </span>
-            </label>
-            }
-            @if (usdAccount) {
-            <label class="currency-option" [class.disabled]="!usdAccount">
-              <input
-                type="radio"
-                name="currency"
-                value="USD"
-                [ngModel]="transferCurrency"
-                (ngModelChange)="onCurrencySelected($event)"
-                [disabled]="!usdAccount"
-              />
-              <span class="currency-info">
-                <span class="currency-name">Dólares (USD)</span>
-                <span class="currency-balance"
-                  >Saldo: US${{ usdAccount.balance | number: '1.2-2' }}</span
-                >
-              </span>
-            </label>
-            }
-          </div>
-        </div>
-
-        @if (transferCurrency === 'ARS' && cuentaDestinoData?.currency === 'USD') {
-        <div class="conversion-warning">
-          ⚠️ Se aplicará una conversión de ARS a USD con comisión (~30%)
-        </div>
-        }
-        @if (transferCurrency === 'USD' && cuentaDestinoData?.currency === 'USD') {
-        <div class="conversion-info">ℹ️ Transferencia directa en USD, sin conversión</div>
-        }
-
-        <div class="form-group">
+        <label class="transfer-label" for="transfer-amount">Monto</label>
+        <div
+          class="transfer-amount"
+          [class.transfer-amount--active]="!!montoTransfer">
+          <span>{{ currencySymbol }}</span>
           <input
+            id="transfer-amount"
             type="number"
             [(ngModel)]="montoTransfer"
             name="montoTransfer"
             min="1"
             step="0.01"
-            placeholder=" "
+            placeholder="0"
             required
+            inputmode="decimal"
+            autocomplete="off"
           />
-          <label>Monto {{ transferCurrency === 'USD' ? 'US$' : '$' }}</label>
         </div>
-        <button
-          class="primary"
-          type="submit"
-          [disabled]="
-            !transferForm.valid ||
-            montoTransfer === null ||
-            montoTransfer <= 0 ||
-            isTransfiriendo
-          "
-          [class.loading]="isTransfiriendo"
-        >
-          <span class="button-text">
-            {{ isTransfiriendo ? 'Transfiriendo...' : 'Transferir' }}
-          </span>
-          @if (isTransfiriendo) {
-          <div class="progress-bar"></div>
-          }
-        </button>
 
-        @if (!isTransfiriendo) {
-        <button type="button" (click)="volverAConfirmacion()" class="secondary">Volver</button>
-        }
+        <div class="transfer-summary">
+          <span>Vas a enviar</span>
+          <strong>{{ currencySymbol }} {{ formattedAmount }}</strong>
+        </div>
+
+        <div class="transfer-actions">
+          <button type="button" class="transfer-btn transfer-btn--ghost" (click)="volverAConfirmacion()">
+            Volver
+          </button>
+          <button
+            type="submit"
+            class="transfer-btn transfer-btn--primary"
+            [disabled]="!canTransfer || !transferForm.valid">
+            Transferir
+          </button>
+        </div>
       </form>
     </div>
     }
 
     @if (transferStep === 4 && showPostTransferFavorite) {
-    <div id="add-favorite-step">
-      <div class="transfer-success">
-        <div class="success-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </div>
-        <h3>¡Transferencia exitosa!</h3>
-        <p>¿Querés agregar este contacto a tus favoritos?</p>
-        <div class="favorite-option">
-          <button class="primary" (click)="openAddFavorite.emit()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                stroke="currentColor"
-                stroke-width="2"
-              />
-            </svg>
-            Agregar a favoritos
-          </button>
-          <button class="secondary" (click)="skipAddFavorite.emit()">No, gracias</button>
-        </div>
+    <div class="transfer-step transfer-success">
+      <div class="transfer-success__icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M20 6L9 17l-5-5"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
       </div>
+      <h3>¡Transferencia exitosa!</h3>
+      <p>¿Querés agregar este contacto a tus favoritos?</p>
+      <div class="transfer-actions transfer-actions--stack">
+        <button type="button" class="transfer-btn transfer-btn--primary" (click)="openAddFavorite.emit()">
+          Agregar a favoritos
+        </button>
+        <button type="button" class="transfer-btn transfer-btn--ghost" (click)="skipAddFavorite.emit()">
+          No, gracias
+        </button>
+      </div>
+    </div>
+    }
+    }
+
+    @if (uiPhase === 'sending') {
+    <div class="transfer-status" aria-live="polite">
+      <div class="transfer-status__spinner" aria-hidden="true"></div>
+      <h2 id="transfer-title">Enviando tu dinero</h2>
+      <p>
+        Estamos transfiriendo
+        <strong>{{ currencySymbol }} {{ formattedAmount }}</strong>
+        @if (cuentaDestinoData) {
+        a <strong>{{ recipientName }}</strong>.
+        }
+        Esto puede tardar unos segundos.
+      </p>
+      <div class="transfer-status__bar" aria-hidden="true"><span></span></div>
+    </div>
+    }
+
+    @if (uiPhase === 'sent') {
+    <div class="transfer-status transfer-status--ok" aria-live="polite">
+      <button
+        type="button"
+        class="transfer-modal__close transfer-modal__close--on-status"
+        (click)="continueAfterSent()"
+        [disabled]="receiptBusy"
+        aria-label="Cerrar">
+        &times;
+      </button>
+      <div class="transfer-status__check" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M20 6L9 17l-5-5"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </div>
+      <h2 id="transfer-title">¡Enviado!</h2>
+      <p>
+        Transferiste
+        <strong>{{ currencySymbol }} {{ formattedAmount }}</strong>
+        @if (recipientName) {
+        a <strong>{{ recipientName }}</strong>
+        }
+        correctamente.
+      </p>
+
+      <div class="transfer-actions transfer-actions--stack transfer-status__actions">
+        <button
+          type="button"
+          class="transfer-btn transfer-btn--primary"
+          (click)="downloadReceipt()"
+          [disabled]="receiptBusy || !completedReceiptReady">
+          {{ receiptBusy ? 'Generando…' : 'Descargar comprobante' }}
+        </button>
+        <button
+          type="button"
+          class="transfer-btn transfer-btn--ghost"
+          (click)="shareReceipt()"
+          [disabled]="receiptBusy || !completedReceiptReady">
+          Compartir comprobante
+        </button>
+        <button
+          type="button"
+          class="transfer-btn transfer-btn--ghost"
+          (click)="continueAfterSent()"
+          [disabled]="receiptBusy">
+          Continuar
+        </button>
+      </div>
+    </div>
+    }
+
+    @if (isBuscandoCuenta && uiPhase === 'flow' && !isScanning) {
+    <div class="transfer-loading" aria-live="polite">
+      <div class="transfer-status__spinner" aria-hidden="true"></div>
+      <p>Buscando cuenta...</p>
     </div>
     }
   </div>

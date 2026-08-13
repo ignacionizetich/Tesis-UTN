@@ -1,7 +1,7 @@
 package com.EDJ.ArCash.Service.strategy;
 
 import com.EDJ.ArCash.Security.JwtService;
-import com.EDJ.ArCash.Service.SessionService;
+import com.EDJ.ArCash.Service.interfaces.SessionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
