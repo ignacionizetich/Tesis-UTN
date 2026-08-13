@@ -69,11 +69,14 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
   amountToTransfer: number | null = null;
   selectedCurrency: 'ARS' | 'USD' = 'USD';
   
-  // Conversión en tiempo real para compra USD
-  estimatedUsdAmount: number = 0;
-  estimatedArsAmount: number = 0;
-  currentExchangeRate: number = 0;
-  taxPercentage: number = 3; // Comisión del servicio
+  // Conversión en tiempo real para compra/venta USD (misma fórmula que el backend)
+  readonly taxRate = 0.03;
+  readonly taxPercentage = 3;
+  estimatedUsdAmount = 0;
+  estimatedArsAmount = 0;
+  estimatedTaxAmount = 0;
+  estimatedTotalDebitado = 0;
+  currentExchangeRate = 0;
   
   // Transfer data
   transferStep = 1;
@@ -176,12 +179,21 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
   closeBuyUsdSection(): void {
     this.showBuyUsdSection = false;
     this.amountToBuyUsd = null;
-    this.estimatedUsdAmount = 0;
+    this.resetConversionPreview();
   }
 
   async buyUsd(): Promise<void> {
     if (!this.amountToBuyUsd || this.amountToBuyUsd <= 0) {
       this.utilService.showToast('Por favor ingrese un monto válido', 'error');
+      return;
+    }
+
+    const totalDebitado = this.amountToBuyUsd * (1 + this.taxRate);
+    if (totalDebitado > this.arsBalance) {
+      this.utilService.showToast(
+        `Saldo insuficiente. Necesitás $${totalDebitado.toFixed(2)} ARS (incluye comisión del ${this.taxPercentage}%)`,
+        'error'
+      );
       return;
     }
 
@@ -236,7 +248,7 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
   closeSellUsdSection(): void {
     this.showSellUsdSection = false;
     this.amountToSellUsd = null;
-    this.estimatedArsAmount = 0;
+    this.resetConversionPreview();
   }
 
   async sellUsd(): Promise<void> {
@@ -245,8 +257,12 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.amountToSellUsd > this.usdBalance) {
-      this.utilService.showToast('Saldo insuficiente en dólares', 'error');
+    const totalDebitado = this.amountToSellUsd * (1 + this.taxRate);
+    if (totalDebitado > this.usdBalance) {
+      this.utilService.showToast(
+        `Saldo insuficiente. Necesitás $${totalDebitado.toFixed(2)} USD (incluye comisión del ${this.taxPercentage}%)`,
+        'error'
+      );
       return;
     }
 
@@ -504,6 +520,7 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
   }
 
   // =================== CONVERSIÓN EN TIEMPO REAL ===================
+  // Espejo del backend: input = base; comisión 3% sobre la base; crédito solo sobre la base.
   
   private loadExchangeRate(): void {
     // Obtener el tipo de cambio actual
@@ -519,24 +536,36 @@ export class UsdAccountComponent implements OnInit, OnDestroy {
     });
   }
 
+  private resetConversionPreview(): void {
+    this.estimatedUsdAmount = 0;
+    this.estimatedArsAmount = 0;
+    this.estimatedTaxAmount = 0;
+    this.estimatedTotalDebitado = 0;
+  }
+
   onAmountToBuyChange(): void {
     if (this.amountToBuyUsd && this.amountToBuyUsd > 0) {
-      // El usuario ingresa ARS que quiere gastar
-      // Calcular el tipo de cambio efectivo con impuestos (65% = 30% PAIS + 35% Ganancias)
-      const effectiveRate = this.currentExchangeRate * (1 + this.taxPercentage / 100);
-      // Estimar los USD que se obtendrían
-      this.estimatedUsdAmount = this.amountToBuyUsd / effectiveRate;
+      const amountArs = this.amountToBuyUsd;
+      this.estimatedTaxAmount = amountArs * this.taxRate;
+      this.estimatedTotalDebitado = amountArs + this.estimatedTaxAmount;
+      // Solo la base se convierte (igual que ArsToUsdConversionService).
+      this.estimatedUsdAmount = this.currentExchangeRate > 0
+        ? amountArs / this.currentExchangeRate
+        : 0;
     } else {
-      this.estimatedUsdAmount = 0;
+      this.resetConversionPreview();
     }
   }
 
   onAmountToSellChange(): void {
     if (this.amountToSellUsd && this.amountToSellUsd > 0) {
-      // Calcular los ARS que se obtendrían
-      this.estimatedArsAmount = this.amountToSellUsd * this.currentExchangeRate;
+      const amountUsd = this.amountToSellUsd;
+      this.estimatedTaxAmount = amountUsd * this.taxRate;
+      this.estimatedTotalDebitado = amountUsd + this.estimatedTaxAmount;
+      // Solo la base se convierte (igual que UsdToArsConversionService).
+      this.estimatedArsAmount = amountUsd * this.currentExchangeRate;
     } else {
-      this.estimatedArsAmount = 0;
+      this.resetConversionPreview();
     }
   }
 

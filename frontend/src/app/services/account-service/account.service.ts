@@ -38,6 +38,9 @@ export interface SellUsdResponse {
   amountUsd: number;
   amountArs: number;
   exchangeRate: number;
+  taxAmount: number;
+  taxPercentage: number;
+  totalDebitado: number;
   newBalanceUsd: number;
   newBalanceArs: number;
 }
