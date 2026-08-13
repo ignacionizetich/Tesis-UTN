@@ -1,21 +1,27 @@
 package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.Models.Account;
+import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.FavoriteContact;
 import com.EDJ.ArCash.Models.Imp.Currency;
+import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
-import com.EDJ.ArCash.Security.JwtService;
+import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.FavoriteContactService;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.util.List;
 
@@ -33,20 +39,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Tests de caracterizacion del contrato HTTP de /api/favorites.
- *
- * Se corre con addFilters = false porque el controller parsea el JWT por su
- * cuenta desde el header Authorization: con la cadena de filtros activa, un
- * token de prueba seria rechazado con 401 antes de llegar al handler, y la
- * rama de 401 propia del controller quedaria inalcanzable.
+ * Contrato HTTP de /api/favorites con AuthenticationPrincipal.
+ * addFilters=false para ejercer la rama principal==null (401 del controller).
  */
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class FavoriteContactControllerTest {
 
-    private static final String TOKEN = "token-de-prueba";
-    private static final String BEARER = "Bearer " + TOKEN;
     private static final Long ID_USUARIO = 1L;
 
     @Autowired
@@ -55,12 +55,10 @@ class FavoriteContactControllerTest {
     @MockitoBean
     private FavoriteContactService favoriteContactService;
 
-    @MockitoBean
-    private JwtService jwtService;
-
-    @BeforeEach
-    void setUp() {
-        when(jwtService.extractUserId(TOKEN)).thenReturn(String.valueOf(ID_USUARIO));
+    @AfterEach
+    void limpiarSecurityContext() {
+        TestSecurityContextHolder.clearContext();
+        SecurityContextHolder.clearContext();
     }
 
     // --- POST /add ---
@@ -71,7 +69,7 @@ class FavoriteContactControllerTest {
         when(favoriteContactService.addFavoriteContact(ID_USUARIO, 10L, "Juancito", "amigo")).thenReturn(true);
 
         mockMvc.perform(post("/api/favorites/add")
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"accountId\":10,\"contactAlias\":\"Juancito\",\"description\":\"amigo\"}"))
                 .andExpect(status().isOk())
@@ -85,18 +83,20 @@ class FavoriteContactControllerTest {
         when(favoriteContactService.addFavoriteContact(anyLong(), anyLong(), any(), any())).thenReturn(false);
 
         mockMvc.perform(post("/api/favorites/add")
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"accountId\":10,\"contactAlias\":\"Juancito\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("ERROR"))
-                // El mensaje no distingue entre cuenta propia, duplicado o cuenta inexistente.
                 .andExpect(jsonPath("$.message").value("No se pudo agregar el contacto a favoritos"));
     }
 
     @Test
-    @DisplayName("Sin header Authorization responde el 401 propio del controller")
-    void addDevuelveUnauthorizedSinHeader() throws Exception {
+    @DisplayName("Sin principal responde el 401 propio del controller")
+    void addDevuelveUnauthorizedSinPrincipal() throws Exception {
+        TestSecurityContextHolder.clearContext();
+        SecurityContextHolder.clearContext();
+
         mockMvc.perform(post("/api/favorites/add")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"accountId\":10,\"contactAlias\":\"Juancito\"}"))
@@ -110,14 +110,8 @@ class FavoriteContactControllerTest {
     @Test
     @DisplayName("Sin contactAlias revienta con NPE y sale como 500 por el handler global")
     void addSinAliasDevuelveErrorInternoDelHandlerGlobal() throws Exception {
-        // AddFavoriteContactRequest no tiene ninguna constraint pese al @Valid,
-        // asi que el alias null llega hasta el .trim() y lanza NullPointerException.
-        // Al sacar el try/catch del controller el cuerpo dejo de ser
-        // {"status":"ERROR","message":...} y paso al formato de ErrorResponse.
-        // El codigo HTTP y el texto de message, que es lo que lee el frontend,
-        // siguen siendo los mismos.
         mockMvc.perform(post("/api/favorites/add")
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"accountId\":10}"))
                 .andExpect(status().isInternalServerError())
@@ -136,7 +130,7 @@ class FavoriteContactControllerTest {
         when(favoriteContactService.getFavoriteContactsByUser(ID_USUARIO))
                 .thenReturn(List.of(favoritoDeEjemplo()));
 
-        mockMvc.perform(get("/api/favorites/list").header("Authorization", BEARER))
+        mockMvc.perform(get("/api/favorites/list").with(comoUsuarioAutenticado()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.favorites.length()").value(1))
@@ -146,12 +140,10 @@ class FavoriteContactControllerTest {
                 .andExpect(jsonPath("$.favorites[0].creationDate").value("2026-01-15 10:30:00"))
                 .andExpect(jsonPath("$.favorites[0].lastUsed").isEmpty())
                 .andExpect(jsonPath("$.favorites[0].active").value(true))
-                // El frontend parte este string por espacios para reconstruir nombre y apellido.
                 .andExpect(jsonPath("$.favorites[0].accountOwnerName").value("Juan Perez"))
                 .andExpect(jsonPath("$.favorites[0].accountOwnerAlias").value("juan.perez"))
                 .andExpect(jsonPath("$.favorites[0].accountCbu").value("0000003100010000000001"))
                 .andExpect(jsonPath("$.favorites[0].accountAlias").value("juan.pesos"))
-                // La cuenta del fixture es en USD y aun asi se informa PESOS.
                 .andExpect(jsonPath("$.favorites[0].accountType").value("PESOS"));
     }
 
@@ -160,7 +152,7 @@ class FavoriteContactControllerTest {
     void listDevuelveListaVacia() throws Exception {
         when(favoriteContactService.getFavoriteContactsByUser(ID_USUARIO)).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/favorites/list").header("Authorization", BEARER))
+        mockMvc.perform(get("/api/favorites/list").with(comoUsuarioAutenticado()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.favorites.length()").value(0));
@@ -172,7 +164,7 @@ class FavoriteContactControllerTest {
         when(favoriteContactService.getFavoriteContactsByUserOrderedByUsage(ID_USUARIO))
                 .thenReturn(List.of(favoritoDeEjemplo()));
 
-        mockMvc.perform(get("/api/favorites/list/recent").header("Authorization", BEARER))
+        mockMvc.perform(get("/api/favorites/list/recent").with(comoUsuarioAutenticado()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.favorites.length()").value(1));
@@ -187,7 +179,7 @@ class FavoriteContactControllerTest {
     void deleteDevuelveSuccess() throws Exception {
         when(favoriteContactService.removeFavoriteContact(ID_USUARIO, 77L)).thenReturn(true);
 
-        mockMvc.perform(delete("/api/favorites/77").header("Authorization", BEARER))
+        mockMvc.perform(delete("/api/favorites/77").with(comoUsuarioAutenticado()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.message").value("Contacto eliminado de favoritos correctamente"));
@@ -198,7 +190,7 @@ class FavoriteContactControllerTest {
     void deleteDevuelveBadRequestSiElServicioRechaza() throws Exception {
         when(favoriteContactService.removeFavoriteContact(ID_USUARIO, 77L)).thenReturn(false);
 
-        mockMvc.perform(delete("/api/favorites/77").header("Authorization", BEARER))
+        mockMvc.perform(delete("/api/favorites/77").with(comoUsuarioAutenticado()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("ERROR"))
                 .andExpect(jsonPath("$.message").value("No se pudo eliminar el contacto favorito"));
@@ -212,7 +204,7 @@ class FavoriteContactControllerTest {
         when(favoriteContactService.updateFavoriteContact(eq(77L), eq(ID_USUARIO), any(), any())).thenReturn(true);
 
         mockMvc.perform(put("/api/favorites/update/77")
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"contactAlias\":\"Nuevo alias\"}"))
                 .andExpect(status().isOk())
@@ -224,7 +216,7 @@ class FavoriteContactControllerTest {
     @DisplayName("La edicion sin ningun campo devuelve 400")
     void updateSinCamposDevuelveBadRequest() throws Exception {
         mockMvc.perform(put("/api/favorites/update/77")
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -240,10 +232,9 @@ class FavoriteContactControllerTest {
         when(favoriteContactService.updateFavoriteContact(eq(77L), eq(ID_USUARIO), any(), any())).thenReturn(false);
 
         mockMvc.perform(put("/api/favorites/update/77")
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"contactAlias\":\"Nuevo alias\"}"))
-                // 404 aunque el mismo mensaje admite que puede tratarse de un contacto ajeno.
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value("ERROR"))
                 .andExpect(jsonPath("$.message")
@@ -256,14 +247,32 @@ class FavoriteContactControllerTest {
         String aliasLargo = "a".repeat(51);
 
         mockMvc.perform(put("/api/favorites/update/77")
-                        .header("Authorization", BEARER)
+                        .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"contactAlias\":\"" + aliasLargo + "\"}"))
                 .andExpect(status().isBadRequest())
-                // Este cuerpo no se parece al de los errores manuales del mismo controller.
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.status").doesNotExist());
+    }
+
+    private RequestPostProcessor comoUsuarioAutenticado() {
+        CustomUserDetails principal = new CustomUserDetails(usuario());
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal, null, principal.getAuthorities());
+        return request -> {
+            TestSecurityContextHolder.setAuthentication(auth);
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            return request;
+        };
+    }
+
+    private User usuario() {
+        User user = new User();
+        user.setId(ID_USUARIO);
+        user.setPermissions(Permissions.USER);
+        user.setCredentials(new Credentials(user, "ana.gomez", "irrelevante"));
+        return user;
     }
 
     private FavoriteContact favoritoDeEjemplo() {
