@@ -12,58 +12,54 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Lista de endpoints públicos que no requieren autenticación
+  // Endpoints públicos: no adjuntar Bearer.
+  // /auth/refresh debe ir sin access token (el BE lo ignora en permitAll, pero
+  // un JWT vencido en el header no aporta y confunde el flujo).
   const publicEndpoints = [
     '/auth/login',
+    '/auth/refresh',
     '/auth/send-recover-mail',
     '/auth/reset-password',
     '/user/create'
   ];
 
-  // Verificar si la URL actual es un endpoint público
-  const isPublicEndpoint = publicEndpoints.some(endpoint => 
+  const isPublicEndpoint = publicEndpoints.some(endpoint =>
     req.url.includes(endpoint)
   );
 
-  // Si es un endpoint público, no agregamos el token
   if (isPublicEndpoint) {
     return next(req);
   }
 
-  // Obtenemos el token desde localStorage
   const token = localStorage.getItem('JWT');
 
-  // Si no hay token, dejamos que la petición siga su camino sin modificarla
   if (!token) {
     return next(req);
   }
 
-  // Si hay token, clonamos la petición y le agregamos el header
   const reqConToken = req.clone({
     setHeaders: {
       Authorization: `Bearer ${token}`
     }
   });
 
-  // Dejamos que la petición clonada continúe
   return next(reqConToken).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Si el error es 498 (Token expirado) y no es una request de refresh
-      if (error.status === 498 && !req.url.includes('/auth/refresh')) {
-        return handle498Error(reqConToken, next, authService, router);
-      }
-      
-      // Si el error es 401 (No autorizado) - token inválido
-      if (error.status === 401 && !req.url.includes('/auth/refresh')) {
-        // Verificar si es un error de creación de admin (conflict) que devuelve 401 por el constraint
-        if (req.url.includes('/admin/users/create-admin')) {
-          // No hacer logout, simplemente propagar el error
-          return throwError(() => error);
-        }
-        return handle401Error(authService, router, error);
+      if (req.url.includes('/auth/refresh')) {
+        return throwError(() => error);
       }
 
-      // Para errores 409 (Conflict) - duplicados, no hacer logout
+      // create-admin puede devolver 401 por conflictos de constraint: no refrescar ni logout
+      if (error.status === 401 && req.url.includes('/admin/users/create-admin')) {
+        return throwError(() => error);
+      }
+
+      // Access vencido / inválido: el filtro BE responde 401; algunos flujos legacy usan 498.
+      // En ambos casos intentamos renovar con la cookie de refresh.
+      if (error.status === 401 || error.status === 498) {
+        return handleAccessTokenExpired(reqConToken, next, authService, router);
+      }
+
       if (error.status === 409) {
         return throwError(() => error);
       }
@@ -73,8 +69,7 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   );
 };
 
-// Función para manejar error 498 (Token expirado)
-function handle498Error(
+function handleAccessTokenExpired(
   request: HttpRequest<unknown>,
   next: HttpHandlerFn,
   authService: AuthService,
@@ -87,55 +82,42 @@ function handle498Error(
     return authService.refreshToken().pipe(
       switchMap((response: any) => {
         isRefreshing = false;
-        
+
         const newToken = response.accessToken;
         localStorage.setItem('JWT', newToken);
         refreshTokenSubject.next(newToken);
-        
-        // Reintentar la request original con el nuevo token
+
         const newRequest = request.clone({
           setHeaders: {
             Authorization: `Bearer ${newToken}`
           }
         });
-        
+
         return next(newRequest);
       }),
       catchError((error: any) => {
         isRefreshing = false;
-        
-        // Si el refresh falla, hacer logout completo
         handleFullLogout(authService, router);
         return throwError(() => error);
       })
     );
-  } else {
-    // Si ya se está refrescando, esperar a que termine
-    return refreshTokenSubject.pipe(
-      filter(token => token !== null),
-      take(1),
-      switchMap(token => {
-        // Reintentar la request original con el nuevo token
-        const newRequest = request.clone({
-          setHeaders: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        return next(newRequest);
-      })
-    );
   }
+
+  return refreshTokenSubject.pipe(
+    filter(token => token !== null),
+    take(1),
+    switchMap(token => {
+      const newRequest = request.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      return next(newRequest);
+    })
+  );
 }
 
-// Función para manejar error 401 (No autorizado)
-function handle401Error(authService: AuthService, router: Router, error: any): Observable<never> {
-  handleFullLogout(authService, router);
-  return throwError(() => error);
-}
-
-// Función para logout completo (limpia localStorage y hace logout en backend)
 function handleFullLogout(authService: AuthService, router: Router): void {
-  // Primero intentar hacer logout en el backend para invalidar el refresh token
   authService.logoutUser().subscribe({
     next: () => {
       console.log('Logout exitoso en backend');
@@ -144,7 +126,6 @@ function handleFullLogout(authService: AuthService, router: Router): void {
       console.warn('Error al hacer logout en backend:', err);
     },
     complete: () => {
-      // Limpiar sesión local independientemente del resultado del logout
       authService.clearLocalSession();
       router.navigate(['/login']);
     }
