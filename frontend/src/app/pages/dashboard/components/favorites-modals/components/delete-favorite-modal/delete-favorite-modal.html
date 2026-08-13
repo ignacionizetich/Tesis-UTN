@@ -1,0 +1,61 @@
+<div class="modal" (click)="onBackdrop($event)">
+  <div class="modal-content delete-favorite-modal">
+    <div class="modal-header">
+      <h2>Eliminar Contacto Favorito</h2>
+      <span class="close-button" (click)="closed.emit()">&times;</span>
+    </div>
+
+    <div class="delete-confirmation-content">
+      <div class="warning-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+          <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                stroke="var(--plasma-pink)"
+                stroke-width="2"
+                stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="confirmation-message">
+        <h3>¿Estás seguro de que querés eliminar este contacto?</h3>
+        <p>Esta acción no se puede deshacer.</p>
+
+        <div class="favorite-to-delete">
+          <div class="favorite-avatar small">
+            <span>{{ initials(favorite.accountOwnerName) }}</span>
+          </div>
+          <div class="favorite-details">
+            <strong>{{ favorite.contactAlias }}</strong>
+            <span>{{ favorite.accountOwnerName }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="confirmation-actions">
+        @if (!isDeletingFavorite) {
+        <button class="cancel-btn" (click)="closed.emit()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          Cancelar
+        </button>
+        }
+
+        <button class="delete-btn" (click)="confirm()" [disabled]="isDeletingFavorite">
+          @if (isDeletingFavorite) {
+            <div class="button-loading">
+              <div class="spinner"></div>
+              Eliminando...
+            </div>
+          } @else {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+                    stroke="currentColor"
+                    stroke-width="2"/>
+            </svg>
+            Sí, eliminar
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

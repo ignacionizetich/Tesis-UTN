@@ -1,284 +1,47 @@
 @if (currentModal === 'favorites') {
-<div class="modal" (click)="onModalBackdropClick($event, 'favorites')">
-  <div class="modal-content favorites-modal">
-    <div class="modal-header">
-      <h2>Contactos Favoritos</h2>
-      <span class="close-button-favorite" (click)="closeFavoritesModal()">&times;</span>
-    </div>
-
-    @if (favoriteContacts.length > 0) {
-    <div class="favorites-list">
-      @for (favorite of favoriteContacts; track trackFavorite($index, favorite)) {
-      <div class="favorite-card" (click)="openFavoriteDetailsModal(favorite)">
-        <div class="favorite-avatar">
-          <span>{{favorite.accountOwnerName.split(' ')[0]?.charAt(0)}}{{favorite.accountOwnerName.split(' ')[1]?.charAt(0)
-            || ''}}</span>
-        </div>
-        <div class="favorite-info">
-          <h3 class="favorite-alias">{{favorite.contactAlias}}</h3>
-          <p class="favorite-owner">{{favorite.accountOwnerName}}</p>
-          <p class="favorite-account">{{favorite.accountAlias}}</p>
-          @if (favorite.description) {
-          <p class="favorite-description">{{favorite.description}}</p>
-          }
-        </div>
-        <div class="favorite-actions">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </svg>
-        </div>
-      </div>
-      }
-    </div>
-    }
-
-    @if (favoriteContacts.length === 0) {
-    <div class="empty-favorites">
-      <div class="empty-icon">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-            stroke="currentColor" stroke-width="2" />
-        </svg>
-      </div>
-      <h3>No tienes favoritos</h3>
-      <p>Cuando realices transferencias, podrás agregar contactos a tus favoritos</p>
-    </div>
-    }
-  </div>
-</div>
+<app-favorites-list-modal
+  [favorites]="favoriteContacts"
+  (closed)="closeFavoritesModal()"
+  (favoriteSelected)="openFavoriteDetailsModal($event)"
+  (backdropClick)="onBackdropClose('favorites')"
+/>
 }
 
 @if (currentModal === 'favoriteDetails' && selectedFavoriteContact) {
-<div class="modal" (click)="onModalBackdropClick($event, 'favoriteDetails')">
-  <div class="modal-content favorite-details-modal">
-    <div class="modal-header-info">
-      <button class="back-button-list" (click)="backToFavoritesList()" title="Volver a la lista">
-        <i class="fas fa-arrow-left"></i>
-      </button>
-      <span class="close-button" (click)="closeFavoriteDetailsModal()">&times;</span>
-    </div>
-
-    <div class="favorite-details">
-      <div class="favorite-profile">
-        <div class="favorite-avatar large">
-          <span>{{selectedFavoriteContact.accountOwnerName.split(' ')[0]?.charAt(0)}}{{selectedFavoriteContact.accountOwnerName.split(' ')[1]?.charAt(0)
-            || ''}}</span>
-        </div>
-        <div class="favorite-profile-info">
-          <h3>{{selectedFavoriteContact.contactAlias}}</h3>
-          <p class="owner-name">{{selectedFavoriteContact.accountOwnerName}}</p>
-        </div>
-      </div>
-
-      <div class="favorite-account-info">
-        <div class="info-row">
-          <span class="label">Alias de cuenta:</span>
-          <span class="value">{{selectedFavoriteContact.accountAlias}}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">CVU:</span>
-          <span class="value">{{selectedFavoriteContact.accountCbu}}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Tipo de cuenta:</span>
-          <span class="value">{{selectedFavoriteContact.accountType}}</span>
-        </div>
-        @if (selectedFavoriteContact.description) {
-        <div class="info-row">
-          <span class="label">Descripción:</span>
-          <span class="value">{{selectedFavoriteContact.description}}</span>
-        </div>
-        }
-        <div class="info-row">
-          <span class="label">Agregado:</span>
-          <span class="value">{{selectedFavoriteContact.creationDate}}</span>
-        </div>
-        @if (selectedFavoriteContact.lastUsed) {
-        <div class="info-row">
-          <span class="label">Última transferencia:</span>
-          <span class="value">{{selectedFavoriteContact.lastUsed}}</span>
-        </div>
-        }
-      </div>
-
-      <div class="favorite-actions-buttons">
-        <button class="primary transfer-btn" (click)="transferToFavorite(selectedFavoriteContact)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M21 12H3M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" />
-          </svg>
-          Transferir
-        </button>
-        <button class="secondary edit-btn" (click)="openEditFavoriteModal(selectedFavoriteContact)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" />
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" />
-          </svg>
-          Editar
-        </button>
-        <button class="danger remove-btn" (click)="openDeleteFavoriteModal(selectedFavoriteContact)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-              stroke="currentColor" stroke-width="2" />
-          </svg>
-          Eliminar
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+<app-favorite-details-modal
+  [favorite]="selectedFavoriteContact"
+  (closed)="closeFavoriteDetailsModal()"
+  (back)="backToFavoritesList()"
+  (transfer)="transferToFavorite($event)"
+  (edit)="openEditFavoriteModal($event)"
+  (remove)="openDeleteFavoriteModal($event)"
+  (backdropClick)="onBackdropClose('favoriteDetails')"
+/>
 }
 
 @if (currentModal === 'addFavorite') {
-<div class="modal" (click)="onModalBackdropClick($event, 'addFavorite')">
-  <div class="modal-content add-favorite-modal">
-    <div class="modal-header">
-      <h2>Agregar a Favoritos</h2>
-      <span class="close-button" (click)="closeAddFavoriteModal()">&times;</span>
-    </div>
-
-    <div class="add-favorite-form">
-      <div class="form-group">
-        <input type="text" [(ngModel)]="favoriteContactAlias" placeholder=" " required maxlength="50" [disabled]="isAddingFavorite">
-        <label>Nombre para agendar *</label>
-      </div>
-
-      <div class="form-group">
-        <textarea [(ngModel)]="favoriteContactDescription" placeholder=" " maxlength="200" rows="3" [disabled]="isAddingFavorite"></textarea>
-        <label>Descripción (opcional)</label>
-      </div>
-
-      <div class="form-actions">
-        <button class="primary" (click)="addToFavorites()" [disabled]="!favoriteContactAlias.trim() || isAddingFavorite">
-          @if (isAddingFavorite) {
-            <div class="button-loading">
-              <div class="spinner"></div>
-              Guardando...
-            </div>
-          } @else {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                stroke="currentColor" stroke-width="2" />
-            </svg>
-            Guardar favorito
-          }
-        </button>
-
-        @if (!isAddingFavorite) {
-          <button class="secondary" (click)="closeAddFavoriteModal()">Cancelar</button>
-        }
-      </div>
-    </div>
-  </div>
-</div>
+<app-add-favorite-modal
+  [transferCompletedData]="transferCompletedData"
+  (closed)="closeAddFavoriteModal()"
+  (saved)="onAddFavoriteSaved()"
+  (backdropClick)="onBackdropClose('addFavorite')"
+/>
 }
 
 @if (currentModal === 'editFavorite' && selectedFavoriteContact) {
-<div class="modal" (click)="onModalBackdropClick($event, 'editFavorite')">
-  <div class="modal-content edit-favorite-modal">
-    <div class="modal-header">
-      <h2>Editar Favorito</h2>
-      <span class="close-button" (click)="closeEditFavoriteModal()">&times;</span>
-    </div>
-
-    <div class="edit-favorite-form">
-      <div class="form-group">
-        <input type="text" [(ngModel)]="favoriteContactAlias" placeholder=" " required maxlength="50">
-        <label>Nombre para agendar *</label>
-      </div>
-
-      <div class="form-group">
-        <textarea [(ngModel)]="favoriteContactDescription" placeholder=" " maxlength="200" rows="3"></textarea>
-        <label>Descripción (opcional)</label>
-      </div>
-
-      <div class="form-actions">
-        <button
-          class="primary"
-          (click)="updateFavoriteContact()"
-          [disabled]="!favoriteContactAlias.trim() || isUpdatingFavorite">
-          @if (isUpdatingFavorite) {
-            <div class="loading-spinner"></div>
-            Guardando...
-          } @else {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" />
-            </svg>
-            Guardar cambios
-          }
-        </button>
-
-        @if (!isUpdatingFavorite) {
-          <button class="secondary" (click)="closeEditFavoriteModal()">Cancelar</button>
-        }
-      </div>
-    </div>
-  </div>
-</div>
+<app-edit-favorite-modal
+  [favorite]="selectedFavoriteContact"
+  (closed)="closeEditFavoriteModal()"
+  (saved)="onEditFavoriteSaved()"
+  (backdropClick)="onBackdropClose('editFavorite')"
+/>
 }
 
 @if (currentModal === 'deleteFavorite' && favoriteToDelete) {
-<div class="modal" (click)="onModalBackdropClick($event, 'deleteFavorite')">
-  <div class="modal-content delete-favorite-modal">
-    <div class="modal-header">
-      <h2>Eliminar Contacto Favorito</h2>
-      <span class="close-button" (click)="closeDeleteFavoriteModal()">&times;</span>
-    </div>
-
-    <div class="delete-confirmation-content">
-      <div class="warning-icon">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
-          <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                stroke="var(--plasma-pink)"
-                stroke-width="2"
-                stroke-linecap="round"/>
-        </svg>
-      </div>
-
-      <div class="confirmation-message">
-        <h3>¿Estás seguro de que querés eliminar este contacto?</h3>
-        <p>Esta acción no se puede deshacer.</p>
-
-        <div class="favorite-to-delete">
-          <div class="favorite-avatar small">
-            <span>{{favoriteToDelete.accountOwnerName.split(' ')[0]?.charAt(0)}}{{favoriteToDelete.accountOwnerName.split(' ')[1]?.charAt(0) || ''}}</span>
-          </div>
-          <div class="favorite-details">
-            <strong>{{favoriteToDelete.contactAlias}}</strong>
-            <span>{{favoriteToDelete.accountOwnerName}}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="confirmation-actions">
-        @if (!isDeletingFavorite) {
-        <button class="cancel-btn" (click)="closeDeleteFavoriteModal()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2"/>
-          </svg>
-          Cancelar
-        </button>
-        }
-
-        <button class="delete-btn" (click)="confirmDeleteFavorite()" [disabled]="isDeletingFavorite">
-          @if (isDeletingFavorite) {
-            <div class="button-loading">
-              <div class="spinner"></div>
-              Eliminando...
-            </div>
-          } @else {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
-                    stroke="currentColor"
-                    stroke-width="2"/>
-            </svg>
-            Sí, eliminar
-          }
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+<app-delete-favorite-modal
+  [favorite]="favoriteToDelete"
+  (closed)="closeDeleteFavoriteModal()"
+  (deleted)="onDeleteFavoriteDeleted()"
+  (backdropClick)="onBackdropClose('deleteFavorite')"
+/>
 }

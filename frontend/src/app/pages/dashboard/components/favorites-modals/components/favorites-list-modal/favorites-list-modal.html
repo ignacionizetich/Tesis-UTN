@@ -1,0 +1,48 @@
+<div class="modal" (click)="onBackdrop($event)">
+  <div class="modal-content favorites-modal">
+    <div class="modal-header">
+      <h2>Contactos Favoritos</h2>
+      <span class="close-button-favorite" (click)="closed.emit()">&times;</span>
+    </div>
+
+    @if (favorites.length > 0) {
+    <div class="favorites-list">
+      @for (favorite of favorites; track trackFavorite($index, favorite)) {
+      <div class="favorite-card" (click)="favoriteSelected.emit(favorite)">
+        <div class="favorite-avatar">
+          <span>{{ initials(favorite.accountOwnerName) }}</span>
+        </div>
+        <div class="favorite-info">
+          <h3 class="favorite-alias">{{ favorite.contactAlias }}</h3>
+          <p class="favorite-owner">{{ favorite.accountOwnerName }}</p>
+          <p class="favorite-account">{{ favorite.accountAlias }}</p>
+          @if (favorite.description) {
+          <p class="favorite-description">{{ favorite.description }}</p>
+          }
+        </div>
+        <div class="favorite-actions">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    @if (favorites.length === 0) {
+    <div class="empty-favorites">
+      <div class="empty-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+            stroke="currentColor" stroke-width="2" />
+        </svg>
+      </div>
+      <h3>No tienes favoritos</h3>
+      <p>Cuando realices transferencias, podrás agregar contactos a tus favoritos</p>
+    </div>
+    }
+  </div>
+</div>

@@ -1,20 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { AuthenticatedInfoComponent } from './authenticated-info';
 
-import { AuthenticatedInfo } from './authenticated-info';
-
-describe('AuthenticatedInfo', () => {
-  let component: AuthenticatedInfo;
-  let fixture: ComponentFixture<AuthenticatedInfo>;
+describe('AuthenticatedInfoComponent', () => {
+  let component: AuthenticatedInfoComponent;
+  let fixture: ComponentFixture<AuthenticatedInfoComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AuthenticatedInfo]
-    })
-    .compileComponents();
+      imports: [AuthenticatedInfoComponent],
+    }).compileComponents();
 
-    fixture = TestBed.createComponent(AuthenticatedInfo);
+    fixture = TestBed.createComponent(AuthenticatedInfoComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
   it('should create', () => {

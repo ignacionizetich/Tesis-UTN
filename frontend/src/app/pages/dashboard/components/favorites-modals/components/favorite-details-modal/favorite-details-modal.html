@@ -1,0 +1,76 @@
+<div class="modal" (click)="onBackdrop($event)">
+  <div class="modal-content favorite-details-modal">
+    <div class="modal-header-info">
+      <button class="back-button-list" (click)="back.emit()" title="Volver a la lista">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <span class="close-button" (click)="closed.emit()">&times;</span>
+    </div>
+
+    <div class="favorite-details">
+      <div class="favorite-profile">
+        <div class="favorite-avatar large">
+          <span>{{ initials(favorite.accountOwnerName) }}</span>
+        </div>
+        <div class="favorite-profile-info">
+          <h3>{{ favorite.contactAlias }}</h3>
+          <p class="owner-name">{{ favorite.accountOwnerName }}</p>
+        </div>
+      </div>
+
+      <div class="favorite-account-info">
+        <div class="info-row">
+          <span class="label">Alias de cuenta:</span>
+          <span class="value">{{ favorite.accountAlias }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">CVU:</span>
+          <span class="value">{{ favorite.accountCbu }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Tipo de cuenta:</span>
+          <span class="value">{{ favorite.accountType }}</span>
+        </div>
+        @if (favorite.description) {
+        <div class="info-row">
+          <span class="label">Descripción:</span>
+          <span class="value">{{ favorite.description }}</span>
+        </div>
+        }
+        <div class="info-row">
+          <span class="label">Agregado:</span>
+          <span class="value">{{ favorite.creationDate }}</span>
+        </div>
+        @if (favorite.lastUsed) {
+        <div class="info-row">
+          <span class="label">Última transferencia:</span>
+          <span class="value">{{ favorite.lastUsed }}</span>
+        </div>
+        }
+      </div>
+
+      <div class="favorite-actions-buttons">
+        <button class="primary transfer-btn" (click)="transfer.emit(favorite)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M21 12H3M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" />
+          </svg>
+          Transferir
+        </button>
+        <button class="secondary edit-btn" (click)="edit.emit(favorite)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" />
+          </svg>
+          Editar
+        </button>
+        <button class="danger remove-btn" (click)="remove.emit(favorite)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              stroke="currentColor" stroke-width="2" />
+          </svg>
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

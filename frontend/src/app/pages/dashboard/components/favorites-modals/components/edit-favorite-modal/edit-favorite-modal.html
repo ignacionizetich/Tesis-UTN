@@ -1,0 +1,41 @@
+<div class="modal" (click)="onBackdrop($event)">
+  <div class="modal-content edit-favorite-modal">
+    <div class="modal-header">
+      <h2>Editar Favorito</h2>
+      <span class="close-button" (click)="closed.emit()">&times;</span>
+    </div>
+
+    <div class="edit-favorite-form">
+      <div class="form-group">
+        <input type="text" [(ngModel)]="favoriteContactAlias" placeholder=" " required maxlength="50">
+        <label>Nombre para agendar *</label>
+      </div>
+
+      <div class="form-group">
+        <textarea [(ngModel)]="favoriteContactDescription" placeholder=" " maxlength="200" rows="3"></textarea>
+        <label>Descripción (opcional)</label>
+      </div>
+
+      <div class="form-actions">
+        <button
+          class="primary"
+          (click)="save()"
+          [disabled]="!favoriteContactAlias.trim() || isUpdatingFavorite">
+          @if (isUpdatingFavorite) {
+            <div class="loading-spinner"></div>
+            Guardando...
+          } @else {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" />
+            </svg>
+            Guardar cambios
+          }
+        </button>
+
+        @if (!isUpdatingFavorite) {
+          <button class="secondary" (click)="closed.emit()">Cancelar</button>
+        }
+      </div>
+    </div>
+  </div>
+</div>
