@@ -2,6 +2,7 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.Service.AuthService;
 import com.EDJ.ArCash.Service.CredentialsService;
+import com.EDJ.ArCash.Service.ResetPasswordResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Caracterizacion HTTP de RecoverController (validate-recovery-token + reset-password).
- * Congela la heuristica de status basada en substrings del mensaje del service.
+ * Mapping por Kind tipado (sin heuristica de substrings en el controller).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -70,10 +71,11 @@ class RecoverControllerTest {
     }
 
     @Test
-    @DisplayName("Reset exitoso: mensaje con 'exitosamente' → 200")
-    void resetExitosoPorSubstringExitosamente() throws Exception {
+    @DisplayName("Reset exitoso: OK → 200")
+    void resetExitoso() throws Exception {
         when(credentialsService.actualizarPassword("tok", "a", "a"))
-                .thenReturn("¡Contraseña actualizada exitosamente! Ya puedes iniciar sesión con tu nueva contraseña.");
+                .thenReturn(ResetPasswordResult.ok(
+                        "¡Contraseña actualizada exitosamente! Ya puedes iniciar sesión con tu nueva contraseña."));
 
         mockMvc.perform(post("/api/auth/reset-password")
                         .param("token", "tok")
@@ -86,10 +88,11 @@ class RecoverControllerTest {
     }
 
     @Test
-    @DisplayName("Reset token invalido: substring → 401")
+    @DisplayName("Reset token invalido: UNAUTHORIZED → 401")
     void resetTokenInvalidoDevuelve401() throws Exception {
         when(credentialsService.actualizarPassword("tok", "a", "a"))
-                .thenReturn("El enlace de recuperación no es válido o no existe.");
+                .thenReturn(ResetPasswordResult.unauthorized(
+                        "El enlace de recuperación no es válido o no existe."));
 
         mockMvc.perform(post("/api/auth/reset-password")
                         .param("token", "tok")
@@ -102,10 +105,11 @@ class RecoverControllerTest {
     }
 
     @Test
-    @DisplayName("Reset token ya usado: substring → 401")
+    @DisplayName("Reset token ya usado: UNAUTHORIZED → 401")
     void resetTokenYaUsadoDevuelve401() throws Exception {
         when(credentialsService.actualizarPassword("tok", "a", "a"))
-                .thenReturn("Este enlace de recuperación ya fue utilizado. Solicita un nuevo enlace si necesitas cambiar tu contraseña nuevamente.");
+                .thenReturn(ResetPasswordResult.unauthorized(
+                        "Este enlace de recuperación ya fue utilizado. Solicita un nuevo enlace si necesitas cambiar tu contraseña nuevamente."));
 
         mockMvc.perform(post("/api/auth/reset-password")
                         .param("token", "tok")
@@ -116,10 +120,11 @@ class RecoverControllerTest {
     }
 
     @Test
-    @DisplayName("Reset token expirado: substring → 401")
+    @DisplayName("Reset token expirado: UNAUTHORIZED → 401")
     void resetTokenExpiradoDevuelve401() throws Exception {
         when(credentialsService.actualizarPassword("tok", "a", "a"))
-                .thenReturn("El enlace de recuperación ha expirado. Solicita un nuevo enlace para restablecer tu contraseña.");
+                .thenReturn(ResetPasswordResult.unauthorized(
+                        "El enlace de recuperación ha expirado. Solicita un nuevo enlace para restablecer tu contraseña."));
 
         mockMvc.perform(post("/api/auth/reset-password")
                         .param("token", "tok")
@@ -130,10 +135,11 @@ class RecoverControllerTest {
     }
 
     @Test
-    @DisplayName("Reset contraseñas no coinciden: 400 (no es substring de token)")
+    @DisplayName("Reset contraseñas no coinciden: BAD_REQUEST → 400")
     void resetPasswordsNoCoincidenDevuelve400() throws Exception {
         when(credentialsService.actualizarPassword("tok", "a", "b"))
-                .thenReturn("Las contraseñas no coinciden. Verifica que ambas sean iguales.");
+                .thenReturn(ResetPasswordResult.badRequest(
+                        "Las contraseñas no coinciden. Verifica que ambas sean iguales."));
 
         mockMvc.perform(post("/api/auth/reset-password")
                         .param("token", "tok")

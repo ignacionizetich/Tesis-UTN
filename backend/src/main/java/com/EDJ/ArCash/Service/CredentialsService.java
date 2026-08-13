@@ -43,25 +43,29 @@ public class CredentialsService {
     }
 
     @Transactional
-    public String actualizarPassword(String tokenValue, String nuevaPassword, String confirmarPassword) {
+    public ResetPasswordResult actualizarPassword(String tokenValue, String nuevaPassword, String confirmarPassword) {
         if (!nuevaPassword.equals(confirmarPassword)) {
-            return "Las contraseñas no coinciden. Verifica que ambas sean iguales.";
+            return ResetPasswordResult.badRequest(
+                    "Las contraseñas no coinciden. Verifica que ambas sean iguales.");
         }
 
         Optional<RecoveryToken> recoveryToken = recoveryTokenRepository.findByToken(tokenValue);
 
         if (recoveryToken.isEmpty()) {
-            return "El enlace de recuperación no es válido o no existe.";
+            return ResetPasswordResult.unauthorized(
+                    "El enlace de recuperación no es válido o no existe.");
         }
 
         RecoveryToken token = recoveryToken.get();
 
         if (token.isUsed()) {
-            return "Este enlace de recuperación ya fue utilizado. Solicita un nuevo enlace si necesitas cambiar tu contraseña nuevamente.";
+            return ResetPasswordResult.unauthorized(
+                    "Este enlace de recuperación ya fue utilizado. Solicita un nuevo enlace si necesitas cambiar tu contraseña nuevamente.");
         }
 
         if (token.getExpirationDate().isBefore(LocalDateTime.now())) {
-            return "El enlace de recuperación ha expirado. Solicita un nuevo enlace para restablecer tu contraseña.";
+            return ResetPasswordResult.unauthorized(
+                    "El enlace de recuperación ha expirado. Solicita un nuevo enlace para restablecer tu contraseña.");
         }
 
         User user = token.getUser();
@@ -80,7 +84,8 @@ public class CredentialsService {
             System.err.println("Error al publicar evento PASSWORD_CHANGED: " + e.getMessage());
         }
 
-        return "¡Contraseña actualizada exitosamente! Ya puedes iniciar sesión con tu nueva contraseña.";
+        return ResetPasswordResult.ok(
+                "¡Contraseña actualizada exitosamente! Ya puedes iniciar sesión con tu nueva contraseña.");
     }
 
 

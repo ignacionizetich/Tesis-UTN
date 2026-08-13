@@ -217,6 +217,75 @@ class UserServiceTest {
         assertEquals("nuevoalias", evento.getData("newAlias"));
     }
 
+    @Test
+    @DisplayName("activateWithToken: token vacio → MISSING_TOKEN")
+    void activateWithTokenVacio() {
+        EmailActivationResult r = userService.activateWithToken("  ");
+        assertEquals(EmailActivationResult.Kind.MISSING_TOKEN, r.getKind());
+        verify(validationTokenService, never()).buscarToken(any());
+    }
+
+    @Test
+    @DisplayName("activateWithToken: token inexistente → INVALID")
+    void activateWithTokenInexistente() {
+        when(validationTokenService.buscarToken("ghost")).thenReturn(Optional.empty());
+
+        EmailActivationResult r = userService.activateWithToken("ghost");
+        assertEquals(EmailActivationResult.Kind.INVALID, r.getKind());
+        verify(accountService, never()).createAccount(any());
+    }
+
+    @Test
+    @DisplayName("activateWithToken: token ya usado → ALREADY_USED")
+    void activateWithTokenYaUsado() {
+        User user = usuarioConCredenciales(ALIAS);
+        com.EDJ.ArCash.Models.ValidationToken token = new com.EDJ.ArCash.Models.ValidationToken();
+        token.setUser(user);
+        token.setUsed(true);
+        token.setExpirationDate(java.time.LocalDateTime.now().plusHours(1));
+        when(validationTokenService.buscarToken("used")).thenReturn(Optional.of(token));
+
+        EmailActivationResult r = userService.activateWithToken("used");
+        assertEquals(EmailActivationResult.Kind.ALREADY_USED, r.getKind());
+        verify(accountService, never()).createAccount(any());
+    }
+
+    @Test
+    @DisplayName("activateWithToken: token expirado → EXPIRED")
+    void activateWithTokenExpirado() {
+        User user = usuarioConCredenciales(ALIAS);
+        com.EDJ.ArCash.Models.ValidationToken token = new com.EDJ.ArCash.Models.ValidationToken();
+        token.setUser(user);
+        token.setUsed(false);
+        token.setExpirationDate(java.time.LocalDateTime.now().minusMinutes(1));
+        when(validationTokenService.buscarToken("exp")).thenReturn(Optional.of(token));
+
+        EmailActivationResult r = userService.activateWithToken("exp");
+        assertEquals(EmailActivationResult.Kind.EXPIRED, r.getKind());
+        verify(accountService, never()).createAccount(any());
+    }
+
+    @Test
+    @DisplayName("activateWithToken: valido activa usuario y marca token usado")
+    void activateWithTokenOk() {
+        User user = usuarioConCredenciales(ALIAS);
+        user.setEnabled(false);
+        user.setActive(false);
+        com.EDJ.ArCash.Models.ValidationToken token = new com.EDJ.ArCash.Models.ValidationToken();
+        token.setUser(user);
+        token.setUsed(false);
+        token.setExpirationDate(java.time.LocalDateTime.now().plusHours(1));
+        when(validationTokenService.buscarToken("ok")).thenReturn(Optional.of(token));
+
+        EmailActivationResult r = userService.activateWithToken("ok");
+
+        assertEquals(EmailActivationResult.Kind.OK, r.getKind());
+        assertTrue(user.isEnabled());
+        assertTrue(user.isActive());
+        verify(accountService).createAccount(user);
+        verify(validationTokenService).usedToken(user);
+    }
+
     private User usuarioNuevo() {
         return new User("ana", "gomez", DNI, EMAIL, ALIAS);
     }

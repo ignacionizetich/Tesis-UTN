@@ -129,6 +129,32 @@ public class UserService {
     }
 
     /**
+     * Activa la cuenta a partir del token de verificacion de email (flujo /api/auth/validate).
+     */
+    @Transactional
+    public EmailActivationResult activateWithToken(String tokenValue) {
+        if (tokenValue == null || tokenValue.trim().isEmpty()) {
+            return EmailActivationResult.missingToken();
+        }
+
+        Optional<ValidationToken> optionalToken = validationTokenService.buscarToken(tokenValue);
+        if (optionalToken.isEmpty()) {
+            return EmailActivationResult.invalid();
+        }
+
+        ValidationToken token = optionalToken.get();
+        if (token.isUsed()) {
+            return EmailActivationResult.alreadyUsed();
+        }
+        if (token.getExpirationDate().isBefore(java.time.LocalDateTime.now())) {
+            return EmailActivationResult.expired();
+        }
+
+        validarUsuario(token.getUser());
+        return EmailActivationResult.ok();
+    }
+
+    /**
      * Reenvía el enlace de validación de email para usuarios no validados
      * @param email Email del usuario
      * @return true si se envió exitosamente, false si no se pudo enviar
