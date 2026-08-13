@@ -14,7 +14,7 @@ import { formatMoney } from '../../../../shared/utils/money-format';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './buy-usd-panel.html',
-  styleUrls: ['../../usd-account.css'],
+  styleUrls: ['../../styles/usd-modals.css'],
   encapsulation: ViewEncapsulation.None,
 })
 export class BuyUsdPanelComponent {

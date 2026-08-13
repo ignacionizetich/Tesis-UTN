@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { themeService } from '../../../services/theme-service/theme-service';
+import { ThemeService } from '../../../services/theme-service/theme-service';
 
 @Component({
   selector: 'app-theme-toggle',
@@ -10,7 +10,7 @@ import { themeService } from '../../../services/theme-service/theme-service';
   styleUrls: ['./theme-toggle.css']
 })
 export class ThemeToggleComponent {
-  constructor(private themeService: themeService) {}
+  constructor(private themeService: ThemeService) {}
 
   toggleTheme(): void {
     this.themeService.toggleTheme();

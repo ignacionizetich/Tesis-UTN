@@ -4,7 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
-export class themeService {
+export class ThemeService {
 
   // Usamos Observer para que los componentes se puedan suscribir al cambio de tema
   private themeSubject = new BehaviorSubject<string>('light')

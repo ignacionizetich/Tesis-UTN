@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { themeService } from '../../services/theme-service/theme-service';
+import { ThemeService } from '../../services/theme-service/theme-service';
 import { ToastService } from '../../services/toast-service/toast.service';
 import { ValidationService, type ValidationResponse } from '../../services/validation-service/validation-service';
 import { ResendNavigationService } from '../../services/resend-navigation/resend-navigation.service';
@@ -26,7 +26,7 @@ export class ValidateComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private themeService: themeService,
+    private themeService: ThemeService,
     private toast: ToastService,
     private validationService: ValidationService,
     private resendNavigationService: ResendNavigationService,

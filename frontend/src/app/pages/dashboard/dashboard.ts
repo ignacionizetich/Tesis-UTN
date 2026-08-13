@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription, of, from } from 'rxjs';
 
-import { themeService } from '../../services/theme-service/theme-service';
+import { ThemeService } from '../../services/theme-service/theme-service';
 import { ToastService } from '../../services/toast-service/toast.service';
 import { AuthService } from '../../services/auth-service/auth-service';
 import { UserDataStore } from '../../services/user-data-store/user-data.store';
@@ -84,7 +84,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private themeService: themeService,
+    private themeService: ThemeService,
     private toast: ToastService,
     private authService: AuthService,
     private userDataStore: UserDataStore,

@@ -13,7 +13,7 @@ import { UserResponse } from '../../../../models/admin.interface';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './user-status-confirm-modal.html',
-  styleUrls: ['../../admin.css'],
+  styleUrls: ['../../styles/users-list.css', '../../styles/confirm-modal.css'],
   encapsulation: ViewEncapsulation.None,
 })
 export class UserStatusConfirmModalComponent {

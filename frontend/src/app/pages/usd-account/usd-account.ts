@@ -34,7 +34,7 @@ import { formatDateTime } from '../../shared/utils/date-format';
     TransferWizardComponent,
   ],
   templateUrl: './usd-account.html',
-  styleUrls: ['./usd-account.css']
+  styleUrls: ['./usd-account.css', './styles/transaction-detail.css'],
 })
 export class UsdAccountComponent implements OnInit, OnDestroy {
 

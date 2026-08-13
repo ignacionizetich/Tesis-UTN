@@ -18,7 +18,7 @@ import { UserStatusConfirmModalComponent } from '../user-status-confirm-modal/us
   standalone: true,
   imports: [CommonModule, AuthenticatedInfoComponent, UserStatusConfirmModalComponent],
   templateUrl: './users-list.html',
-  styleUrls: ['../../admin.css'],
+  styleUrls: ['../../admin.css', '../../styles/users-list.css'],
   encapsulation: ViewEncapsulation.None,
 })
 export class UsersListComponent implements OnInit {
