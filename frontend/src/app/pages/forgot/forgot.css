@@ -1,96 +1,17 @@
-/* Estilos específicos para la página forgot - Solo layout y posicionamiento */
-
-/* === LAYOUT PRINCIPAL === */
-.main {
-    display: flex;
-    min-height: 100vh;
-    position: relative;
-    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-    padding-bottom: 80px; /* Espacio para el footer */
+/* Forgot page-specific (layout base en auth-layout; override flex) */
+main.auth-shell.forgot-page {
+  display: flex;
+  min-height: 100vh;
+  height: auto;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  padding-bottom: 80px;
+  grid-template-columns: none;
 }
 
-/* Fondo unificado - exactamente igual al global */
-.main::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-        radial-gradient(circle at var(--mouse-x, 20%) var(--mouse-y, 20%), rgba(255, 0, 110, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at calc(100% - var(--mouse-x, 80%)) calc(100% - var(--mouse-y, 80%)), rgba(0, 212, 255, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at var(--mouse-x, 40%) var(--mouse-y, 60%), rgba(139, 95, 191, 0.04) 0%, transparent 50%),
-        conic-gradient(from 0deg at var(--mouse-x, 50%) var(--mouse-y, 50%),
-            rgba(255, 0, 111, 0.027) 0deg,
-            rgba(0, 212, 255, 0.02) 120deg,
-            rgba(139, 95, 191, 0.02) 240deg,
-            rgba(255, 0, 110, 0.02) 360deg);
-    pointer-events: none;
-    z-index: 0;
-    transition: all 0.4s ease;
-    animation: rosePulse 10s ease-in-out infinite;
-}
-
-@keyframes rosePulse {
-    0%, 100% {
-        opacity: 0.7;
-        filter: hue-rotate(0deg) saturate(1.1);
-    }
-    50% {
-        opacity: 0.8;
-        filter: hue-rotate(5deg) saturate(1.15);
-    }
-}
-
-[data-theme="dark"] .main::before {
-    background:
-        radial-gradient(circle at var(--mouse-x, 20%) var(--mouse-y, 20%), rgba(57, 255, 204, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at calc(100% - var(--mouse-x, 80%)) calc(100% - var(--mouse-y, 80%)), rgba(255, 0, 110, 0.12) 0%, transparent 50%),
-        radial-gradient(circle at var(--mouse-x, 40%) var(--mouse-y, 60%), rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-        conic-gradient(from 180deg at var(--mouse-x, 50%) var(--mouse-y, 50%),
-            rgba(57, 255, 204, 0.08) 0deg,
-            rgba(255, 0, 110, 0.06) 120deg,
-            rgba(0, 212, 255, 0.04) 240deg,
-            rgba(57, 255, 204, 0.08) 360deg);
-    animation: cyberpunkPulse 8s ease-in-out infinite;
-}
-
-@keyframes cyberpunkPulse {
-    0%, 100% {
-        opacity: 0.8;
-    }
-    50% {
-        opacity: 0.9;
-    }
-}
-
-/* Panel izquierdo - Brand */
-.left-panel {
-    flex: 1;
-    background: transparent;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-    min-width: 0;
-}
-
-/* Panel derecho - Formulario */
-.right-panel {
-    flex: 1;
-    background: transparent;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-    min-width: 0;
+main.auth-shell.forgot-page .left-panel,
+main.auth-shell.forgot-page .right-panel {
+  height: auto;
+  min-height: unset;
 }
 
 /* === RECOVERY CONTENT RESPONSIVE === */
