@@ -134,8 +134,6 @@ export class ForgotPasswordFormComponent implements OnInit, OnDestroy {
         
         if (error.status === 429) {
           this.showToast('Demasiados intentos: Espera un momento antes de solicitar otro reenvío.', 'warning');
-        } else if (error.status === 404) {
-          this.showToast('El correo no está registrado en el sistema.', 'warning');
         } else {
           this.showToast('Error al reenviar: Intenta nuevamente en unos momentos.', 'error');
         }

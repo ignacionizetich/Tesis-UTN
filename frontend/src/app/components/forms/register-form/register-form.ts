@@ -208,8 +208,6 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
         
         if (error.status === 429) {
           this.utilService.showToast('Demasiados intentos: Espera un momento antes de solicitar otro reenvío.', 'warning');
-        } else if (error.status === 400) {
-          this.utilService.showToast('La cuenta ya está validada.', 'info');
         } else {
           this.utilService.showToast('Error al reenviar: Intenta nuevamente en unos momentos.', 'error');
         }

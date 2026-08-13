@@ -72,7 +72,7 @@ public class JwtTokenManagementService implements TokenManagementStrategy {
     public LogoutStatus revokeUserTokens(String accessToken) {
         try {
             Claims claims = jwtService.getClaimJWT(accessToken);
-            String userId = claims.get("userID", String.class);
+            String userId = claims.getSubject();
 
             if (userId == null) {
                 logger.warn("No se pudo extraer el userId del token");

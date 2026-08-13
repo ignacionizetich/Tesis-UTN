@@ -32,13 +32,6 @@ public class JwtService {
     public String generateToken(String idUser, String role) {
         return Jwts.builder()
                 .setSubject(idUser)
-                // Fase 8: claim "userID" es vestigial fuera de logout.
-                // El filtro autentica por sub → UserDetails (DB); transfer/buy-usd
-                // y el resto de endpoints autenticados usan el principal, no este claim.
-                // Logout (JwtTokenManagementService.revokeUserTokens) todavía lo lee.
-                // Evaluar: sacarlo del todo (y migrar logout a sub) o documentar por qué
-                // se mantiene — para no reinvestigar el mismo edge case.
-                .claim("userID", idUser)
                 .claim("role", role)
                 .claim(CLAIM_TYPE, TYPE_ACCESS)
                 .setIssuedAt(new Date())
@@ -65,6 +58,6 @@ public class JwtService {
 
     public String extractUserId(String token) {
         Claims claims = getClaimJWT(token);
-        return claims.get("userID", String.class);
+        return claims.getSubject();
     }
 }

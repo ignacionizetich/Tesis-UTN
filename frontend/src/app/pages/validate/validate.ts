@@ -146,11 +146,7 @@ export class ValidateComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error al reenviar:', error);
         
-        if (error.status === 404) {
-          this.utilService.showToast('El correo no está registrado en el sistema.', 'warning');
-        } else if (error.status === 400) {
-          this.utilService.showToast('La cuenta ya está validada.', 'info');
-        } else if (error.status === 429) {
+        if (error.status === 429) {
           this.utilService.showToast('Demasiados intentos: Espera un momento antes de solicitar otro reenvío.', 'warning');
         } else {
           this.utilService.showToast('Error al reenviar: Intenta nuevamente en unos momentos.', 'error');

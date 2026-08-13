@@ -37,14 +37,14 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("Un access token se parsea con los claims esperados")
+    @DisplayName("Un access token se parsea con subject, role y type=access (sin claim userID)")
     void accessTokenRoundtrip() {
         String token = jwtService.generateToken(USER_ID, ROLE);
 
         var claims = jwtService.getClaimJWT(token);
 
         assertEquals(USER_ID, claims.getSubject());
-        assertEquals(USER_ID, claims.get("userID", String.class));
+        assertEquals(null, claims.get("userID", String.class));
         assertEquals(ROLE, claims.get("role", String.class));
         assertEquals(JwtService.TYPE_ACCESS, claims.get(JwtService.CLAIM_TYPE, String.class));
         assertTrue(claims.getExpiration().after(new Date()));
@@ -64,8 +64,8 @@ class JwtServiceTest {
     }
 
     @Test
-    @DisplayName("extractUserId lee el claim userID del access token")
-    void extractUserIdLeeElClaim() {
+    @DisplayName("extractUserId lee el subject del access token")
+    void extractUserIdLeeElSubject() {
         String token = jwtService.generateToken(USER_ID, ROLE);
 
         assertEquals(USER_ID, jwtService.extractUserId(token));
@@ -76,7 +76,6 @@ class JwtServiceTest {
     void tokenVencidoLanzaAlParsear() {
         String vencido = Jwts.builder()
                 .setSubject(USER_ID)
-                .claim("userID", USER_ID)
                 .claim("role", ROLE)
                 .claim(JwtService.CLAIM_TYPE, JwtService.TYPE_ACCESS)
                 .setIssuedAt(new Date(System.currentTimeMillis() - 7200000))
@@ -104,7 +103,6 @@ class JwtServiceTest {
                 "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"));
         String ajeno = Jwts.builder()
                 .setSubject(USER_ID)
-                .claim("userID", USER_ID)
                 .claim("role", ROLE)
                 .claim(JwtService.CLAIM_TYPE, JwtService.TYPE_ACCESS)
                 .setIssuedAt(new Date())
