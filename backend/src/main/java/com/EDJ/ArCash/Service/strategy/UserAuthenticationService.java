@@ -45,10 +45,10 @@ public class UserAuthenticationService implements AuthenticationStrategy {
             return AuthenticationResult.failure("Credenciales incorrectas");
         }
 
-        if (!user.isActive()) {
-            logger.warn("Usuario no habilitado: {}", loginRequest.getUsername());
-            return AuthenticationResult.failure("Usuario no habilitado");
-        }
+      if (!user.isActive()) {
+        logger.warn("Usuario no habilitado: {}", loginRequest.getUsername());
+        return AuthenticationResult.failure(AuthenticationResult.USER_DISABLED_MESSAGE);
+      }
 
         logger.info("Credenciales validas para usuario: {}", loginRequest.getUsername());
         return AuthenticationResult.success(user);

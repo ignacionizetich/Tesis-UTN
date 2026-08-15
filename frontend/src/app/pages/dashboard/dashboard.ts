@@ -456,12 +456,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   openReceiveAction(): void {
-    if (this.activeCurrency === 'USD') {
-      if (!this.usdAccount) {
-        this.toast.show('Primero abrí tu cuenta en dólares', 'info');
-        return;
-      }
-      this.showReceiveUsd = true;
+    if (this.activeCurrency === 'USD' && !this.usdAccount) {
+      this.toast.show('Primero abrí tu cuenta en dólares', 'info');
       return;
     }
     this.openMyQrModal();
@@ -520,6 +516,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.closeAllModals();
     this.isBalanceUpdating = false;
     this.isBalanceDecreasing = false;
+  }
+
+  closeMyQrModal(): void {
+    this.currentModal = null;
   }
 
   openTransferModal(): void {

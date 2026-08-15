@@ -14,6 +14,8 @@ import { UserStatusConfirmModalComponent } from '../user-status-confirm-modal/us
 import { logger } from '../../../../shared/utils/logger';
 import { formatDni as formatDniAr } from '../../../../shared/utils/dni-format';
 
+type RoleFilter = 'ALL' | 'USER' | 'ADMIN';
+
 @Component({
   selector: 'app-users-list',
   standalone: true,
@@ -32,8 +34,22 @@ export class UsersListComponent implements OnInit {
   showConfirmModal = false;
   userToToggle: UserResponse | null = null;
   loadingUserAction: number | null = null;
+  isRoot = false;
+  roleFilter: RoleFilter = 'ALL';
 
   private currentUserId = 0;
+
+  /** ADMIN agrupa ADMIN + ROOT: para el filtro, "administradores" es todo lo que no es USER. */
+  get filteredUsers(): UserResponse[] {
+    switch (this.roleFilter) {
+      case 'USER':
+        return this.users.filter((u) => u.permissions === 'USER');
+      case 'ADMIN':
+        return this.users.filter((u) => u.permissions === 'ADMIN' || u.permissions === 'ROOT');
+      default:
+        return this.users;
+    }
+  }
 
   formatDni(dni: string | number | null | undefined): string {
     return formatDniAr(dni);
@@ -45,6 +61,15 @@ export class UsersListComponent implements OnInit {
     return `${a}${b}`.toUpperCase() || '?';
   }
 
+  /** Una fila de admin/root solo puede tocarse desde acá si quien mira es ROOT. */
+  canToggle(user: UserResponse): boolean {
+    return user.permissions === 'USER' || this.isRoot;
+  }
+
+  setRoleFilter(filter: RoleFilter): void {
+    this.roleFilter = filter;
+  }
+
   constructor(
     private adminService: AdminService,
     private toast: ToastService,
@@ -53,6 +78,7 @@ export class UsersListComponent implements OnInit {
 
   ngOnInit(): void {
     this.currentUserId = this.sessionStore.getCurrentUserIdHint();
+    this.isRoot = this.sessionStore.getRole() === 'ROOT';
     if (this.currentUserId <= 0) {
       logger.warn('No se pudo obtener el ID del usuario actual desde SessionStore');
     }
@@ -134,18 +160,19 @@ export class UsersListComponent implements OnInit {
 
     const user = this.userToToggle;
     const action = user.active ? 'deshabilitar' : 'habilitar';
+    const isAdminTarget = user.permissions === 'ADMIN';
     this.loadingUserAction = user.id;
 
-    const serviceCall = user.active
-      ? this.adminService.disableUser(user.id)
-      : this.adminService.enableUser(user.id);
+    const serviceCall = isAdminTarget
+      ? (user.active ? this.adminService.disableAdmin(user.id) : this.adminService.enableAdmin(user.id))
+      : (user.active ? this.adminService.disableUser(user.id) : this.adminService.enableUser(user.id));
 
     serviceCall.subscribe({
       next: () => {
         user.active = !user.active;
         this.adminService.updateUserInCache(user.id, user.active);
         this.toast.show(
-          `Usuario ${action === 'deshabilitar' ? 'deshabilitado' : 'habilitado'} exitosamente`,
+          `${isAdminTarget ? 'Administrador' : 'Usuario'} ${action === 'deshabilitar' ? 'deshabilitado' : 'habilitado'} exitosamente`,
           'success'
         );
         this.usersAlreadyLoaded = false;
@@ -154,19 +181,20 @@ export class UsersListComponent implements OnInit {
         this.resetUserModal();
       },
       error: (error) => {
-        logger.error(`Error al ${action} usuario:`, error);
-        this.toast.show(`Error al ${action} usuario`, 'error');
+        logger.error(`Error al ${action} ${isAdminTarget ? 'administrador' : 'usuario'}:`, error);
+        this.toast.show(`Error al ${action} ${isAdminTarget ? 'administrador' : 'usuario'}`, 'error');
         this.loadingUserAction = null;
         this.closeConfirmModal();
       },
     });
   }
 
+  // NOTA: currentUserId viene de SessionStore.getCurrentUserIdHint(), que hoy
+  // devuelve el ID de CUENTA (idAccount), no el ID de usuario — porque
+  // UserData/LoginResponse nunca cargan el ID de usuario real. Comparar
+  // user.id (ID de usuario) contra esto compara dos cosas distintas y puede
+  // dar falsos positivos por coincidencia numérica (pasó con id=4).
   private isCurrentUser(user: UserResponse): boolean {
-    return (
-      user.id === this.currentUserId ||
-      user.idAccount === this.currentUserId ||
-      Number(user.id) === this.currentUserId
-    );
+    return user.idAccount === this.currentUserId;
   }
 }

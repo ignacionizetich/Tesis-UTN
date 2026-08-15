@@ -135,12 +135,31 @@ export class TransferWizardComponent implements OnInit {
     return !!this.destinatarioInput.trim() && !this.isBuscandoCuenta;
   }
 
+  get isOwnDestinationAccount(): boolean {
+    if (!this.cuentaDestinoData) return false;
+    const destId = String(this.cuentaDestinoData.idaccount);
+
+    const arsId = this.arsAccount && 'id' in this.arsAccount && this.arsAccount.id != null
+      ? String(this.arsAccount.id)
+      : null;
+    const usdId = this.usdAccount && 'id' in this.usdAccount && this.usdAccount.id != null
+      ? String(this.usdAccount.id)
+      : null;
+
+    return destId === arsId || destId === usdId;
+  }
+
+  get isCrossCurrency(): boolean {
+    return !!this.cuentaDestinoData && this.transferCurrency !== this.cuentaDestinoData.currency;
+  }
+
   get canTransfer(): boolean {
     return (
       !!this.montoTransfer &&
       this.montoTransfer > 0 &&
       !this.isTransfiriendo &&
-      this.uiPhase === 'flow'
+      this.uiPhase === 'flow' &&
+      (!this.isCrossCurrency || this.isOwnDestinationAccount)
     );
   }
 

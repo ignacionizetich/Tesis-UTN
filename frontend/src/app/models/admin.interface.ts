@@ -8,6 +8,8 @@ export interface UserResponse {
   idAccount: number | null;
   enabled: boolean;
   active: boolean;
+  permissions: 'USER' | 'ADMIN' | 'ROOT';
+  creationDate: string | null;
 }
 
 export interface AdminRequest {

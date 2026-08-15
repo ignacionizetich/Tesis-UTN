@@ -12,32 +12,32 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AccountService {
-    public void createAccount(User user);
+     void createAccount(User user);
 
-    public Account createUsdAccount(User user);
+     Account createUsdAccount(User user);
 
-    public Account ensureArsAccount(User user);
+     Account ensureArsAccount(User user);
 
-    public OpenUsdResult openUsdAccount(User user);
+     OpenUsdResult openUsdAccount(User user);
 
-    public DepositResult deposit(Long accountId, Long userId, double amount);
+     DepositResult deposit(Long accountId, Long userId, double amount);
 
-    public Optional<AccountBalanceView> getOwnedBalance(Long accountId, Long userId);
+     Optional<AccountBalanceView> getOwnedBalance(Long accountId, Long userId);
 
-    public QrDataResult getQrDataForOwner(Long accountId, Long userId);
+     QrDataResult getQrDataForOwner(Long accountId, Long userId);
 
-    public boolean updateBalance(double balanceToAdd, Long id);
+     boolean updateBalance(double balanceToAdd, Long id);
 
-    public Optional<Account> findAccountByID(long id);
+     Optional<Account> findAccountByID(long id);
 
-    public List<Account> findAccountsByUser(Long userId);
+     List<Account> findAccountsByUser(Long userId);
 
-    public Optional<Account> encontrarCuentaPorAlias(String alias);
+     Optional<Account> encontrarCuentaPorAlias(String alias);
 
-    public Optional<Account> encontrarCuentaPorCvu(String cvu);
+     Optional<Account> encontrarCuentaPorCvu(String cvu);
 
-    public Optional<AccountSearchResponse> searchByAliasOrCvu(String input);
+     Optional<AccountSearchResponse> searchByAliasOrCvu(String input);
 
-    public AliasChangeResult changeAlias(String newAlias, Long id, Long userId);
+     AliasChangeResult changeAlias(String newAlias, Long id, Long userId);
 
 }

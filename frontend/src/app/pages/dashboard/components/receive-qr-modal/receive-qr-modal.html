@@ -33,45 +33,49 @@
     </header>
 
     @if (isLoadingQr) {
-    <div class="qr-status" aria-live="polite">
-      <div class="qr-status__spinner" aria-hidden="true"></div>
-      <p>Generando tu código QR...</p>
-    </div>
+      <div class="qr-status" aria-live="polite">
+        <div class="qr-status__spinner" aria-hidden="true"></div>
+        <p>Generando tu código QR...</p>
+      </div>
     }
 
     @if (loadError && !isLoadingQr) {
-    <div class="qr-status qr-status--error" aria-live="assertive">
-      <p>No pudimos generar tu QR. Intentá de nuevo en un momento.</p>
-      <button type="button" class="qr-btn qr-btn--primary" (click)="close()">Cerrar</button>
-    </div>
+      <div class="qr-status qr-status--error" aria-live="assertive">
+        <p>No pudimos generar tu QR. Intentá de nuevo en un momento.</p>
+        <button type="button" class="qr-btn qr-btn--primary" (click)="close()">Cerrar</button>
+      </div>
     }
 
     @if (qrCodeDataString && qrCodeDataObject && !isLoadingQr) {
-    <div class="qr-body">
-      <div class="qr-frame">
-        <qrcode
-          [qrdata]="qrCodeDataString"
-          [width]="220"
-          [margin]="1"
-          [errorCorrectionLevel]="'M'">
-        </qrcode>
+      <div class="qr-body">
+        <div class="qr-frame" [class.qr-frame--usd]="qrCodeDataObject.currency === 'USD'">
+          <qrcode
+            [qrdata]="qrCodeDataString"
+            [width]="220"
+            [margin]="1"
+            [errorCorrectionLevel]="'M'">
+          </qrcode>
+        </div>
+
+        <div class="qr-meta">
+        <span
+          class="qr-badge"
+          [class.qr-badge--usd]="qrCodeDataObject.currency === 'USD'">{{ qrCodeDataObject.currency || 'ARS' }}</span>
+          <strong>{{ qrCodeDataObject.receiverName }}</strong>
+          <span
+            class="qr-alias"
+            [class.qr-alias--usd]="qrCodeDataObject.currency === 'USD'">{{ qrCodeDataObject.accountAlias }}</span>
+          @if (formattedDni) {
+            <span class="qr-dni">DNI {{ formattedDni }}</span>
+          }
+        </div>
+
+        <p class="qr-hint">
+          Este código sirve para recibir transferencias en {{ currencyLabel }}.
+        </p>
+
+        <button type="button" class="qr-btn qr-btn--ghost" (click)="close()">Listo</button>
       </div>
-
-      <div class="qr-meta">
-        <span class="qr-badge">{{ qrCodeDataObject.currency || 'ARS' }}</span>
-        <strong>{{ qrCodeDataObject.receiverName }}</strong>
-        <span class="qr-alias">{{ qrCodeDataObject.accountAlias }}</span>
-        @if (formattedDni) {
-        <span class="qr-dni">DNI {{ formattedDni }}</span>
-        }
-      </div>
-
-      <p class="qr-hint">
-        Este código sirve para recibir transferencias en {{ currencyLabel }}.
-      </p>
-
-      <button type="button" class="qr-btn qr-btn--ghost" (click)="close()">Listo</button>
-    </div>
     }
   </div>
 </div>

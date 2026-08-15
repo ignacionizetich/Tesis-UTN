@@ -79,6 +79,13 @@
   --rosa-plasma: var(--danger);
   --amarillo-tech: var(--warning);
   --azul-cyber: var(--brand);
+
+  /* Dentro de :root, junto al resto de los tokens (después de --danger, por ejemplo) */
+  --usd-accent: #7c3aed;
+  --usd-accent-soft: #f3ebfd;
+
+  /* Dentro de [data-theme='dark'], junto a --brand */
+
 }
 
 [data-theme='dark'] {
@@ -89,7 +96,8 @@
   --surface-elevated: #1e2633;
   --line: rgba(241, 245, 249, 0.08);
   --line-strong: rgba(241, 245, 249, 0.14);
-
+  --usd-accent: #a78bfa;
+  --usd-accent-soft: rgba(124, 58, 237, 0.16);
   --brand: #4d8dff;
   --brand-hover: #6ba0ff;
   --brand-soft: rgba(77, 141, 255, 0.14);

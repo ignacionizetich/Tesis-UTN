@@ -325,4 +325,75 @@
   .user-row__chevron {
     margin-left: auto;
   }
+
+
 }
+
+/* Agregar al final de users-list.css */
+
+/* --- Insignia de rol (mismo lenguaje visual que .qr-badge del modal de QR) --- */
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--text-secondary) 14%, transparent);
+  color: var(--text-secondary);
+}
+
+.role-pill--user {
+  background: color-mix(in srgb, var(--text-secondary) 14%, transparent);
+  color: var(--text-secondary);
+}
+
+.role-pill--admin {
+  background: var(--brand-soft);
+  color: var(--text-accent);
+}
+
+.role-pill--root {
+  background: var(--usd-accent-soft);
+  color: var(--usd-accent);
+}
+
+/* --- Filtro por rol (mismo lenguaje visual que .currency-pill del transfer-wizard) --- */
+.role-filter {
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  margin: 0 0 1rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  width: fit-content;
+}
+
+.role-filter-btn {
+  appearance: none;
+  border: none;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  box-shadow: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.role-filter-btn:hover {
+  color: var(--text-primary);
+}
+
+.role-filter-btn--active {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+
