@@ -44,7 +44,7 @@ export class SessionStore {
   }
 
   isAdmin(): boolean {
-    return this.getRole() === 'ADMIN';
+    return this.getRole() === 'ADMIN' || this.getRole() === 'ROOT';
   }
 
   hasAccessToken(): boolean {

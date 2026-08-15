@@ -3,6 +3,7 @@ import {
   EventEmitter,
   OnInit,
   Output,
+  Input, numberAttribute
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { QRCodeComponent } from 'angularx-qrcode';
@@ -26,6 +27,12 @@ export class ReceiveQrModalComponent implements OnInit {
   qrCodeDataString: string | null = null;
   qrCodeDataObject: qrData | null = null;
 
+  /** Moneda de la wallet activa cuando se abrió el modal (la decide quien lo abre). */
+  @Input() selectedCurrency: 'ARS' | 'USD' | null = null;
+  /** IDs de las dos cuentas, para poder resolver cuál usar según selectedCurrency. */
+  @Input({transform: numberAttribute}) arsAccountId: number | null = null;
+  @Input({transform: numberAttribute}) usdAccountId: number | null = null;
+
   @Output() closed = new EventEmitter<void>();
   @Output() backdropClick = new EventEmitter<MouseEvent>();
 
@@ -45,14 +52,14 @@ export class ReceiveQrModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const accountId = this.sessionStore.getAccountId();
-    if (!accountId) {
-      logger.error('No se encontro el ID de la cuenta en la sesión.');
+    const accountIdNumber = this.resolveAccountId();
+
+    if (!accountIdNumber) {
+      logger.error('No se encontró el ID de la cuenta para generar el QR.');
       this.close();
       return;
     }
 
-    const accountIdNumber = parseInt(accountId, 10);
     this.isLoadingQr = true;
     this.loadError = false;
 
@@ -68,6 +75,19 @@ export class ReceiveQrModalComponent implements OnInit {
         this.loadError = true;
       },
     });
+  }
+
+  /** Resuelve qué cuenta usar según la moneda activa que le pasó el padre. */
+  private resolveAccountId(): number | null {
+    if (this.selectedCurrency === 'USD' && this.usdAccountId != null) {
+      return this.usdAccountId;
+    }
+    if (this.selectedCurrency === 'ARS' && this.arsAccountId != null) {
+      return this.arsAccountId;
+    }
+    // Fallback: comportamiento viejo, por si algún llamador todavía no pasa los @Input() nuevos.
+    const sessionId = this.sessionStore.getAccountId();
+    return sessionId ? parseInt(sessionId, 10) : null;
   }
 
   close(): void {

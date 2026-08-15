@@ -198,15 +198,23 @@
         }
       </div>
 
-      @if (transferCurrency === 'ARS' && cuentaDestinoData?.currency === 'USD') {
-      <div class="transfer-alert transfer-alert--warn">
-        Se aplicará una conversión de ARS a USD con comisión (~30%).
-      </div>
+      @if (isCrossCurrency && isOwnDestinationAccount) {
+        <div class="transfer-alert transfer-alert--warn">
+          Se aplicará una conversión de {{ transferCurrency }} a {{ cuentaDestinoData?.currency }},
+          con comisión.
+        </div>
       }
-      @if (transferCurrency === 'USD' && cuentaDestinoData?.currency === 'USD') {
-      <div class="transfer-alert transfer-alert--info">
-        Transferencia directa en USD, sin conversión.
-      </div>
+      @if (isCrossCurrency && !isOwnDestinationAccount) {
+        <div class="transfer-alert transfer-alert--warn">
+          Para transferirle a {{ recipientName }} necesitás elegir la misma moneda que su cuenta
+          ({{ cuentaDestinoData?.currency }}). La conversión de moneda solo está disponible
+          entre tus propias cuentas.
+        </div>
+      }
+      @if (!isCrossCurrency) {
+        <div class="transfer-alert transfer-alert--info">
+          Transferencia directa en {{ transferCurrency }}, sin conversión.
+        </div>
       }
 
       <form (ngSubmit)="realizarTransferencia()" #transferForm="ngForm">

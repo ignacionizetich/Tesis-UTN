@@ -22,133 +22,185 @@ import java.util.Optional;
 @Service
 public class AdminServiceImpl implements AdminService {
 
-    @Autowired
-    private UserRepository userRepository;
+  @Autowired
+  private UserRepository userRepository;
 
-    @Autowired
-    private AccountService accountService;
+  @Autowired
+  private AccountService accountService;
 
-    @Autowired
-    private SessionService sessionService;
+  @Autowired
+  private SessionService sessionService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+  @Autowired
+  private PasswordEncoder passwordEncoder;
 
-    public List<UserResponse> getAuthUsers() {
-        List<User> users = userRepository.findByEnabledTrue();
-        return users.stream()
-                .map(user -> {
-                    Long idAccount = user.getAccounts() != null && !user.getAccounts().isEmpty()
-                            ? user.getAccounts().get(0).getIdAccount()
-                            : null;
-                    String username = user.getAlias() != null ? user.getAlias() : null;
-                    return new UserResponse(
-                            user.getId(),
-                            user.getName(),
-                            user.getLastName(),
-                            user.getDni(),
-                            user.getEmail(),
-                            username,
-                            idAccount,
-                            user.isEnabled(),
-                            user.isActive()
-                    );
-                })
-                .toList();
-    }
+  public List<UserResponse> getAuthUsers() {
+    List<User> users = userRepository.findByEnabledTrue();
+    return users.stream()
+      .map(user -> {
+        Long idAccount = user.getAccounts() != null && !user.getAccounts().isEmpty()
+          ? user.getAccounts().get(0).getIdAccount()
+          : null;
+        String username = user.getAlias() != null ? user.getAlias() : null;
+        return new UserResponse(
+          user.getId(),
+          user.getName(),
+          user.getLastName(),
+          user.getDni(),
+          user.getEmail(),
+          username,
+          idAccount,
+          user.isEnabled(),
+          user.isActive(),
+          user.getPermissions(),
+          user.getCreationDate()
+        );
+      })
+      .toList();
+  }
 
-    // Soft-disable: marca inactive y corta la sesion de inmediato (revoca refresh).
-    @Transactional
-    public void disableUser(Long userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("Usuario no encontrado");
+  // ------------------------------------------------------------------
+  // Gestión de cuentas USER (endpoint genérico /users/{id}/disable|enable)
+  // ------------------------------------------------------------------
+
+  // Soft-disable: marca inactive y corta la sesion de inmediato (revoca refresh).
+  @Transactional
+  public void disableUser(Long userId) {
+    User user = getUserOrThrow(userId);
+    requirePermission(user, Permissions.USER,
+      "Para deshabilitar una cuenta con permisos de administrador usá /users/{id}/disable-admin");
+
+    user.setActive(false);
+    userRepository.save(user);
+    sessionService.revokeAllUserTokens(userId);
+  }
+
+  @Transactional
+  public void enableUser(Long userId) {
+    User user = getUserOrThrow(userId);
+    requirePermission(user, Permissions.USER,
+      "Para habilitar una cuenta con permisos de administrador usá /users/{id}/enable-admin");
+
+    user.setActive(true);
+    // Si nunca valido el email, puede no tener cuenta ARS; sin ella el login falla.
+    accountService.ensureArsAccount(user);
+    userRepository.save(user);
+  }
+
+  // ------------------------------------------------------------------
+  // Gestión de cuentas ADMIN (endpoints exclusivos de ROOT)
+  // ------------------------------------------------------------------
+
+  @Transactional
+  public void disableAdmin(Long userId) {
+    User user = getUserOrThrow(userId);
+    requirePermission(user, Permissions.ADMIN,
+      "Esta operación solo aplica a cuentas con permisos de administrador");
+
+    user.setActive(false);
+    userRepository.save(user);
+    sessionService.revokeAllUserTokens(userId);
+  }
+
+  @Transactional
+  public void enableAdmin(Long userId) {
+    User user = getUserOrThrow(userId);
+    requirePermission(user, Permissions.ADMIN,
+      "Esta operación solo aplica a cuentas con permisos de administrador");
+
+    user.setActive(true);
+    userRepository.save(user);
+  }
+
+  // ------------------------------------------------------------------
+  // Creación de administradores (exclusivo de ROOT vía @PreAuthorize)
+  // ------------------------------------------------------------------
+
+  @Transactional
+  public AdminCreateResult createAdmin(AdminRequest adminRequest) {
+    try {
+      if (existsByUsername(adminRequest.getUsername())) {
+        return AdminCreateResult.conflict("username", "nombre de usuario no está disponible");
+      }
+      if (existsByEmail(adminRequest.getEmail())) {
+        return AdminCreateResult.conflict("email", "email ya se encuentra en uso");
+      }
+      if (existsByDni(adminRequest.getDni())) {
+        return AdminCreateResult.conflict("dni", "DNI ya está registrado");
+      }
+
+      User user = new User();
+      user.setName(capitalizePersonName(adminRequest.getName()));
+      user.setLastName(capitalizePersonName(adminRequest.getLastName()));
+      user.setPermissions(Permissions.ADMIN);
+      user.setDni(adminRequest.getDni());
+      user.setEmail(adminRequest.getEmail());
+      user.setAlias(adminRequest.getUsername());
+      user.setEnabled(true);
+      user.setActive(true);
+      user.setCredentials(new Credentials(
+        user,
+        user.getAlias(),
+        passwordEncoder.encode(adminRequest.getPassword())
+      ));
+
+      try {
+        cargarAdmin(user);
+        return AdminCreateResult.success();
+      } catch (DataIntegrityViolationException e) {
+        if (existsByUsername(adminRequest.getUsername())) {
+          return AdminCreateResult.conflict("username", "nombre de usuario no está disponible");
         }
-        User user = userOpt.get();
-        user.setActive(false);
-        userRepository.save(user);
-        sessionService.revokeAllUserTokens(userId);
-    }
-
-    @Transactional
-    public void enableUser(Long userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("Usuario no encontrado");
+        if (existsByEmail(adminRequest.getEmail())) {
+          return AdminCreateResult.conflict("email", "email ya se encuentra en uso");
         }
-        User user = userOpt.get();
-        user.setActive(true);
-        // Si nunca valido el email, puede no tener cuenta ARS; sin ella el login falla.
-        accountService.ensureArsAccount(user);
-        userRepository.save(user);
-    }
-
-    @Transactional
-    public AdminCreateResult createAdmin(AdminRequest adminRequest) {
-        try {
-            if (existsByUsername(adminRequest.getUsername())) {
-                return AdminCreateResult.conflict("username", "nombre de usuario no está disponible");
-            }
-            if (existsByEmail(adminRequest.getEmail())) {
-                return AdminCreateResult.conflict("email", "email ya se encuentra en uso");
-            }
-            if (existsByDni(adminRequest.getDni())) {
-                return AdminCreateResult.conflict("dni", "DNI ya está registrado");
-            }
-
-            User user = new User();
-            user.setName(capitalizePersonName(adminRequest.getName()));
-            user.setLastName(capitalizePersonName(adminRequest.getLastName()));
-            user.setPermissions(Permissions.ADMIN);
-            user.setDni(adminRequest.getDni());
-            user.setEmail(adminRequest.getEmail());
-            user.setAlias(adminRequest.getUsername());
-            user.setEnabled(true);
-            user.setActive(true);
-            user.setCredentials(new Credentials(
-                    user,
-                    user.getAlias(),
-                    passwordEncoder.encode(adminRequest.getPassword())
-            ));
-
-            try {
-                cargarAdmin(user);
-                return AdminCreateResult.success();
-            } catch (DataIntegrityViolationException e) {
-                if (existsByUsername(adminRequest.getUsername())) {
-                    return AdminCreateResult.conflict("username", "nombre de usuario no está disponible");
-                }
-                if (existsByEmail(adminRequest.getEmail())) {
-                    return AdminCreateResult.conflict("email", "email ya se encuentra en uso");
-                }
-                if (existsByDni(adminRequest.getDni())) {
-                    return AdminCreateResult.conflict("dni", "DNI ya está registrado");
-                }
-                return AdminCreateResult.conflictGeneric();
-            }
-        } catch (Exception e) {
-            return AdminCreateResult.error();
+        if (existsByDni(adminRequest.getDni())) {
+          return AdminCreateResult.conflict("dni", "DNI ya está registrado");
         }
+        return AdminCreateResult.conflictGeneric();
+      }
+    } catch (Exception e) {
+      return AdminCreateResult.error();
     }
+  }
 
-    public void cargarAdmin(User user) {
-        userRepository.save(user);
-        accountService.createAccount(user);
-    }
+  public void cargarAdmin(User user) {
+    userRepository.save(user);
+    accountService.createAccount(user);
+  }
 
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByAlias(username);
-    }
+  public boolean existsByUsername(String username) {
+    return userRepository.existsByAlias(username);
+  }
 
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
+  public boolean existsByEmail(String email) {
+    return userRepository.existsByEmail(email);
+  }
 
-    public boolean existsByDni(String dni) {
-        return userRepository.existsByDni(dni);
-    }
+  public boolean existsByDni(String dni) {
+    return userRepository.existsByDni(dni);
+  }
 
-    private static String capitalizePersonName(String value) {
-        return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
+  // ------------------------------------------------------------------
+  // Helpers
+  // ------------------------------------------------------------------
+
+  private User getUserOrThrow(Long userId) {
+    Optional<User> userOpt = userRepository.findById(userId);
+    if (userOpt.isEmpty()) {
+      throw new IllegalArgumentException("Usuario no encontrado");
     }
+    return userOpt.get();
+  }
+
+  /** Corta la operación si el target no tiene exactamente el nivel de permiso esperado. */
+  private void requirePermission(User user, Permissions expected, String errorMessage) {
+    if (user.getPermissions() != expected) {
+      throw new IllegalArgumentException(errorMessage);
+    }
+  }
+
+  private static String capitalizePersonName(String value) {
+    return value.substring(0, 1).toUpperCase() + value.substring(1).toLowerCase();
+  }
 }

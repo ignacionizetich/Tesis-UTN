@@ -15,66 +15,77 @@
     </button>
 
     @if (user) {
-    <header class="user-detail__header">
-      <div class="user-detail__avatar" aria-hidden="true">{{ initials(user) }}</div>
-      <div class="user-detail__identity">
-        <h3 id="user-modal-title">{{ user.name }} {{ user.lastName }}</h3>
-        <p>@{{ user.username }}</p>
-        <div class="user-detail__badges">
+      <header class="user-detail__header">
+        <div class="user-detail__avatar" aria-hidden="true">{{ initials(user) }}</div>
+        <div class="user-detail__identity">
+          <h3 id="user-modal-title">{{ user.name }} {{ user.lastName }}</h3>
+          <p>@{{ user.username }}</p>
+          <div class="user-detail__badges">
           <span
-            class="status-pill"
-            [class.status-pill--on]="user.active"
-            [class.status-pill--off]="!user.active"
-          >
+            class="role-pill"
+            [class.role-pill--user]="user.permissions === 'USER'"
+            [class.role-pill--admin]="user.permissions === 'ADMIN'"
+            [class.role-pill--root]="user.permissions === 'ROOT'">
+            {{ user.permissions }}
+          </span>
+            <span
+              class="status-pill"
+              [class.status-pill--on]="user.active"
+              [class.status-pill--off]="!user.active"
+            >
             {{ user.active ? 'Activo' : 'Inactivo' }}
           </span>
-          <span
-            class="status-pill"
-            [class.status-pill--on]="user.enabled"
-            [class.status-pill--off]="!user.enabled"
-          >
+            <span
+              class="status-pill"
+              [class.status-pill--on]="user.enabled"
+              [class.status-pill--off]="!user.enabled"
+            >
             {{ user.enabled ? 'Habilitado' : 'No habilitado' }}
           </span>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <dl class="user-detail__grid">
-      <div class="user-detail__field">
-        <dt>Email</dt>
-        <dd>{{ user.email }}</dd>
-      </div>
-      <div class="user-detail__field">
-        <dt>DNI</dt>
-        <dd>{{ formatDni(user.dni) }}</dd>
-      </div>
-      <div class="user-detail__field">
-        <dt>ID de cuenta</dt>
-        <dd>{{ user.idAccount || 'No asignado' }}</dd>
-      </div>
-      <div class="user-detail__field">
-        <dt>ID de usuario</dt>
-        <dd>{{ user.id }}</dd>
-      </div>
-    </dl>
+      <dl class="user-detail__grid">
+        <div class="user-detail__field">
+          <dt>Email</dt>
+          <dd>{{ user.email }}</dd>
+        </div>
+        <div class="user-detail__field">
+          <dt>DNI</dt>
+          <dd>{{ formatDni(user.dni) }}</dd>
+        </div>
+        <div class="user-detail__field">
+          <dt>Fecha de alta</dt>
+          <dd>{{ user.creationDate || 'Sin datos' }}</dd>
+        </div>
+        <div class="user-detail__field">
+          <dt>ID de cuenta</dt>
+          <dd>{{ user.idAccount || 'No asignado' }}</dd>
+        </div>
+        <div class="user-detail__field">
+          <dt>ID de usuario</dt>
+          <dd>{{ user.id }}</dd>
+        </div>
+      </dl>
 
-    <div class="user-detail__actions">
-      <button type="button" class="user-detail__ghost" (click)="onCloseModal()">Cerrar</button>
-      @if (user.active) {
-      <button type="button" class="user-detail__danger" (click)="onToggleUserStatus()">
-        Deshabilitar usuario
-      </button>
-      } @else {
-      <button type="button" class="user-detail__success" (click)="onToggleUserStatus()">
-        Habilitar usuario
-      </button>
-      }
-    </div>
+      <div class="user-detail__actions">
+        <button type="button" class="user-detail__ghost" (click)="onCloseModal()">Cerrar</button>
+        @if (user.active) {
+          <button type="button" class="user-detail__danger" (click)="onToggleUserStatus()">
+            Deshabilitar usuario
+          </button>
+        } @else {
+          <button type="button" class="user-detail__success" (click)="onToggleUserStatus()">
+            Habilitar usuario
+          </button>
+        }
+      </div>
     } @else {
-    <div class="user-detail__empty" role="status">
-      <p>No se pudo cargar la información del usuario.</p>
-      <button type="button" class="user-detail__ghost" (click)="onCloseModal()">Cerrar</button>
-    </div>
+      <div class="user-detail__empty" role="status">
+        <p>No se pudo cargar la información del usuario.</p>
+        <button type="button" class="user-detail__ghost" (click)="onCloseModal()">Cerrar</button>
+      </div>
     }
   </div>
 </div>

@@ -12,6 +12,7 @@ import com.EDJ.ArCash.Service.result.RefreshAccessResult;
 import com.EDJ.ArCash.Service.result.SessionCheckResult;
 import com.EDJ.ArCash.Service.interfaces.UserService;
 import com.EDJ.ArCash.Service.result.UsernameChangeResult;
+import com.EDJ.ArCash.Service.strategy.AuthenticationResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -63,29 +64,33 @@ public class AuthController {
     })
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
-        try {
+      try {
 
-            LoginResponse loginResponse = authService.login(loginRequest);
+        LoginResponse loginResponse = authService.login(loginRequest);
 
-            if (loginResponse.isSuccess()) {
-                String refreshToken = loginResponse.getRefreshToken();
-                if (refreshToken != null) {
-                    ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
-                            .httpOnly(true)
-                            .path("/")
-                            .maxAge(7 * 24 * 60 * 60)
-                            .build();
-                    response.addHeader("Set-Cookie", cookie.toString());
-                }
-                return ResponseEntity.ok(loginResponse);
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(loginResponse);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new LoginResponse(false, "Error interno del servidor", null, null, null, null));
+        if (loginResponse.isSuccess()) {
+          String refreshToken = loginResponse.getRefreshToken();
+          if (refreshToken != null) {
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+              .httpOnly(true)
+              .path("/")
+              .maxAge(7 * 24 * 60 * 60)
+              .build();
+            response.addHeader("Set-Cookie", cookie.toString());
+          }
+          return ResponseEntity.ok(loginResponse);
         }
+
+        HttpStatus status = AuthenticationResult.USER_DISABLED_MESSAGE.equals(loginResponse.getMessage())
+          ? HttpStatus.FORBIDDEN
+          : HttpStatus.UNAUTHORIZED;
+        return ResponseEntity.status(status).body(loginResponse);
+
+      } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(new LoginResponse(false, "Error interno del servidor", null, null, null, null));
+      }
     }
 
     @Operation(

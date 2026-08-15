@@ -4,33 +4,36 @@ import com.EDJ.ArCash.Models.User;
 
 public final class AuthenticationResult {
 
-    private final boolean success;
-    private final String errorMessage;
-    private final User user;
+  public static final String USER_DISABLED_MESSAGE =
+    "Tu cuenta fue suspendida temporalmente, si esto se trata de un error, por favor contacte a soporte tecnico";
 
-    private AuthenticationResult(boolean success, String errorMessage, User user) {
-        this.success = success;
-        this.errorMessage = errorMessage;
-        this.user = user;
-    }
+  private final boolean success;
+  private final String errorMessage;
+  private final User user;
 
-    public static AuthenticationResult failure(String errorMessage) {
-        return new AuthenticationResult(false, errorMessage, null);
-    }
+  private AuthenticationResult(boolean success, String errorMessage, User user) {
+    this.success = success;
+    this.errorMessage = errorMessage;
+    this.user = user;
+  }
 
-    public static AuthenticationResult success(User user) {
-        return new AuthenticationResult(true, null, user);
-    }
+  public static AuthenticationResult failure(String errorMessage) {
+    return new AuthenticationResult(false, errorMessage, null);
+  }
 
-    public boolean isSuccess() {
-        return success;
-    }
+  public static AuthenticationResult success(User user) {
+    return new AuthenticationResult(true, null, user);
+  }
 
-    public String getErrorMessage() {
-        return errorMessage;
-    }
+  public boolean isSuccess() {
+    return success;
+  }
 
-    public User getUser() {
-        return user;
-    }
+  public String getErrorMessage() {
+    return errorMessage;
+  }
+
+  public User getUser() {
+    return user;
+  }
 }

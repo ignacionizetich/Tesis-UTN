@@ -1,95 +1,130 @@
 <div class="admin-panel users-panel">
   @if (!isLoadingUsers) {
-  <div class="admin-panel__toolbar">
-    <button type="button" class="admin-toolbar-btn" (click)="refreshUsersList()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M1 4v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-        <path
-          d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-        />
-      </svg>
-      Refrescar
-    </button>
+    <div class="admin-panel__toolbar">
+      <button type="button" class="admin-toolbar-btn" (click)="refreshUsersList()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M1 4v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          <path
+            d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        Refrescar
+      </button>
 
-    <button type="button" class="admin-toolbar-btn admin-toolbar-btn--primary" (click)="goToCreate.emit()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 5v14m7-7H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-      </svg>
-      Crear administrador
-    </button>
-  </div>
+      @if (isRoot) {
+        <button type="button" class="admin-toolbar-btn admin-toolbar-btn--primary" (click)="goToCreate.emit()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 5v14m7-7H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          Crear administrador
+        </button>
+      }
+    </div>
+
+    <div class="role-filter" role="group" aria-label="Filtrar por rol">
+      <button
+        type="button"
+        class="role-filter-btn"
+        [class.role-filter-btn--active]="roleFilter === 'ALL'"
+        (click)="setRoleFilter('ALL')">
+        Todos
+      </button>
+      <button
+        type="button"
+        class="role-filter-btn"
+        [class.role-filter-btn--active]="roleFilter === 'USER'"
+        (click)="setRoleFilter('USER')">
+        Usuarios
+      </button>
+      <button
+        type="button"
+        class="role-filter-btn"
+        [class.role-filter-btn--active]="roleFilter === 'ADMIN'"
+        (click)="setRoleFilter('ADMIN')">
+        Administradores
+      </button>
+    </div>
   }
 
   <div class="users-panel__body">
     @if (isLoadingUsers) {
-    <div class="users-loading" role="status">
-      <div class="users-loading__spinner"></div>
-      <p>Cargando usuarios...</p>
-    </div>
+      <div class="users-loading" role="status">
+        <div class="users-loading__spinner"></div>
+        <p>Cargando usuarios...</p>
+      </div>
     }
 
-    @if (!isLoadingUsers && users.length > 0) {
-    <div class="users-meta">
-      <span>{{ users.length }} usuario{{ users.length === 1 ? '' : 's' }}</span>
-    </div>
+    @if (!isLoadingUsers && filteredUsers.length > 0) {
+      <div class="users-meta">
+        <span>{{ filteredUsers.length }} usuario{{ filteredUsers.length === 1 ? '' : 's' }}</span>
+      </div>
 
-    <ul class="users-list">
-      @for (user of users; track user.id) {
-      <li class="user-row" (click)="openUserModal(user)">
-        <div class="user-row__avatar" aria-hidden="true">{{ initials(user) }}</div>
+      <ul class="users-list">
+        @for (user of filteredUsers; track user.id) {
+          <li class="user-row" (click)="openUserModal(user)">
+            <div class="user-row__avatar" aria-hidden="true">{{ initials(user) }}</div>
 
-        <div class="user-row__content">
-          <div class="user-row__top">
-            <strong class="user-row__name">{{ user.name }} {{ user.lastName }}</strong>
-            <span
-              class="status-pill"
-              [class.status-pill--on]="user.active"
-              [class.status-pill--off]="!user.active"
-            >
+            <div class="user-row__content">
+              <div class="user-row__top">
+                <strong class="user-row__name">{{ user.name }} {{ user.lastName }}</strong>
+                <span
+                  class="role-pill"
+                  [class.role-pill--user]="user.permissions === 'USER'"
+                  [class.role-pill--admin]="user.permissions === 'ADMIN'"
+                  [class.role-pill--root]="user.permissions === 'ROOT'">
+              {{ user.permissions }}
+            </span>
+                <span
+                  class="status-pill"
+                  [class.status-pill--on]="user.active"
+                  [class.status-pill--off]="!user.active"
+                >
               {{ user.active ? 'Activo' : 'Inactivo' }}
             </span>
-          </div>
-          <div class="user-row__meta">
-            <span class="user-row__username">@{{ user.username }}</span>
-            <span class="user-row__dot" aria-hidden="true">·</span>
-            <span>{{ user.email }}</span>
-          </div>
-          <div class="user-row__sub">DNI {{ formatDni(user.dni) }}</div>
-        </div>
+              </div>
+              <div class="user-row__meta">
+                <span class="user-row__username">@{{ user.username }}</span>
+                <span class="user-row__dot" aria-hidden="true">·</span>
+                <span>{{ user.email }}</span>
+              </div>
+              <div class="user-row__sub">DNI {{ formatDni(user.dni) }}</div>
+            </div>
 
-        <div class="user-row__actions" (click)="$event.stopPropagation()">
-          @if (user.active) {
-          <button
-            type="button"
-            class="user-action-btn user-action-btn--danger"
-            (click)="openConfirmModal(user)"
-            [disabled]="loadingUserAction === user.id"
-          >
-            @if (loadingUserAction === user.id) {
-            <span class="btn-spinner"></span>
-            } @else {
-            Deshabilitar
-            }
-          </button>
-          } @else {
-          <button
-            type="button"
-            class="user-action-btn user-action-btn--success"
-            (click)="openConfirmModal(user)"
-            [disabled]="loadingUserAction === user.id"
-          >
-            @if (loadingUserAction === user.id) {
-            <span class="btn-spinner"></span>
-            } @else {
-            Habilitar
-            }
-          </button>
-          }
+            <div class="user-row__actions" (click)="$event.stopPropagation()">
+              @if (canToggle(user)) {
+                @if (user.active) {
+                  <button
+                    type="button"
+                    class="user-action-btn user-action-btn--danger"
+                    (click)="openConfirmModal(user)"
+                    [disabled]="loadingUserAction === user.id"
+                  >
+                    @if (loadingUserAction === user.id) {
+                      <span class="btn-spinner"></span>
+                    } @else {
+                      Deshabilitar
+                    }
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="user-action-btn user-action-btn--success"
+                    (click)="openConfirmModal(user)"
+                    [disabled]="loadingUserAction === user.id"
+                  >
+                    @if (loadingUserAction === user.id) {
+                      <span class="btn-spinner"></span>
+                    } @else {
+                      Habilitar
+                    }
+                  </button>
+                }
+              }
 
-          <span class="user-row__chevron" aria-hidden="true">
+              <span class="user-row__chevron" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
                 d="M9 18l6-6-6-6"
@@ -100,27 +135,31 @@
               />
             </svg>
           </span>
-        </div>
-      </li>
-      }
-    </ul>
+            </div>
+          </li>
+        }
+      </ul>
     }
 
-    @if (!isLoadingUsers && users.length === 0) {
-    <div class="users-empty">
-      <div class="users-empty__icon" aria-hidden="true">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
+    @if (!isLoadingUsers && filteredUsers.length === 0) {
+      <div class="users-empty">
+        <div class="users-empty__icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+        <p>
+          {{ users.length === 0
+          ? 'No hay usuarios autenticados para mostrar.'
+          : 'No hay resultados para este filtro.' }}
+        </p>
       </div>
-      <p>No hay usuarios autenticados para mostrar.</p>
-    </div>
     }
   </div>
 </div>

@@ -248,6 +248,29 @@
   transform: none;
 }
 
+.qr-frame--usd {
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--surface) 100%, transparent),
+    0 0 0 5px color-mix(in srgb, #7c3aed 28%, transparent),
+    var(--shadow-soft);
+}
+
+[data-theme='dark'] .qr-frame--usd {
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, 0.06),
+    0 0 0 7px color-mix(in srgb, #7c3aed 35%, transparent),
+    0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.qr-badge--usd {
+  background: color-mix(in srgb, #7c3aed 15%, transparent);
+  color: #7c3aed;
+}
+
+.qr-alias--usd {
+  color: #7c3aed;
+}
+
 @keyframes qrFade {
   from {
     opacity: 0;

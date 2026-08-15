@@ -7,20 +7,24 @@ import com.EDJ.ArCash.Service.result.AdminCreateResult;
 import java.util.List;
 
 public interface AdminService {
-    public List<UserResponse> getAuthUsers();
+     List<UserResponse> getAuthUsers();
 
-    public void disableUser(Long userId);
+     void disableUser(Long userId);
 
-    public void enableUser(Long userId);
+     void enableUser(Long userId);
 
-    public AdminCreateResult createAdmin(AdminRequest adminRequest);
+     AdminCreateResult createAdmin(AdminRequest adminRequest);
 
-    public void cargarAdmin(User user);
+     void cargarAdmin(User user);
 
-    public boolean existsByUsername(String username);
+     boolean existsByUsername(String username);
 
-    public boolean existsByEmail(String email);
+     boolean existsByEmail(String email);
 
-    public boolean existsByDni(String dni);
+     boolean existsByDni(String dni);
+
+    void disableAdmin(Long userId);
+    
+    void enableAdmin(Long userId);
 
 }

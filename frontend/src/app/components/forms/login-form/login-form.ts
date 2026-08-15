@@ -78,10 +78,15 @@ export class LoginFormComponent implements OnInit {
           this.isLoading = false;
           logger.error('Error en login:', error);
 
+          // El backend ya manda el mensaje correcto en el body (loginResponse.message);
+          // lo usamos como texto principal y dejamos el genérico solo como fallback
+          // por si la respuesta no trae body (ej: error de red intermedio).
+          const backendMessage = error?.error?.message as string | undefined;
+
           if (error.status === 401) {
-            this.toast.show('Nombre de usuario y/o contraseña incorrecta', 'error');
+            this.toast.show(backendMessage || 'Nombre de usuario y/o contraseña incorrecta', 'error');
           } else if (error.status === 403) {
-            this.toast.show('Cuenta inhabilitada, por favor confirma su cuenta', 'error');
+            this.toast.show(backendMessage || 'Tu cuenta no está habilitada o fue suspendida temporalmente', 'error');
           } else if (error.status >= 500) {
             this.toast.show('Error del servidor: Intenta nuevamente en unos momentos.', 'error');
           } else if (error.status === 0 || !navigator.onLine) {

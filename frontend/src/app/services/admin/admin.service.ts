@@ -50,6 +50,18 @@ export class AdminService {
     });
   }
 
+  enableAdmin(userId: number): Observable<string>{
+    return this.http.put(`${this.apiUrl}/users/${userId}/enable-admin`, {}, {
+      responseType: 'text'
+    });
+  }
+
+  disableAdmin(userId: number): Observable<string>{
+    return this.http.put(`${this.apiUrl}/users/${userId}/disable-admin`, {}, {
+      responseType: 'text'
+    });
+  }
+
   createAdmin(adminData: AdminRequest): Observable<string> {
     return this.http.post(`${this.apiUrl}/users/create-admin`, adminData, {
       responseType: 'text'

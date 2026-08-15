@@ -198,87 +198,160 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    @Transactional
-    public TransferOperationResult transactionWithConversionDetails(Account cuentaOrigen, Account cuentaDestino, double monto) {
-        Transaction transaction = new Transaction();
+  @Transactional
+  public TransferOperationResult transactionWithConversionDetails(Account cuentaOrigen, Account cuentaDestino, double monto) {
+    Transaction transaction = new Transaction();
 
-        if (cuentaOrigen.getAccountType() != Currency.ARS || cuentaDestino.getAccountType() != Currency.USD) {
-            transaction.setIdOrigin(cuentaOrigen);
-            transaction.setIdDestination(cuentaDestino);
-            transaction.setBalance(monto);
-            transaction.setState("FAILED");
-            transaction.setCurrency(cuentaOrigen.getAccountType());
-            transactionRepository.save(transaction);
-            return TransferOperationResult.fail("Solo se permite conversión de ARS a USD");
-        }
+    boolean esArsAUsd = cuentaOrigen.getAccountType() == Currency.ARS && cuentaDestino.getAccountType() == Currency.USD;
+    boolean esUsdAArs = cuentaOrigen.getAccountType() == Currency.USD && cuentaDestino.getAccountType() == Currency.ARS;
 
-        if (!cuentaOrigen.getUser().getId().equals(cuentaDestino.getUser().getId())) {
-            transaction.setIdOrigin(cuentaOrigen);
-            transaction.setIdDestination(cuentaDestino);
-            transaction.setBalance(monto);
-            transaction.setState("FAILED");
-            transaction.setCurrency(Currency.ARS);
-            transaction.setOriginalAmount(monto);
-            transaction.setOriginalCurrency(Currency.ARS);
-            transactionRepository.save(transaction);
-            return TransferOperationResult.fail("Las cuentas deben pertenecer al mismo usuario");
-        }
-
-        DebitPreview preview = arsToUsdConversionService.previewDebit(monto);
-
-        if (cuentaOrigen.getBalance() < preview.totalDebitado()) {
-            transaction.setIdOrigin(cuentaOrigen);
-            transaction.setIdDestination(cuentaDestino);
-            transaction.setBalance(monto);
-            transaction.setState("FAILED");
-            transaction.setCurrency(Currency.ARS);
-            transaction.setOriginalAmount(monto);
-            transaction.setOriginalCurrency(Currency.ARS);
-            transactionRepository.save(transaction);
-
-            String message = String.format(
-                    "Saldo insuficiente. Para enviar $%.2f ARS necesitas $%.2f ARS (incluye $%.2f de comisión). Tu saldo actual es $%.2f ARS",
-                    monto, preview.totalDebitado(), preview.taxAmount(), cuentaOrigen.getBalance());
-            return TransferOperationResult.failInsufficient(
-                    message, preview.totalDebitado(), cuentaOrigen.getBalance(), preview.taxAmount());
-        }
-
-        ArsToUsdConversion conversion = arsToUsdConversionService.calculate(monto);
-
-        cuentaOrigen.setBalance(cuentaOrigen.getBalance() - conversion.totalDebitado());
-        cuentaDestino.setBalance(cuentaDestino.getBalance() + conversion.amountUsd());
-
-        transaction.setIdOrigin(cuentaOrigen);
-        transaction.setIdDestination(cuentaDestino);
-        transaction.setBalance(conversion.amountUsd());
-        transaction.setOriginalAmount(conversion.amountArs());
-        transaction.setOriginalCurrency(Currency.ARS);
-        transaction.setCurrency(Currency.USD);
-        transaction.setExchangeRate(conversion.exchangeRate());
-        transaction.setTaxAmount(conversion.taxAmount());
-        transaction.setTaxPercentage(conversion.taxPercentage());
-        transaction.setState("COMPLETED");
-
-        accountRepository.save(cuentaOrigen);
-        accountRepository.save(cuentaDestino);
-        transactionRepository.save(transaction);
-
-        Event event = new Event(EventType.TRANSACTION_COMPLETED);
-        event.addData("user", cuentaOrigen.getUser());
-        event.addData("amount", conversion.amountArs());
-        event.addData("amountUsd", conversion.amountUsd());
-        event.addData("exchangeRate", conversion.exchangeRate());
-        event.addData("taxAmount", conversion.taxAmount());
-        event.addData("taxPercentage", conversion.taxPercentage());
-        event.addData("totalDebitado", conversion.totalDebitado());
-        event.addData("destinationAlias", cuentaDestino.getAccountNickname());
-        event.addData("currency", "USD");
-        event.addData("converted", true);
-        event.addData("operationType", "CONVERSION");
-        eventPublisher.publish(event);
-
-        return TransferOperationResult.ok("Transferencia completada exitosamente");
+    if (!esArsAUsd && !esUsdAArs) {
+      transaction.setIdOrigin(cuentaOrigen);
+      transaction.setIdDestination(cuentaDestino);
+      transaction.setBalance(monto);
+      transaction.setState("FAILED");
+      transaction.setCurrency(cuentaOrigen.getAccountType());
+      transactionRepository.save(transaction);
+      return TransferOperationResult.fail("Combinación de monedas no soportada");
     }
+
+    if (!cuentaOrigen.getUser().getId().equals(cuentaDestino.getUser().getId())) {
+      transaction.setIdOrigin(cuentaOrigen);
+      transaction.setIdDestination(cuentaDestino);
+      transaction.setBalance(monto);
+      transaction.setState("FAILED");
+      transaction.setCurrency(cuentaOrigen.getAccountType());
+      transaction.setOriginalAmount(monto);
+      transaction.setOriginalCurrency(cuentaOrigen.getAccountType());
+      transactionRepository.save(transaction);
+      return TransferOperationResult.fail(
+        "Para convertir entre ARS y USD, la cuenta destino debe ser tuya. " +
+          "Para transferir a otro usuario, elegí una cuenta en la misma moneda que la suya."
+      );
+    }
+
+    if (esArsAUsd) {
+      return convertArsToUsd(cuentaOrigen, cuentaDestino, monto, transaction);
+    } else {
+      return convertUsdToArs(cuentaOrigen, cuentaDestino, monto, transaction);
+    }
+  }
+
+  private TransferOperationResult convertArsToUsd(Account cuentaOrigen, Account cuentaDestino, double monto, Transaction transaction) {
+    DebitPreview preview = arsToUsdConversionService.previewDebit(monto);
+
+    if (cuentaOrigen.getBalance() < preview.totalDebitado()) {
+      transaction.setIdOrigin(cuentaOrigen);
+      transaction.setIdDestination(cuentaDestino);
+      transaction.setBalance(monto);
+      transaction.setState("FAILED");
+      transaction.setCurrency(Currency.ARS);
+      transaction.setOriginalAmount(monto);
+      transaction.setOriginalCurrency(Currency.ARS);
+      transactionRepository.save(transaction);
+
+      String message = String.format(
+        "Saldo insuficiente. Para enviar $%.2f ARS necesitas $%.2f ARS (incluye $%.2f de comisión). Tu saldo actual es $%.2f ARS",
+        monto, preview.totalDebitado(), preview.taxAmount(), cuentaOrigen.getBalance());
+      return TransferOperationResult.failInsufficient(
+        message, preview.totalDebitado(), cuentaOrigen.getBalance(), preview.taxAmount());
+    }
+
+    ArsToUsdConversion conversion = arsToUsdConversionService.calculate(monto);
+
+    cuentaOrigen.setBalance(cuentaOrigen.getBalance() - conversion.totalDebitado());
+    cuentaDestino.setBalance(cuentaDestino.getBalance() + conversion.amountUsd());
+
+    transaction.setIdOrigin(cuentaOrigen);
+    transaction.setIdDestination(cuentaDestino);
+    transaction.setBalance(conversion.amountUsd());
+    transaction.setOriginalAmount(conversion.amountArs());
+    transaction.setOriginalCurrency(Currency.ARS);
+    transaction.setCurrency(Currency.USD);
+    transaction.setExchangeRate(conversion.exchangeRate());
+    transaction.setTaxAmount(conversion.taxAmount());
+    transaction.setTaxPercentage(conversion.taxPercentage());
+    transaction.setState("COMPLETED");
+
+    accountRepository.save(cuentaOrigen);
+    accountRepository.save(cuentaDestino);
+    transactionRepository.save(transaction);
+
+    Event event = new Event(EventType.TRANSACTION_COMPLETED);
+    event.addData("user", cuentaOrigen.getUser());
+    event.addData("amount", conversion.amountArs());
+    event.addData("amountUsd", conversion.amountUsd());
+    event.addData("exchangeRate", conversion.exchangeRate());
+    event.addData("taxAmount", conversion.taxAmount());
+    event.addData("taxPercentage", conversion.taxPercentage());
+    event.addData("totalDebitado", conversion.totalDebitado());
+    event.addData("destinationAlias", cuentaDestino.getAccountNickname());
+    event.addData("currency", "USD");
+    event.addData("converted", true);
+    event.addData("operationType", "CONVERSION");
+    eventPublisher.publish(event);
+
+    return TransferOperationResult.ok("Transferencia completada exitosamente");
+  }
+
+  private TransferOperationResult convertUsdToArs(Account cuentaOrigen, Account cuentaDestino, double monto, Transaction transaction) {
+    UsdDebitPreview preview = usdToArsConversionService.previewDebit(monto);
+
+    if (cuentaOrigen.getBalance() < preview.totalDebitado()) {
+      transaction.setIdOrigin(cuentaOrigen);
+      transaction.setIdDestination(cuentaDestino);
+      transaction.setBalance(monto);
+      transaction.setState("FAILED");
+      transaction.setCurrency(Currency.USD);
+      transaction.setOriginalAmount(monto);
+      transaction.setOriginalCurrency(Currency.USD);
+      transactionRepository.save(transaction);
+
+      String message = String.format(
+        "Saldo insuficiente. Para enviar U$S%.2f necesitas U$S%.2f (incluye U$S%.2f de comisión). Tu saldo actual es U$S%.2f",
+        monto, preview.totalDebitado(), preview.taxAmount(), cuentaOrigen.getBalance());
+      return TransferOperationResult.failInsufficient(
+        message, preview.totalDebitado(), cuentaOrigen.getBalance(), preview.taxAmount());
+    }
+
+    UsdToArsConversion conversion = usdToArsConversionService.calculate(monto);
+
+    cuentaOrigen.setBalance(cuentaOrigen.getBalance() - conversion.totalDebitado());
+    cuentaDestino.setBalance(cuentaDestino.getBalance() + conversion.amountArs());
+
+    transaction.setIdOrigin(cuentaOrigen);
+    transaction.setIdDestination(cuentaDestino);
+    transaction.setBalance(conversion.amountArs());
+    transaction.setOriginalAmount(conversion.amountUsd());
+    transaction.setOriginalCurrency(Currency.USD);
+    transaction.setCurrency(Currency.ARS);
+    transaction.setExchangeRate(conversion.exchangeRate());
+    transaction.setTaxAmount(conversion.taxAmount());
+    transaction.setTaxPercentage(conversion.taxPercentage());
+    transaction.setState("COMPLETED");
+
+    accountRepository.save(cuentaOrigen);
+    accountRepository.save(cuentaDestino);
+    transactionRepository.save(transaction);
+
+    Event event = new Event(EventType.TRANSACTION_COMPLETED);
+    event.addData("user", cuentaOrigen.getUser());
+    event.addData("amount", conversion.amountUsd());
+    event.addData("amountArs", conversion.amountArs());
+    event.addData("exchangeRate", conversion.exchangeRate());
+    event.addData("taxAmount", conversion.taxAmount());
+    event.addData("taxPercentage", conversion.taxPercentage());
+    event.addData("totalDebitado", conversion.totalDebitado());
+    event.addData("destinationAlias", cuentaDestino.getAccountNickname());
+    event.addData("currency", "ARS");
+    event.addData("converted", true);
+    event.addData("operationType", "CONVERSION");
+    eventPublisher.publish(event);
+
+    return TransferOperationResult.ok("Transferencia completada exitosamente");
+  }
+
+
 
     @Transactional
     public boolean transactionWithConversion(Account cuentaOrigen, Account cuentaDestino, double monto) {
