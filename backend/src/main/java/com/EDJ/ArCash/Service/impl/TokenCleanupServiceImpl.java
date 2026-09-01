@@ -11,6 +11,7 @@ import com.EDJ.ArCash.Repository.TransactionRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.Repository.ValidationTokenRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -24,29 +25,30 @@ import java.util.List;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class TokenCleanupServiceImpl implements TokenCleanupService, ApplicationListener<ContextRefreshedEvent> {
 
-    @Autowired
-    private ValidationTokenRepository validationTokenRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final ValidationTokenRepository validationTokenRepository;
 
-    @Autowired
-    private AccountRepository accountRepository;
 
-    @Autowired
-    private TransactionRepository transactionRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private FavoriteContactRepository favoriteContactRepository;
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private final AccountRepository accountRepository;
 
-    @Autowired
+
+    private final TransactionRepository transactionRepository;
+
+
+    private final FavoriteContactRepository favoriteContactRepository;
+
+
+    private final RefreshTokenRepository refreshTokenRepository;
+
+
     @Lazy
-    private TokenCleanupService self;
+    private final TokenCleanupService self;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {

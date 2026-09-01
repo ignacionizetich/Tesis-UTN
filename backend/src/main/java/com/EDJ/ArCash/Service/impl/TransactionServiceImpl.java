@@ -16,6 +16,7 @@ import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -24,6 +25,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
     private final AccountRepository accountRepository;
@@ -33,19 +35,6 @@ public class TransactionServiceImpl implements TransactionService {
     private final UsdToArsConversionService usdToArsConversionService;
     private final FavoriteContactService favoriteContactService;
 
-    public TransactionServiceImpl(AccountRepository accountRepository,
-                              TransactionRepository transactionRepository,
-                              EventPublisher eventPublisher,
-                              ArsToUsdConversionService arsToUsdConversionService,
-                              UsdToArsConversionService usdToArsConversionService,
-                              FavoriteContactService favoriteContactService) {
-        this.accountRepository = accountRepository;
-        this.transactionRepository = transactionRepository;
-        this.eventPublisher = eventPublisher;
-        this.arsToUsdConversionService = arsToUsdConversionService;
-        this.usdToArsConversionService = usdToArsConversionService;
-        this.favoriteContactService = favoriteContactService;
-    }
 
     /**
      * Transferencia con ownership del origen + side-effect lastUsed de favoritos.

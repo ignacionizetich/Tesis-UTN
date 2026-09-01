@@ -13,12 +13,14 @@ import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
@@ -27,17 +29,7 @@ public class AccountServiceImpl implements AccountService {
     private final AliasFormatValidator aliasFormatValidator;
     private final VirtualCardService virtualCardService;
 
-    public AccountServiceImpl(AccountRepository accountRepository,
-                          EventPublisher eventPublisher,
-                          AccountIdentifierGenerator identifierGenerator,
-                          AliasFormatValidator aliasFormatValidator,
-                          VirtualCardService virtualCardService) {
-        this.accountRepository = accountRepository;
-        this.eventPublisher = eventPublisher;
-        this.identifierGenerator = identifierGenerator;
-        this.aliasFormatValidator = aliasFormatValidator;
-        this.virtualCardService = virtualCardService;
-    }
+
 
     public void createAccount(User user) {
         Account account = new Account();
@@ -48,7 +40,7 @@ public class AccountServiceImpl implements AccountService {
         account.setAccountCvu(identifierGenerator.generateUniqueCvu());
         accountRepository.save(account);
         virtualCardService.createForAccount(account);
-        
+
         // Publicar evento de cuenta creada
         Event event = new Event(EventType.ACCOUNT_CREATED);
         event.addData("user", user);

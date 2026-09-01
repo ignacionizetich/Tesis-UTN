@@ -4,19 +4,18 @@ import com.EDJ.ArCash.Service.interfaces.ValidationTokenService;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Models.ValidationToken;
 import com.EDJ.ArCash.Repository.ValidationTokenRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class ValidationTokenServiceImpl implements ValidationTokenService {
 
     private final ValidationTokenRepository validationTokenRepository;
 
-    public ValidationTokenServiceImpl(ValidationTokenRepository validationTokenRepository) {
-        this.validationTokenRepository = validationTokenRepository;
-    }
 
     @Transactional
     public void usedToken(User user){
@@ -36,7 +35,7 @@ public class ValidationTokenServiceImpl implements ValidationTokenService {
         try {
             // Buscar si ya existe un token para este usuario
             ValidationToken existingToken = validationTokenRepository.findByUser(user);
-            
+
             if (existingToken != null) {
                 // Si existe, actualizar el token existente
                 existingToken.regenerateToken(); // Regenerar el valor del token

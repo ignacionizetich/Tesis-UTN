@@ -5,6 +5,7 @@ import com.EDJ.ArCash.exception.response.ErrorResponse;
 import io.jsonwebtoken.JwtException;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.coyote.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -247,6 +248,18 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+
+    @ExceptionHandler(PasswordMissmatchException.class)
+    public ResponseEntity<ErrorResponse> handlePasswordMissmatchException(PasswordMissmatchException ex, HttpServletRequest request){
+      ErrorResponse error = new ErrorResponse(
+        false,
+        ex.getMessage(),
+        "CREDENTIALS_MISSMATCH",
+        request.getRequestURI()
+      );
+      return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     /**

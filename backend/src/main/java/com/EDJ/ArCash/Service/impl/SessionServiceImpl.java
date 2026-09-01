@@ -5,21 +5,20 @@ import com.EDJ.ArCash.Models.RefreshToken;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class SessionServiceImpl implements SessionService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    public SessionServiceImpl(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository) {
-        this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
-    }
+
 
     public boolean tieneSesionActiva(Long userId) {
         return userRepository.findById(userId)

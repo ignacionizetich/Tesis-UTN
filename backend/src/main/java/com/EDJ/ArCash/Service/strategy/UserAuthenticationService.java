@@ -40,6 +40,7 @@ public class UserAuthenticationService implements AuthenticationStrategy {
         Credentials credentials = credentialsOptional.get();
         User user = credentials.getUser();
 
+
         if (!passwordEncoder.matches(loginRequest.getPassword(), credentials.getPass())) {
             logger.warn("Credenciales incorrectas para usuario: {}", loginRequest.getUsername());
             return AuthenticationResult.failure("Credenciales incorrectas");

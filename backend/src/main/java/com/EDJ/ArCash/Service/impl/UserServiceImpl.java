@@ -14,9 +14,11 @@ import com.EDJ.ArCash.Models.ValidationToken;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.CredentialRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
+import com.EDJ.ArCash.exception.personalizated.PasswordMissmatchException;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +30,7 @@ import java.util.Optional;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
@@ -48,28 +51,12 @@ public class UserServiceImpl implements UserService {
 
     private final EventPublisher eventPublisher;
 
-    public UserServiceImpl(PasswordEncoder passwordEncoder,
-                       UserRepository userRepository,
-                       AccountService accountService,
-                       AccountRepository accountRepository,
-                       CredentialRepository credentialRepository,
-                       EmailService emailService,
-                       ValidationTokenService validationTokenService,
-                       EventPublisher eventPublisher) {
-        this.userRepository = userRepository;
-        this.accountService = accountService;
-        this.accountRepository = accountRepository;
-        this.credentialRepository = credentialRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.emailService = emailService;
-        this.validationTokenService = validationTokenService;
-        this.eventPublisher = eventPublisher;
-    }
+
 
     public void insertarUsuario(User user, String rawPassword) throws RuntimeException {
         // Validar múltiples conflictos
         validateUserConflicts(user);
-        
+
         // Formatear nombres
         user.setName(capitalize(user.getName()));
         user.setLastName(capitalize(user.getLastName()));
@@ -78,6 +65,11 @@ public class UserServiceImpl implements UserService {
         user.setPermissions(Permissions.USER);
 
         // Crear credenciales y token en cascada
+
+      if(user.getEmail().equals(rawPassword)){
+        throw new PasswordMissmatchException("La contraseña no puede ser igual a tu email, por favor elija otra");
+      }
+
         user.setCredentials(new Credentials(user, user.getAlias(), passwordEncoder.encode(rawPassword)));
         user.setValidationToken(new ValidationToken(user));
 
@@ -139,7 +131,7 @@ public class UserServiceImpl implements UserService {
                 account.getBalance()
         ));
     }
-    
+
     private void validateUserConflicts(User user) {
         java.util.List<RegistrationConflictCode> errors = new java.util.ArrayList<>();
 
@@ -159,12 +151,12 @@ public class UserServiceImpl implements UserService {
             throw new RegistrationConflictException(errors);
         }
     }
-    
+
     private User findByAlias(String alias) {
         // Usar el método del repository para búsqueda por alias
         return userRepository.findByAlias(alias).orElse(null);
     }
-    
+
     private User findByDni(String dni) {
         // Usar el método del repository para búsqueda por DNI
         return userRepository.findByDni(dni).orElse(null);
@@ -208,26 +200,26 @@ public class UserServiceImpl implements UserService {
         try {
             // Buscar el usuario por email
             java.util.Optional<User> optionalUser = userRepository.findByEmail(email);
-            
+
             if (optionalUser.isEmpty()) {
                 return false; // Usuario no existe
             }
-            
+
             User user = optionalUser.get();
-            
+
             // Verificar que el usuario no esté ya validado
             if (user.isEnabled()) {
                 return false; // Usuario ya está validado
             }
-            
+
             // Crear un nuevo token de validación (invalidar el anterior)
             ValidationToken newToken = validationTokenService.createNewToken(user);
-            
+
             // Enviar el nuevo email de validación
             emailService.sendVerificationEmail(user, newToken.getToken());
-            
+
             return true;
-            
+
         } catch (Exception e) {
             // Log del error (opcional)
             System.err.println("Error al reenviar email de validación: " + e.getMessage());

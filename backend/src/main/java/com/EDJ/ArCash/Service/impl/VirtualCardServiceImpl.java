@@ -10,6 +10,7 @@ import com.EDJ.ArCash.Models.Imp.CardStatus;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.VirtualCardRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class VirtualCardServiceImpl implements VirtualCardService {
 
     private static final double DEFAULT_LIMIT_ARS = 50_000.0;
@@ -38,16 +40,7 @@ public class VirtualCardServiceImpl implements VirtualCardService {
     private final CardCryptoService cardCryptoService;
     private final CardNumberGenerator cardNumberGenerator;
 
-    public VirtualCardServiceImpl(
-            VirtualCardRepository virtualCardRepository,
-            AccountRepository accountRepository,
-            CardCryptoService cardCryptoService,
-            CardNumberGenerator cardNumberGenerator) {
-        this.virtualCardRepository = virtualCardRepository;
-        this.accountRepository = accountRepository;
-        this.cardCryptoService = cardCryptoService;
-        this.cardNumberGenerator = cardNumberGenerator;
-    }
+
 
     @Transactional
     public VirtualCard createForAccount(Account account) {

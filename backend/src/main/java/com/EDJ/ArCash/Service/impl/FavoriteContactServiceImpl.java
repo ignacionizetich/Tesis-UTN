@@ -8,6 +8,7 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.FavoriteContactRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,19 +17,14 @@ import java.util.Optional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class FavoriteContactServiceImpl implements FavoriteContactService {
 
     private final FavoriteContactRepository favoriteContactRepository;
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
 
-    public FavoriteContactServiceImpl(FavoriteContactRepository favoriteContactRepository,
-                                  UserRepository userRepository,
-                                  AccountRepository accountRepository) {
-        this.favoriteContactRepository = favoriteContactRepository;
-        this.userRepository = userRepository;
-        this.accountRepository = accountRepository;
-    }
+
 
     public boolean addFavoriteContact(Long userId, Long accountId, String contactAlias, String description) {
         try {

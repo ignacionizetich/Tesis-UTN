@@ -10,6 +10,7 @@ import com.EDJ.ArCash.Models.Credentials;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,19 +21,20 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
 
-  @Autowired
-  private UserRepository userRepository;
 
-  @Autowired
-  private AccountService accountService;
+  private final UserRepository userRepository;
 
-  @Autowired
-  private SessionService sessionService;
 
-  @Autowired
-  private PasswordEncoder passwordEncoder;
+  private final AccountService accountService;
+
+
+  private final SessionService sessionService;
+
+
+  private final PasswordEncoder passwordEncoder;
 
   public List<UserResponse> getAuthUsers() {
     List<User> users = userRepository.findByEnabledTrue();

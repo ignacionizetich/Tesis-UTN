@@ -6,12 +6,14 @@ import com.EDJ.ArCash.Service.result.*;
 
 import com.EDJ.ArCash.DTO.AuthDTO.TaxPesosResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TaxUsdResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class TaxServiceImpl implements TaxService {
 
     private static final double ALICUOTA_IVA = 0.21;
@@ -24,9 +26,6 @@ public class TaxServiceImpl implements TaxService {
 
     private final CotizationUsdService cotizationUsdService;
 
-    public TaxServiceImpl(CotizationUsdService cotizationUsdService) {
-        this.cotizationUsdService = cotizationUsdService;
-    }
 
     public TaxPesosResponse calcularPesos(double monto) {
         double iva = calcularIva(monto);

@@ -14,6 +14,7 @@ import com.EDJ.ArCash.Models.Imp.LoanStatus;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.LoanRepository;
 import com.EDJ.ArCash.Repository.TransactionRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class LoanServiceImpl implements LoanService {
 
     public static final double MIN_PRINCIPAL = 1_000.0;
@@ -44,18 +46,7 @@ public class LoanServiceImpl implements LoanService {
     private final TransactionRepository transactionRepository;
     private final LoanRateConfigService loanRateConfigService;
 
-    public LoanServiceImpl(
-            LoanRepository loanRepository,
-            AccountRepository accountRepository,
-            AccountService accountService,
-            TransactionRepository transactionRepository,
-            LoanRateConfigService loanRateConfigService) {
-        this.loanRepository = loanRepository;
-        this.accountRepository = accountRepository;
-        this.accountService = accountService;
-        this.transactionRepository = transactionRepository;
-        this.loanRateConfigService = loanRateConfigService;
-    }
+
 
     public double monthlyRateFor(int installments) {
         return loanRateConfigService.monthlyRateFor(installments);

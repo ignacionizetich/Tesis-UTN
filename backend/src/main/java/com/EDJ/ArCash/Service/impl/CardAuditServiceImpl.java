@@ -6,19 +6,19 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Models.VirtualCard;
 import com.EDJ.ArCash.Models.Imp.CardAuditType;
 import com.EDJ.ArCash.Repository.CardAuditEventRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CardAuditServiceImpl implements CardAuditService {
 
     private final CardAuditEventRepository auditRepository;
 
-    public CardAuditServiceImpl(CardAuditEventRepository auditRepository) {
-        this.auditRepository = auditRepository;
-    }
+
 
     @Transactional
     public void record(User user, VirtualCard card, CardAuditType type, String meta) {

@@ -4,20 +4,18 @@ import com.EDJ.ArCash.Service.interfaces.CotizationUsdService;
 import com.EDJ.ArCash.Service.interfaces.ArsToUsdConversionService;
 import com.EDJ.ArCash.Service.result.*;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class ArsToUsdConversionServiceImpl implements ArsToUsdConversionService {
 
     private final TaxService taxService;
     private final CotizationUsdService cotizationUsdService;
 
-    public ArsToUsdConversionServiceImpl(TaxService taxService, CotizationUsdService cotizationUsdService) {
-        this.taxService = taxService;
-        this.cotizationUsdService = cotizationUsdService;
-    }
 
     /**
      * Solo comision / total a debitar. No consulta la cotizacion externa/cache.

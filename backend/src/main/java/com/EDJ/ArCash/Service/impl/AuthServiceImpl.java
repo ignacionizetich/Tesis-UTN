@@ -13,6 +13,7 @@ import com.EDJ.ArCash.Service.strategy.AuthenticationStrategy;
 import com.EDJ.ArCash.Service.strategy.PasswordRecoveryStrategy;
 import com.EDJ.ArCash.Service.strategy.TokenManagementStrategy;
 import com.EDJ.ArCash.factory.LoginResponseFactory;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,33 +26,34 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
-    @Autowired
+
     @Qualifier("userAuthenticationService")
-    private AuthenticationStrategy authenticationStrategy;
+    private final AuthenticationStrategy authenticationStrategy;
 
-    @Autowired
+
     @Qualifier("jwtTokenManagementService")
-    private TokenManagementStrategy tokenManagementStrategy;
+    private final TokenManagementStrategy tokenManagementStrategy;
 
-    @Autowired
+
     @Qualifier("emailPasswordRecoveryService")
-    private PasswordRecoveryStrategy passwordRecoveryStrategy;
+    private final PasswordRecoveryStrategy passwordRecoveryStrategy;
 
-    @Autowired
-    private LoginResponseFactory loginResponseFactory;
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final LoginResponseFactory loginResponseFactory;
 
-    @Autowired
-    private AccountService accountService;
 
-    @Autowired
-    private RefreshTokenCleanupService refreshTokenCleanupService;
+    private final AccountRepository accountRepository;
+
+
+    private final AccountService accountService;
+
+
+    private final RefreshTokenCleanupService refreshTokenCleanupService;
 
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
