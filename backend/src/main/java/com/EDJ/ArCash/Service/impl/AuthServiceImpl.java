@@ -2,6 +2,7 @@ package com.EDJ.ArCash.Service.impl;
 import com.EDJ.ArCash.Service.interfaces.RefreshTokenCleanupService;
 import com.EDJ.ArCash.Service.interfaces.AccountService;
 import com.EDJ.ArCash.Service.interfaces.AuthService;
+import com.EDJ.ArCash.Service.interfaces.SessionService;
 import com.EDJ.ArCash.Service.result.*;
 
 import com.EDJ.ArCash.DTO.AuthDTO.LoginRequest;
@@ -13,6 +14,7 @@ import com.EDJ.ArCash.Service.strategy.AuthenticationStrategy;
 import com.EDJ.ArCash.Service.strategy.PasswordRecoveryStrategy;
 import com.EDJ.ArCash.Service.strategy.TokenManagementStrategy;
 import com.EDJ.ArCash.factory.LoginResponseFactory;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,33 +27,37 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
-    @Autowired
+
     @Qualifier("userAuthenticationService")
-    private AuthenticationStrategy authenticationStrategy;
+    private final AuthenticationStrategy authenticationStrategy;
 
-    @Autowired
+
     @Qualifier("jwtTokenManagementService")
-    private TokenManagementStrategy tokenManagementStrategy;
+    private final TokenManagementStrategy tokenManagementStrategy;
 
-    @Autowired
+
     @Qualifier("emailPasswordRecoveryService")
-    private PasswordRecoveryStrategy passwordRecoveryStrategy;
+    private final PasswordRecoveryStrategy passwordRecoveryStrategy;
 
-    @Autowired
-    private LoginResponseFactory loginResponseFactory;
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final LoginResponseFactory loginResponseFactory;
 
-    @Autowired
-    private AccountService accountService;
 
-    @Autowired
-    private RefreshTokenCleanupService refreshTokenCleanupService;
+    private final AccountRepository accountRepository;
+
+
+    private final AccountService accountService;
+
+
+    private final RefreshTokenCleanupService refreshTokenCleanupService;
+
+
+    private final SessionService sessionService;
 
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
@@ -138,6 +144,16 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = tokenOpt.get().getUser();
+
+        // /api/auth/refresh es publico, asi que no pasa por el filtro JWT que corta a los
+        // usuarios inactivos. Sin este control, un refresh token vigente seguiria emitiendo
+        // access tokens despues de que la cuenta se deshabilite.
+        if (!user.isActive()) {
+            logger.warn("Refresh rechazado: la cuenta {} está deshabilitada", user.getId());
+            sessionService.revokeAllUserTokens(user.getId());
+            return RefreshAccessResult.disabled();
+        }
+
         String newAccessToken = tokenManagementStrategy.generateAccessToken(
                 String.valueOf(user.getId()),
                 user.getPermissions().name()

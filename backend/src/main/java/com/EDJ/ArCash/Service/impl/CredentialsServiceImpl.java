@@ -11,6 +11,7 @@ import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,22 +20,17 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CredentialsServiceImpl implements CredentialsService {
 
-    
+
     private final RecoveryTokenRepository recoveryTokenRepository;
     private final CredentialRepository credentialRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EventPublisher eventPublisher;
 
-    public CredentialsServiceImpl(CredentialRepository credentialRepository, PasswordEncoder passwordEncoder, RecoveryTokenRepository recoveryTokenRepository, UserRepository userRepository, EventPublisher eventPublisher) {
-        this.credentialRepository = credentialRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.recoveryTokenRepository = recoveryTokenRepository;
-        this.userRepository = userRepository;
-        this.eventPublisher = eventPublisher;
-    }
+
 
     public void createCredentials(User user, String rawPassword){
         Credentials credentials = new Credentials();

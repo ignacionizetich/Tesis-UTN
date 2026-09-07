@@ -66,12 +66,14 @@ class ApiAdminControllerSecurityTest {
 
     private User usuario;
     private User admin;
+    private User root;
     private User objetivo;
 
     @BeforeEach
     void setUp() {
         usuario = persistirUsuario("user.admin.sec", "user.admin.sec@test.com", "11111111", Permissions.USER);
         admin = persistirUsuario("admin.sec", "admin.sec@test.com", "22222222", Permissions.ADMIN);
+        root = persistirUsuario("root.sec", "root.sec@test.com", "44444444", Permissions.ROOT);
         objetivo = persistirUsuario("target.sec", "target.sec@test.com", "33333333", Permissions.USER);
     }
 
@@ -154,11 +156,19 @@ class ApiAdminControllerSecurityTest {
     }
 
     @Test
-    @DisplayName("POST create-admin con ADMIN: 200")
-    void createAdminConAdmin200() throws Exception {
-        expectOk(post("/api/admin/users/create-admin")
+    @DisplayName("POST create-admin con ADMIN: 403 (el alta de admins es exclusiva de ROOT)")
+    void createAdminConAdmin403() throws Exception {
+        expectForbidden(post("/api/admin/users/create-admin")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(CREATE_ADMIN_BODY), tokenAdmin());
+    }
+
+    @Test
+    @DisplayName("POST create-admin con ROOT: 200")
+    void createAdminConRoot200() throws Exception {
+        expectOk(post("/api/admin/users/create-admin")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(CREATE_ADMIN_BODY), tokenRoot());
     }
 
     // --- GET /check-access ---
@@ -201,6 +211,10 @@ class ApiAdminControllerSecurityTest {
 
     private String tokenAdmin() {
         return emitirAccessConSesion(admin, "ADMIN");
+    }
+
+    private String tokenRoot() {
+        return emitirAccessConSesion(root, "ROOT");
     }
 
     private User persistirUsuario(String alias, String email, String dni, Permissions permissions) {

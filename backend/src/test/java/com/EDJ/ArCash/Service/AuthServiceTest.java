@@ -3,6 +3,7 @@ import com.EDJ.ArCash.Service.result.RefreshAccessResult;
 import com.EDJ.ArCash.Service.interfaces.AccountService;
 import com.EDJ.ArCash.Service.interfaces.AuthService;
 import com.EDJ.ArCash.Service.interfaces.RefreshTokenCleanupService;
+import com.EDJ.ArCash.Service.interfaces.SessionService;
 import com.EDJ.ArCash.Service.impl.AuthServiceImpl;
 
 import com.EDJ.ArCash.DTO.AuthDTO.LoginRequest;
@@ -48,6 +49,7 @@ class AuthServiceTest {
     private AccountRepository accountRepository;
     private AccountService accountService;
     private RefreshTokenCleanupService refreshTokenCleanupService;
+    private SessionService sessionService;
     private AuthService authService;
 
     @BeforeEach
@@ -59,15 +61,17 @@ class AuthServiceTest {
         accountRepository = mock(AccountRepository.class);
         accountService = mock(AccountService.class);
         refreshTokenCleanupService = mock(RefreshTokenCleanupService.class);
+        sessionService = mock(SessionService.class);
 
-        authService = new AuthServiceImpl();
-        ReflectionTestUtils.setField(authService, "authenticationStrategy", authenticationStrategy);
-        ReflectionTestUtils.setField(authService, "tokenManagementStrategy", tokenManagementStrategy);
-        ReflectionTestUtils.setField(authService, "passwordRecoveryStrategy", passwordRecoveryStrategy);
-        ReflectionTestUtils.setField(authService, "loginResponseFactory", loginResponseFactory);
-        ReflectionTestUtils.setField(authService, "accountRepository", accountRepository);
-        ReflectionTestUtils.setField(authService, "accountService", accountService);
-        ReflectionTestUtils.setField(authService, "refreshTokenCleanupService", refreshTokenCleanupService);
+        authService = new AuthServiceImpl(
+                authenticationStrategy,
+                tokenManagementStrategy,
+                passwordRecoveryStrategy,
+                loginResponseFactory,
+                accountRepository,
+                accountService,
+                refreshTokenCleanupService,
+                sessionService);
     }
 
     @Test
@@ -216,6 +220,27 @@ class AuthServiceTest {
         RefreshAccessResult r = authService.refreshAccessToken("ok");
         assertEquals(RefreshAccessResult.Kind.OK, r.getKind());
         assertEquals("access-nuevo", r.getAccessToken());
+    }
+
+    @Test
+    @DisplayName("refresh con cuenta deshabilitada: DISABLED, no emite access token y revoca los refresh")
+    void refreshDeCuentaDeshabilitadaNoEmiteAccess() {
+        // /api/auth/refresh es publico: si no se revalida el estado aca, un refresh token
+        // vigente sigue produciendo access tokens despues de deshabilitar la cuenta.
+        User deshabilitado = usuario();
+        deshabilitado.setActive(false);
+
+        RefreshToken active = new RefreshToken();
+        active.setUser(deshabilitado);
+        active.setExpiresAt(LocalDateTime.now().plusDays(1));
+        when(refreshTokenCleanupService.getRefreshTokenAndRevokedFalse("ok")).thenReturn(Optional.of(active));
+
+        RefreshAccessResult r = authService.refreshAccessToken("ok");
+
+        assertEquals(RefreshAccessResult.Kind.DISABLED, r.getKind());
+        assertNull(r.getAccessToken());
+        verify(tokenManagementStrategy, never()).generateAccessToken(anyString(), anyString());
+        verify(sessionService).revokeAllUserTokens(ID_USUARIO);
     }
 
     private LoginRequest pedido() {

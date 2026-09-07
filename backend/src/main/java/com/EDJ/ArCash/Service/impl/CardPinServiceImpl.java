@@ -7,6 +7,7 @@ import com.EDJ.ArCash.Models.CardPin;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Models.Imp.CardAuditType;
 import com.EDJ.ArCash.Repository.CardPinRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Service
+@RequiredArgsConstructor
 public class CardPinServiceImpl implements CardPinService {
 
     private static final Pattern PIN_PATTERN = Pattern.compile("^\\d{6}$");
@@ -27,16 +29,7 @@ public class CardPinServiceImpl implements CardPinService {
     private final CardAuditService cardAuditService;
     private final CardUnlockService cardUnlockService;
 
-    public CardPinServiceImpl(
-            CardPinRepository cardPinRepository,
-            PasswordEncoder passwordEncoder,
-            CardAuditService cardAuditService,
-            CardUnlockService cardUnlockService) {
-        this.cardPinRepository = cardPinRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.cardAuditService = cardAuditService;
-        this.cardUnlockService = cardUnlockService;
-    }
+
 
     public boolean isConfigured(Long userId) {
         return cardPinRepository.existsByUser_Id(userId);

@@ -11,12 +11,15 @@ import { AuthService } from '../../../services/auth/auth.service';
 import { ResendService } from '../../../services/resend/resend.service';
 import { ToastService } from '../../../services/toast/toast.service';
 import {
+  AUTH_RULES,
   passwordMatchValidator,
   emailMatchValidator,
+  passwordNotSimilarToIdentityValidator,
   strongPasswordValidator,
 } from '../../../shared/validators/auth.validators';
 import { maskEmail } from '../../../shared/utils/email-mask';
 import { logger } from '../../../shared/utils/logger';
+import { errorMessage, fieldErrorsOf } from '../../../shared/utils/error-message';
 
 @Component({
   selector: 'app-register-form',
@@ -49,11 +52,11 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.registerForm = this.fb.group({
-      nombre: ['', [Validators.required, Validators.pattern('[A-Za-zÁÉÍÓÚáéíóúÑñ\\s]{2,50}'), Validators.minLength(2), Validators.maxLength(50)]],
-      apellido: ['', [Validators.required, Validators.pattern('[A-Za-zÁÉÍÓÚáéíóúÑñ\\s]{2,50}'), Validators.minLength(2), Validators.maxLength(50)]],
-      dni: ['', [Validators.required, Validators.pattern('^\\d{8}$'), Validators.minLength(8), Validators.maxLength(8)]],
-      alias: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(10), Validators.pattern('^[a-zA-Z0-9_-]+$')]],
-      
+      nombre: ['', [Validators.required, Validators.pattern(AUTH_RULES.personName), Validators.minLength(AUTH_RULES.personNameMinLength), Validators.maxLength(AUTH_RULES.personNameMaxLength)]],
+      apellido: ['', [Validators.required, Validators.pattern(AUTH_RULES.personName), Validators.minLength(AUTH_RULES.personNameMinLength), Validators.maxLength(AUTH_RULES.personNameMaxLength)]],
+      dni: ['', [Validators.required, Validators.pattern(AUTH_RULES.dni)]],
+      alias: ['', [Validators.required, Validators.minLength(AUTH_RULES.usernameMinLength), Validators.maxLength(AUTH_RULES.usernameMaxLength), Validators.pattern(AUTH_RULES.username)]],
+
       emails: this.fb.group({
         email: ['', [Validators.required, Validators.email, Validators.pattern('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$')]],
         confirmEmail: ['', [Validators.required, Validators.email]]
@@ -67,7 +70,27 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
       }, { 
         validators: passwordMatchValidator
       })
+    }, {
+      // A nivel del formulario porque compara la contraseña contra campos que están fuera de
+      // su propio grupo. Es la misma regla que aplica el backend al recibir el registro.
+      validators: passwordNotSimilarToIdentityValidator(['alias', 'emails.email', 'dni', 'nombre', 'apellido'])
     });
+  }
+
+  /** El campo de identidad que la contraseña está repitiendo, si hay alguno. */
+  get passwordIdentityConflict(): string | null {
+    const conflict = this.registerForm?.errors?.['passwordLikeIdentity'];
+    if (!conflict) {
+      return null;
+    }
+    const labels: Record<string, string> = {
+      alias: 'nombre de usuario',
+      'emails.email': 'email',
+      dni: 'DNI',
+      nombre: 'nombre',
+      apellido: 'apellido',
+    };
+    return labels[conflict.field] ?? 'datos personales';
   }
 
   onSubmit(): void {
@@ -109,36 +132,56 @@ export class RegisterFormComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.loading = false;
         logger.error('Error en registro:', error);
-        
-        const backendMessage = error.error?.message;
-        
+        this.applyServerFieldErrors(error);
+
+        const backendMessage = errorMessage(error, '');
+
         if (backendMessage) {
-          if (backendMessage.includes("email ya se encuentra en uso") ||
-              backendMessage.includes("nombre de usuario no está disponible") ||
-              backendMessage.includes("DNI ya está registrado")) {
-            this.toast.show(backendMessage, "warning");
-          } else if (backendMessage.includes("campos son obligatorios")) {
-            this.toast.show("Todos los campos son obligatorios.", "warning");
-          } else {
-            this.toast.show(backendMessage, "error");
-          }
+          const esDatoRechazado = error.status >= 400 && error.status < 500;
+          this.toast.show(backendMessage, esDatoRechazado ? "warning" : "error");
+        } else if (error.status === 0 || !navigator.onLine) {
+          this.toast.show("Sin conexión. Verifica tu conexión a internet e intenta nuevamente.", "warning");
+        } else if (error.status >= 500) {
+          this.toast.show("Error del servidor. Intenta registrarte nuevamente en unos momentos.", "error");
+        } else if (error.status === 400) {
+          this.toast.show("Datos inválidos. Revisa que todos los campos tengan el formato correcto.", "warning");
         } else {
-          if (error.status === 400) {
-            this.toast.show("Datos inválidos. Revisa que todos los campos tengan el formato correcto.", "warning");
-          } else if (error.status >= 500) {
-            this.toast.show("Error del servidor. Intenta registrarte nuevamente en unos momentos.", "error");
-          } else if (error.status === 0 || !navigator.onLine) {
-            this.toast.show("Sin conexión. Verifica tu conexión a internet e intenta nuevamente.", "warning");
-          } else {
-            this.toast.show("Error inesperado. No se pudo completar el registro. Intenta nuevamente.", "error");
-          }
+          this.toast.show("Error inesperado. No se pudo completar el registro. Intenta nuevamente.", "error");
         }
       }
     });
   }
 
-  onDniInput(event: any): void {
-    const input = event.target;
+  /**
+   * Marca en el formulario los campos que el backend rechazó.
+   *
+   * El DTO del servidor usa `name`/`lastName`/`email`/`password`; acá viven con otros
+   * nombres y a veces dentro de un grupo. Sin este mapeo el toast avisa pero el input
+   * no se pinta en rojo.
+   */
+  private applyServerFieldErrors(error: unknown): void {
+    const paths: Record<string, string> = {
+      name: 'nombre',
+      lastName: 'apellido',
+      dni: 'dni',
+      alias: 'alias',
+      username: 'alias',
+      email: 'emails.email',
+      password: 'passwords.password',
+    };
+
+    for (const fieldError of fieldErrorsOf(error)) {
+      const path = paths[fieldError.field] ?? fieldError.field;
+      const control = this.registerForm.get(path);
+      if (control) {
+        control.setErrors({ ...(control.errors ?? {}), server: fieldError.message });
+        control.markAsTouched();
+      }
+    }
+  }
+
+  onDniInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
     let value = input.value;
     
     value = value.replace(/\D/g, '');

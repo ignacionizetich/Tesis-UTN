@@ -2,6 +2,7 @@ package com.EDJ.ArCash.Service.impl;
 import com.EDJ.ArCash.Service.interfaces.EmailService;
 
 import com.EDJ.ArCash.Models.User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value; // <-- ¡IMPORTADO!
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
     private final WebClient webClient;
     private final SpringTemplateEngine templateEngine;
@@ -20,10 +22,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    public EmailServiceImpl(WebClient resendWebClient, SpringTemplateEngine templateEngine) {
-        this.webClient = resendWebClient;
-        this.templateEngine = templateEngine;
-    }
+
 
     @Async
     public void sendVerificationEmail(User user, String token) {

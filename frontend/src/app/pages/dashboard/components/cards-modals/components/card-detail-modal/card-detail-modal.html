@@ -46,6 +46,35 @@
       </ul>
       }
     </section>
+    } @else if (isExpired) {
+    <section class="card-panel">
+      <div class="card-cancelled">
+        <strong>Tarjeta vencida</strong>
+        <p>•••• {{ card.last4 }} · vence {{ expLabel }}</p>
+        <p class="card-limit-hint">No se pueden ver ni cambiar los datos. Reemitila para seguir usándola.</p>
+        @if (card.canReissue) {
+        <button type="button" class="card-ctrl" (click)="reissueCard()" [disabled]="busy">
+          Solicitar nueva prepaga
+        </button>
+        } @else {
+        <p class="card-limit-hint">{{ card.reissueMessage }}</p>
+        }
+      </div>
+
+      <h3 class="card-audit-title">Actividad reciente</h3>
+      @if (audit.length === 0) {
+      <p class="card-audit-empty">Sin eventos todavía</p>
+      } @else {
+      <ul class="card-audit">
+        @for (event of audit.slice(0, 8); track event.id) {
+        <li>
+          <strong>{{ auditLabel(event.type) }}</strong>
+          <span>{{ event.createdAt }}</span>
+        </li>
+        }
+      </ul>
+      }
+    </section>
     } @else if (loadingReveal) {
     <p class="card-detail-modal__loading">Cargando datos seguros…</p>
     } @else if (reveal) {

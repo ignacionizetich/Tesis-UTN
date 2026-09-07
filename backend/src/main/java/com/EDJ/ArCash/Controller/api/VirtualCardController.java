@@ -11,6 +11,9 @@ import com.EDJ.ArCash.Service.interfaces.CardAuditService;
 import com.EDJ.ArCash.Service.interfaces.CardPinService;
 import com.EDJ.ArCash.Service.interfaces.CardUnlockService;
 import com.EDJ.ArCash.Service.interfaces.VirtualCardService;
+import com.EDJ.ArCash.exception.personalizated.BadRequestException;
+import com.EDJ.ArCash.exception.personalizated.ForbiddenException;
+import com.EDJ.ArCash.exception.personalizated.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping(value = "/api/cards", produces = "application/json")
@@ -60,9 +62,9 @@ public class VirtualCardController {
     }
 
     @PostMapping("/pin")
-    public ResponseEntity<?> setPin(
+    public ResponseEntity<CardUnlockResponse> setPin(
             @AuthenticationPrincipal CustomUserDetails principal,
-            @RequestBody CardPinRequest request) {
+            @Valid @RequestBody CardPinRequest request) {
         CardPinService.PinResult result = cardPinService.setPin(
                 principal.getUser(),
                 request.getPin(),
@@ -72,32 +74,29 @@ public class VirtualCardController {
     }
 
     @PostMapping("/pin/verify")
-    public ResponseEntity<?> verifyPin(
+    public ResponseEntity<CardUnlockResponse> verifyPin(
             @AuthenticationPrincipal CustomUserDetails principal,
-            @RequestBody CardPinVerifyRequest request) {
+            @Valid @RequestBody CardPinVerifyRequest request) {
         CardPinService.PinResult result = cardPinService.verify(principal.getUser(), request.getPin());
         return toUnlockResponse(result);
     }
 
     @GetMapping("/{cardId}/reveal")
-    public ResponseEntity<?> reveal(
+    public ResponseEntity<VirtualCardRevealResponse> reveal(
             @AuthenticationPrincipal CustomUserDetails principal,
             @PathVariable Long cardId,
             @RequestHeader(value = UNLOCK_HEADER, required = false) String unlockToken) {
         User user = principal.getUser();
         if (!cardUnlockService.isValid(unlockToken, user.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Debés desbloquear con tu PIN para ver los datos."));
+            throw new ForbiddenException("Debés desbloquear con tu PIN para ver los datos.");
         }
-        Optional<VirtualCard> owned = virtualCardService.findOwned(cardId, user.getId());
-        if (owned.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Tarjeta no encontrada"));
-        }
-        VirtualCard card = owned.get();
+        VirtualCard card = requireOwnedCard(cardId, user.getId());
         if (card.getStatus() == CardStatus.CANCELLED) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "La tarjeta está dada de baja."));
+            throw new BadRequestException("La tarjeta está dada de baja.");
+        }
+        // Mostrar los datos de una tarjeta vencida invita a intentar un pago que va a fallar.
+        if (virtualCardService.isExpired(card)) {
+            throw new BadRequestException("La tarjeta está vencida. Reemitila para ver los datos.");
         }
         String pan = virtualCardService.decryptPan(card);
         String cvc = virtualCardService.decryptCvc(card);
@@ -118,102 +117,59 @@ public class VirtualCardController {
     }
 
     @PatchMapping("/{cardId}/status")
-    public ResponseEntity<?> updateStatus(
+    public ResponseEntity<VirtualCardSummaryResponse> updateStatus(
             @AuthenticationPrincipal CustomUserDetails principal,
             @PathVariable Long cardId,
-            @RequestBody CardStatusRequest request) {
+            @Valid @RequestBody CardStatusRequest request) {
         User user = principal.getUser();
-        Optional<VirtualCard> owned = virtualCardService.findOwned(cardId, user.getId());
-        if (owned.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Tarjeta no encontrada"));
-        }
-        CardStatus status;
-        try {
-            status = CardStatus.valueOf(request.getStatus().trim().toUpperCase());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Estado inválido"));
-        }
+        VirtualCard card = requireOwnedCard(cardId, user.getId());
+        CardStatus status = parseStatus(request.getStatus());
         if (status != CardStatus.ACTIVE && status != CardStatus.PAUSED) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Usá el endpoint de baja para cancelar la tarjeta."));
+            throw new BadRequestException("Usá el endpoint de baja para cancelar la tarjeta.");
         }
-        try {
-            VirtualCard updated = virtualCardService.updateStatus(owned.get(), status);
-            cardAuditService.record(
-                    user,
-                    updated,
-                    status == CardStatus.PAUSED ? CardAuditType.PAUSE : CardAuditType.RESUME,
-                    "Estado: " + status.name());
-            return ResponseEntity.ok(toSummary(updated, cardPinService.isConfigured(user.getId())));
-        } catch (IllegalStateException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-        }
+        VirtualCard updated = virtualCardService.updateStatus(card, status);
+        cardAuditService.record(
+                user,
+                updated,
+                status == CardStatus.PAUSED ? CardAuditType.PAUSE : CardAuditType.RESUME,
+                "Estado: " + status.name());
+        return ResponseEntity.ok(toSummary(updated, cardPinService.isConfigured(user.getId())));
     }
 
     @PatchMapping("/{cardId}/limit")
-    public ResponseEntity<?> updateLimit(
+    public ResponseEntity<VirtualCardSummaryResponse> updateLimit(
             @AuthenticationPrincipal CustomUserDetails principal,
             @PathVariable Long cardId,
-            @RequestBody CardLimitRequest request) {
-        if (request.getDailyLimit() < 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "El límite no puede ser negativo"));
-        }
+            @Valid @RequestBody CardLimitRequest request) {
         User user = principal.getUser();
-        Optional<VirtualCard> owned = virtualCardService.findOwned(cardId, user.getId());
-        if (owned.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Tarjeta no encontrada"));
-        }
-        try {
-            VirtualCard updated = virtualCardService.updateLimit(owned.get(), request.getDailyLimit());
-            cardAuditService.record(
-                    user,
-                    updated,
-                    CardAuditType.LIMIT_CHANGE,
-                    "Límite diario: " + request.getDailyLimit());
-            return ResponseEntity.ok(toSummary(updated, cardPinService.isConfigured(user.getId())));
-        } catch (IllegalStateException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-        }
+        VirtualCard card = requireOwnedCard(cardId, user.getId());
+        VirtualCard updated = virtualCardService.updateLimit(card, request.getDailyLimit());
+        cardAuditService.record(
+                user,
+                updated,
+                CardAuditType.LIMIT_CHANGE,
+                "Límite diario: " + request.getDailyLimit());
+        return ResponseEntity.ok(toSummary(updated, cardPinService.isConfigured(user.getId())));
     }
 
     @PostMapping("/{cardId}/cancel")
-    public ResponseEntity<?> cancel(
+    public ResponseEntity<VirtualCardSummaryResponse> cancel(
             @AuthenticationPrincipal CustomUserDetails principal,
             @PathVariable Long cardId) {
         User user = principal.getUser();
-        Optional<VirtualCard> owned = virtualCardService.findOwned(cardId, user.getId());
-        if (owned.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Tarjeta no encontrada"));
-        }
-        try {
-            VirtualCard updated = virtualCardService.cancel(owned.get());
-            cardAuditService.record(user, updated, CardAuditType.CANCEL, "Tarjeta dada de baja");
-            return ResponseEntity.ok(toSummary(updated, cardPinService.isConfigured(user.getId())));
-        } catch (IllegalStateException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-        }
+        VirtualCard updated = virtualCardService.cancel(requireOwnedCard(cardId, user.getId()));
+        cardAuditService.record(user, updated, CardAuditType.CANCEL, "Tarjeta dada de baja");
+        return ResponseEntity.ok(toSummary(updated, cardPinService.isConfigured(user.getId())));
     }
 
     @PostMapping("/{cardId}/reissue")
-    public ResponseEntity<?> reissue(
+    public ResponseEntity<VirtualCardSummaryResponse> reissue(
             @AuthenticationPrincipal CustomUserDetails principal,
             @PathVariable Long cardId) {
         User user = principal.getUser();
-        Optional<VirtualCard> owned = virtualCardService.findOwned(cardId, user.getId());
-        if (owned.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Tarjeta no encontrada"));
-        }
-        try {
-            VirtualCard updated = virtualCardService.reissue(owned.get());
-            cardAuditService.record(user, updated, CardAuditType.REISSUE, "Nueva prepaga emitida");
-            return ResponseEntity.ok(toSummary(updated, cardPinService.isConfigured(user.getId())));
-        } catch (IllegalStateException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-        }
+        VirtualCard updated = virtualCardService.reissue(requireOwnedCard(cardId, user.getId()));
+        cardAuditService.record(user, updated, CardAuditType.REISSUE, "Nueva prepaga emitida");
+        return ResponseEntity.ok(toSummary(updated, cardPinService.isConfigured(user.getId())));
     }
 
     @GetMapping("/audit")
@@ -226,7 +182,21 @@ public class VirtualCardController {
         return ResponseEntity.ok(events);
     }
 
-    private ResponseEntity<?> toUnlockResponse(CardPinService.PinResult result) {
+    /** El PIN nunca revela si la tarjeta existe: 404 uniforme para ajena o inexistente. */
+    private VirtualCard requireOwnedCard(Long cardId, Long userId) {
+        return virtualCardService.findOwned(cardId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tarjeta no encontrada"));
+    }
+
+    private CardStatus parseStatus(String raw) {
+        try {
+            return CardStatus.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Estado inválido");
+        }
+    }
+
+    private ResponseEntity<CardUnlockResponse> toUnlockResponse(CardPinService.PinResult result) {
         CardUnlockResponse body = CardUnlockResponse.builder()
                 .success(result.success())
                 .message(result.message())

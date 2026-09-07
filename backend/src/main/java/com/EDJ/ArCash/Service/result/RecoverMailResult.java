@@ -1,6 +1,6 @@
 package com.EDJ.ArCash.Service.result;
 
-import java.util.Map;
+import com.EDJ.ArCash.DTO.common.ApiMessageResponse;
 
 /**
  * Resultado de POST /api/auth/send-recover-mail.
@@ -38,7 +38,7 @@ public final class RecoverMailResult {
         return kind;
     }
 
-    public Map<String, String> toBody() {
-        return Map.of("message", message);
+    public ApiMessageResponse toBody() {
+        return new ApiMessageResponse(kind == Kind.OK, message);
     }
 }

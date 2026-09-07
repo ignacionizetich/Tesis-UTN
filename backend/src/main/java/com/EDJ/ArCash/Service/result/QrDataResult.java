@@ -36,6 +36,12 @@ public final class QrDataResult {
         return payload;
     }
 
+    /**
+     * Contenido que el frontend codifica en el QR de cobro.
+     *
+     * <p>Se serializa directamente: los nombres de los componentes ya son las claves JSON que
+     * espera el cliente, asi que copiarlos a un Map solo agregaba un lugar donde equivocarse.
+     */
     public record QrPayload(
             String walletApp,
             Long accountId,
@@ -45,16 +51,5 @@ public final class QrDataResult {
             String email,
             String currency
     ) {
-        public java.util.Map<String, Object> toResponseMap() {
-            java.util.Map<String, Object> qrData = new java.util.HashMap<>();
-            qrData.put("walletApp", walletApp);
-            qrData.put("accountId", accountId);
-            qrData.put("accountAlias", accountAlias);
-            qrData.put("receiverName", receiverName);
-            qrData.put("dni", dni);
-            qrData.put("email", email);
-            qrData.put("currency", currency);
-            return qrData;
-        }
     }
 }

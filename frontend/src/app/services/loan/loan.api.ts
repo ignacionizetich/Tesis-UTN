@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { LoanDetail, LoanSimulation, LoanSummary } from '../../models/loan';
 import { LoanRatesResponse } from '../../models/loan-rates';
 import { logger } from '../../shared/utils/logger';
+import { errorMessage } from '../../shared/utils/error-message';
 
 @Injectable({
   providedIn: 'root',
@@ -44,7 +45,6 @@ export class LoanApi {
 
   handleError(error: unknown, fallback: string): string {
     logger.error(fallback, error);
-    const err = error as { error?: { message?: string; error?: string }; message?: string };
-    return err?.error?.error || err?.error?.message || err?.message || fallback;
+    return errorMessage(error, fallback);
   }
 }

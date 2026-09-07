@@ -13,6 +13,7 @@ import { UserDataStore } from '../../../../services/user-data-store/user-data.st
 import { AccountService } from '../../../../services/account/account.service';
 import { formatMoney } from '../../../../shared/utils/money-format';
 import { logger } from '../../../../shared/utils/logger';
+import { errorMessage } from '../../../../shared/utils/error-message';
 
 type DepositPhase = 'form' | 'crediting' | 'success';
 
@@ -123,7 +124,7 @@ export class DepositModalComponent {
       this.closed.emit();
     } catch (error) {
       logger.error('Error ingresando dinero:', error);
-      this.toast.show('Error al ingresar dinero', 'error');
+      this.toast.show(errorMessage(error, 'Error al ingresar dinero'), 'error');
       this.phase = 'form';
     } finally {
       this.isIngresandoDinero = false;

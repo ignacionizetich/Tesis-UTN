@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { validateGuard } from './validate.guard';
 import { ValidationService } from '../services/validation/validation.service';
-import { of, throwError } from 'rxjs';
 
 describe('ValidateGuard', () => {
   let router: jasmine.SpyObj<Router>;
@@ -30,28 +29,16 @@ describe('ValidateGuard', () => {
     expect(validateGuard).toBeTruthy();
   });
 
-  it('should allow access when token is valid', (done) => {
-    // Simular query params con token válido
+  it('should allow access when a token is present, leaving the validation to the component', () => {
     route.queryParams = { token: 'valid-token-123' };
-    
-    // Mock respuesta exitosa del servicio
-    validationService.validateEmailToken.and.returnValue(of({ success: true, message: 'Token válido' }));
-    
+
     const result = TestBed.runInInjectionContext(() => validateGuard(route, {} as any));
-    
-    if (result instanceof Promise) {
-      result.then(canActivate => {
-        expect(canActivate).toBe(true);
-        expect(router.navigate).not.toHaveBeenCalled();
-        done();
-      });
-    } else if (typeof result === 'object' && 'subscribe' in result) {
-      result.subscribe(canActivate => {
-        expect(canActivate).toBe(true);
-        expect(router.navigate).not.toHaveBeenCalled();
-        done();
-      });
-    }
+
+    expect(result).toBe(true);
+    expect(router.navigate).not.toHaveBeenCalled();
+    // El guard solo controla que el enlace traiga token: quien lo valida contra el backend
+    // es el componente, que necesita el resultado para mostrar el mensaje correcto.
+    expect(validationService.validateEmailToken).not.toHaveBeenCalled();
   });
 
   it('should redirect to 404 when token is missing', () => {
@@ -74,39 +61,12 @@ describe('ValidateGuard', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/404']);
   });
 
-  it('should redirect to 404 when token validation fails', (done) => {
-    // Simular query params con token inválido
-    route.queryParams = { token: 'invalid-token' };
-    
-    // Mock respuesta de fallo del servicio
-    validationService.validateEmailToken.and.returnValue(of({ success: false, message: 'Token expirado' }));
-    
-    const result = TestBed.runInInjectionContext(() => validateGuard(route, {} as any));
-    
-    if (typeof result === 'object' && 'subscribe' in result) {
-      result.subscribe(canActivate => {
-        expect(canActivate).toBe(false);
-        expect(router.navigate).toHaveBeenCalledWith(['/404']);
-        done();
-      });
-    }
-  });
+  it('should redirect to 404 when the token is only whitespace', () => {
+    route.queryParams = { token: '   ' };
 
-  it('should redirect to 404 when server returns error', (done) => {
-    // Simular query params con token
-    route.queryParams = { token: 'some-token' };
-    
-    // Mock error del servicio
-    validationService.validateEmailToken.and.returnValue(throwError({ status: 404 }));
-    
     const result = TestBed.runInInjectionContext(() => validateGuard(route, {} as any));
-    
-    if (typeof result === 'object' && 'subscribe' in result) {
-      result.subscribe(canActivate => {
-        expect(canActivate).toBe(false);
-        expect(router.navigate).toHaveBeenCalledWith(['/404']);
-        done();
-      });
-    }
+
+    expect(result).toBe(false);
+    expect(router.navigate).toHaveBeenCalledWith(['/404']);
   });
 });

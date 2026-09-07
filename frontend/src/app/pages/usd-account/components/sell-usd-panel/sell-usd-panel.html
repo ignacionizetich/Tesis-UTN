@@ -55,7 +55,7 @@
         <span class="sell-usd-quote__casa">{{ quote?.casa }}</span>
         }
         @if (quoteError) {
-        <span class="sell-usd-quote__warn">Estimación local</span>
+        <span class="sell-usd-quote__warn">Cotización no disponible</span>
         }
       </div>
 
@@ -99,12 +99,12 @@
           name="amountToSellUsd"
           [ngModel]="amountToSellUsd"
           (ngModelChange)="onAmountChange($event)"
-          min="1"
+          min="0.01"
           step="0.01"
           placeholder="0,00"
           inputmode="decimal"
           required
-          [disabled]="isSellingUsd"
+          [disabled]="isSellingUsd || quoteError || isLoadingQuote"
         />
       </div>
 

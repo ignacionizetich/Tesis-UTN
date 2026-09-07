@@ -1,12 +1,11 @@
 package com.EDJ.ArCash.Controller.api;
 
+import com.EDJ.ArCash.DTO.common.ApiMessageResponse;
 import com.EDJ.ArCash.Service.interfaces.AuthService;
 import com.EDJ.ArCash.Service.result.ResendEmailResult;
 import com.EDJ.ArCash.Service.interfaces.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
@@ -22,7 +21,7 @@ public class ResendController {
     }
 
     @PostMapping("/validation")
-    public ResponseEntity<Map<String, Object>> resendValidationEmail(@RequestParam("email") String email) {
+    public ResponseEntity<ApiMessageResponse> resendValidationEmail(@RequestParam("email") String email) {
         ResendEmailResult result = userService.resendValidationEmailRequest(email);
         return switch (result.getKind()) {
             case OK -> ResponseEntity.ok(result.toBody());
@@ -32,7 +31,7 @@ public class ResendController {
     }
 
     @PostMapping("/password-recovery")
-    public ResponseEntity<Map<String, Object>> resendPasswordRecovery(@RequestParam("email") String email) {
+    public ResponseEntity<ApiMessageResponse> resendPasswordRecovery(@RequestParam("email") String email) {
         ResendEmailResult result = authService.resendPasswordRecoveryEmail(email);
         return switch (result.getKind()) {
             case OK -> ResponseEntity.ok(result.toBody());

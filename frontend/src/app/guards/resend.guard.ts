@@ -9,8 +9,11 @@ export const resendGuard: CanActivateFn = () => {
   const navigation = router.getCurrentNavigation();
   const currentState = window.history.state;
   
-  // Verificar si es una navegación interna válida
-  const isInternalNavigation = navigation?.previousNavigation !== null || 
+  // Verificar si es una navegación interna válida.
+  // Ojo con el `!= null`: cuando no hay navegación en curso (acceso directo por URL),
+  // `navigation?.previousNavigation` da undefined. Compararlo con `!== null` daba true y
+  // el guard concluía que la navegación era interna, así que nunca bloqueaba nada.
+  const isInternalNavigation = navigation?.previousNavigation != null ||
                               currentState?.navigationId > 1 ||
                               currentState?.allowResendAccess === true;
   
@@ -26,7 +29,8 @@ export const resendGuard: CanActivateFn = () => {
   
   if (!isInternalNavigation && !isValidReferrer && !hasResendAccess) {
     logger.warn('Intento de acceso directo a /resend bloqueado. Redirigiendo a home.');
-    router.navigate(['/home']);
+    // El landing está en la ruta vacía: '/home' no existe y caía en el comodín, o sea el 404.
+    router.navigate(['/']);
     return false;
   }
   

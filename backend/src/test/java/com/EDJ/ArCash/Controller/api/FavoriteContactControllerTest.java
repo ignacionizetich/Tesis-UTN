@@ -104,18 +104,22 @@ class FavoriteContactControllerTest {
     }
 
     @Test
-    @DisplayName("Sin contactAlias revienta con NPE y sale como 500 por el handler global")
-    void addSinAliasDevuelveErrorInternoDelHandlerGlobal() throws Exception {
+    @DisplayName("Sin contactAlias devuelve 400 y no llega al servicio")
+    void addSinAliasDevuelve400() throws Exception {
+        // El controller hacia contactAlias().trim() sobre un valor nulo: el NPE resultante
+        // salia como 500 pese a tratarse de un cuerpo incompleto. Ahora lo corta @NotBlank.
         mockMvc.perform(post("/api/favorites/add")
                         .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"accountId\":10}"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.message").value("Error interno del servidor"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").value("INTERNAL_SERVER_ERROR"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.path").value("/api/favorites/add"))
-                .andExpect(jsonPath("$.status").doesNotExist());
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("contactAlias"));
+
+        verify(favoriteContactService, never()).addFavoriteContact(anyLong(), anyLong(), any(), any());
     }
 
     // --- GET /list y /list/recent ---
@@ -251,8 +255,9 @@ class FavoriteContactControllerTest {
                         .content("{\"contactAlias\":\"" + aliasLargo + "\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.status").doesNotExist());
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("contactAlias"));
     }
 
     private RequestPostProcessor comoUsuarioAutenticado() {

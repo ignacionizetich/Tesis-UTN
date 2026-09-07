@@ -10,54 +10,39 @@ import com.EDJ.ArCash.Repository.RefreshTokenRepository;
 import com.EDJ.ArCash.Repository.TransactionRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.Repository.ValidationTokenRepository;
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
 @Service
-public class TokenCleanupServiceImpl implements TokenCleanupService, ApplicationListener<ContextRefreshedEvent> {
+@RequiredArgsConstructor
+public class TokenCleanupServiceImpl implements TokenCleanupService {
 
-    @Autowired
-    private ValidationTokenRepository validationTokenRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final ValidationTokenRepository validationTokenRepository;
 
-    @Autowired
-    private AccountRepository accountRepository;
 
-    @Autowired
-    private TransactionRepository transactionRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private FavoriteContactRepository favoriteContactRepository;
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    @Lazy
-    private TokenCleanupService self;
+
+    private final TransactionRepository transactionRepository;
+
+
+    private final FavoriteContactRepository favoriteContactRepository;
+
+
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
-    public void onApplicationEvent(ContextRefreshedEvent event) {
-        try {
-            self.removeExpiredUnvalidatedUsers();
-        } catch (Exception e) {
-            // No tumbar el arranque por datos huérfanos / FKs.
-            log.error("Cleanup de tokens/usuarios falló en el arranque (se continúa): {}", e.getMessage(), e);
-        }
-    }
-
     @Transactional
     @Scheduled(cron = "0 0 * * * ?")
     public void removeExpiredUnvalidatedUsers() {

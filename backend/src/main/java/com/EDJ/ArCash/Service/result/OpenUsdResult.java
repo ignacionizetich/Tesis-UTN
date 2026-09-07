@@ -1,9 +1,7 @@
 package com.EDJ.ArCash.Service.result;
 
+import com.EDJ.ArCash.DTO.AuthDTO.OpenUsdAccountResponse;
 import com.EDJ.ArCash.Models.Account;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Alta de cuenta USD. El controller solo mapea Kind → HTTP.
@@ -63,17 +61,11 @@ public final class OpenUsdResult {
         return message;
     }
 
-    public Map<String, Object> toSuccessBody() {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("success", true);
-        body.put("message", message);
-        body.put("accountId", accountId);
-        body.put("accountAlias", accountAlias);
-        body.put("currency", "USD");
-        return body;
+    public OpenUsdAccountResponse toSuccessBody() {
+        return new OpenUsdAccountResponse(true, message, accountId, accountAlias, "USD");
     }
 
-    public Map<String, Object> toErrorBody() {
-        return Map.of("success", false, "message", message);
+    public OpenUsdAccountResponse toErrorBody() {
+        return new OpenUsdAccountResponse(false, message, null, null, null);
     }
 }

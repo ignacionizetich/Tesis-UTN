@@ -9,6 +9,7 @@ import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.Imp.LoanStatus;
 import com.EDJ.ArCash.Models.Imp.Permissions;
 import com.EDJ.ArCash.Repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class MetricsServiceImpl implements MetricsService {
 
     private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -31,18 +33,7 @@ public class MetricsServiceImpl implements MetricsService {
     private final LoanRepository loanRepository;
     private final VirtualCardRepository virtualCardRepository;
 
-    public MetricsServiceImpl(
-            UserRepository userRepository,
-            AccountRepository accountRepository,
-            TransactionRepository transactionRepository,
-            LoanRepository loanRepository,
-            VirtualCardRepository virtualCardRepository) {
-        this.userRepository = userRepository;
-        this.accountRepository = accountRepository;
-        this.transactionRepository = transactionRepository;
-        this.loanRepository = loanRepository;
-        this.virtualCardRepository = virtualCardRepository;
-    }
+
 
     @Transactional(readOnly = true)
     public AdminMetricsResponse collect() {

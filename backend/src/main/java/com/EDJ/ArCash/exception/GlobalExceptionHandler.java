@@ -1,411 +1,424 @@
 package com.EDJ.ArCash.exception;
 
 import com.EDJ.ArCash.exception.personalizated.*;
+import com.EDJ.ArCash.exception.response.ApiErrorCode;
+import com.EDJ.ArCash.exception.response.ApiFieldError;
 import com.EDJ.ArCash.exception.response.ErrorResponse;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.MissingRequestCookieException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
- * Manejador global de excepciones para toda la aplicación
+ * Traduce cualquier excepcion que escape de un controller a un {@link ErrorResponse}.
+ *
+ * <p>Reglas que sigue todo handler de esta clase:
+ * <ul>
+ *   <li>El estado HTTP lo determina el {@link ApiErrorCode}, nunca se escribe a mano: eso
+ *       hace imposible devolver un 200 con cuerpo de error o un codigo desalineado.</li>
+ *   <li>Los 4xx se loguean en {@code WARN} (son errores del cliente y no requieren
+ *       intervencion) y los 5xx en {@code ERROR} con el stack trace completo.</li>
+ *   <li>Ningun 5xx propaga {@code ex.getMessage()} al cliente: los mensajes de driver JDBC o
+ *       de Hibernate revelan nombres de tablas, constraints y consultas. El detalle queda en
+ *       el log, correlacionado por {@code traceId}.</li>
+ * </ul>
  */
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    /**
-     * Maneja excepciones de recursos no encontrados
-     */
+    private static final String GENERIC_SERVER_ERROR = "Ocurrió un error inesperado. Volvé a intentarlo en unos minutos.";
+
+    // =====================================================================
+    // Excepciones de dominio
+    // =====================================================================
+
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
-            ResourceNotFoundException ex,
-            HttpServletRequest request) {
-
-        logger.error("Recurso no encontrado: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                ex.getMessage(),
-                "NOT_FOUND",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(
+            ResourceNotFoundException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.NOT_FOUND, ex.getMessage(), ex, request);
     }
 
-    /**
-     * Maneja excepciones de peticiones incorrectas
-     */
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequestException(
-            BadRequestException ex,
-            HttpServletRequest request) {
-
-        logger.error("Petición incorrecta: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                ex.getMessage(),
-                "BAD_REQUEST",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ErrorResponse> handleBadRequest(
+            BadRequestException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.BAD_REQUEST, ex.getMessage(), ex, request);
     }
 
     /**
-     * Maneja excepciones de conflictos (datos duplicados, etc.)
+     * Conflicto con el estado actual del recurso (duplicados de email, DNI, alias).
+     *
+     * <p>Si el conflicto se puede atribuir a un campo concreto, viaja en {@code fieldErrors}
+     * para que el cliente lo resalte igual que un error de validacion.
      */
     @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ErrorResponse> handleConflictException(
-            ConflictException ex,
-            HttpServletRequest request) {
-
-        logger.error("Conflicto: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                ex.getMessage(),
-                "CONFLICT",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    public ResponseEntity<ErrorResponse> handleConflict(
+            ConflictException ex, HttpServletRequest request) {
+        List<ApiFieldError> fieldErrors = ex.getField() == null
+                ? null
+                : List.of(new ApiFieldError(ex.getField(), ex.getMessage()));
+        return clientError(ApiErrorCode.CONFLICT, ex.getMessage(), ex, request, fieldErrors);
     }
 
     /**
-     * Maneja excepciones de autorización
+     * Fallo del servidor con un mensaje que el dominio considera seguro de mostrar.
+     * Se loguea como error, igual que cualquier otro 5xx.
      */
+    @ExceptionHandler(InternalServerException.class)
+    public ResponseEntity<ErrorResponse> handleInternalServer(
+            InternalServerException ex, HttpServletRequest request) {
+        return serverError(ApiErrorCode.INTERNAL_SERVER_ERROR, ex.getMessage(), ex, request);
+    }
+
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorResponse> handleUnauthorizedException(
-            UnauthorizedException ex,
-            HttpServletRequest request) {
-
-        logger.error("No autorizado: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                ex.getMessage(),
-                "UNAUTHORIZED",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<ErrorResponse> handleUnauthorized(
+            UnauthorizedException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.UNAUTHORIZED, ex.getMessage(), ex, request);
     }
 
-    /**
-     * Maneja excepciones de acceso denegado
-     */
+    /** Cuenta deshabilitada: mismo codigo que emite el filtro JWT para no duplicar contratos. */
+    @ExceptionHandler(DisabledAccountException.class)
+    public ResponseEntity<ErrorResponse> handleDisabledAccount(
+            DisabledAccountException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.ACCOUNT_DISABLED, ex.getMessage(), ex, request);
+    }
+
     @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ErrorResponse> handleForbiddenException(
-            ForbiddenException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleForbidden(
+            ForbiddenException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.FORBIDDEN, ex.getMessage(), ex, request);
+    }
 
-        logger.error("Acceso denegado: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                ex.getMessage(),
-                "FORBIDDEN",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    @ExceptionHandler(PasswordMissmatchException.class)
+    public ResponseEntity<ErrorResponse> handlePasswordMissmatch(
+            PasswordMissmatchException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.CREDENTIALS_MISSMATCH, ex.getMessage(), ex, request);
     }
 
     /**
-     * Maneja excepciones de validación de argumentos
+     * El proveedor externo de cotizaciones no respondio y tampoco hay valor cacheado. Es un
+     * 503 y no un 500: la causa es una dependencia caida y el cliente puede reintentar.
+     */
+    @ExceptionHandler(ExchangeRateUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleExchangeRateUnavailable(
+            ExchangeRateUnavailableException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.EXCHANGE_RATE_UNAVAILABLE, ex.getMessage(), ex, request);
+    }
+
+    // =====================================================================
+    // Validacion del request
+    // =====================================================================
+
+    /**
+     * Falla de Bean Validation sobre un {@code @Valid @RequestBody}.
+     *
+     * <p>Reune las violaciones de campo y tambien los errores de clase (los que declaran los
+     * validadores cruzados, como "la contrasena no puede ser igual al usuario"), que Spring
+     * expone como {@link ObjectError} sin campo asociado.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleValidation(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
 
-        List<String> errors = new ArrayList<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.add(fieldName + ": " + errorMessage);
-        });
+        List<ApiFieldError> fieldErrors = new ArrayList<>();
+        for (ObjectError error : ex.getBindingResult().getAllErrors()) {
+            String field = error instanceof FieldError fe ? fe.getField() : error.getObjectName();
+            fieldErrors.add(new ApiFieldError(field, error.getDefaultMessage()));
+        }
 
-        logger.error("Error de validación: {}", errors);
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                "Error de validación",
-                "VALIDATION_ERROR",
-                request.getRequestURI(),
-                errors
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return clientError(ApiErrorCode.VALIDATION_ERROR, summarize(fieldErrors), ex, request, fieldErrors);
     }
 
     /**
-     * Maneja excepciones de tipo de argumento incorrecto
+     * Falla de Bean Validation sobre parametros sueltos ({@code @RequestParam},
+     * {@code @PathVariable}) en una clase anotada con {@code @Validated}.
      */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+            ConstraintViolationException ex, HttpServletRequest request) {
+
+        List<ApiFieldError> fieldErrors = new ArrayList<>();
+        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
+            fieldErrors.add(new ApiFieldError(lastNode(violation), violation.getMessage()));
+        }
+
+        return clientError(ApiErrorCode.VALIDATION_ERROR, summarize(fieldErrors), ex, request, fieldErrors);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ErrorResponse> handleTypeMismatchException(
-            MethodArgumentTypeMismatchException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
 
-        String message = String.format("El parámetro '%s' debe ser de tipo %s",
-                ex.getName(), ex.getRequiredType().getSimpleName());
+        String expected = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "válido";
+        String message = String.format("El parámetro '%s' debe ser de tipo %s.", ex.getName(), expected);
+        return clientError(ApiErrorCode.TYPE_MISMATCH, message, ex, request);
+    }
 
-        logger.error("Error de tipo de argumento: {}", message);
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParameter(
+            MissingServletRequestParameterException ex, HttpServletRequest request) {
 
-        ErrorResponse error = new ErrorResponse(
-                false,
-                message,
-                "TYPE_MISMATCH",
-                request.getRequestURI()
-        );
+        String message = String.format("Falta el parámetro obligatorio '%s'.", ex.getParameterName());
+        return clientError(ApiErrorCode.MISSING_PARAMETER, message, ex, request,
+                List.of(new ApiFieldError(ex.getParameterName(), "es obligatorio")));
+    }
 
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(MissingRequestCookieException.class)
+    public ResponseEntity<ErrorResponse> handleMissingCookie(
+            MissingRequestCookieException ex, HttpServletRequest request) {
+
+        String message = String.format("Falta la cookie obligatoria '%s'.", ex.getCookieName());
+        return clientError(ApiErrorCode.MISSING_PARAMETER, message, ex, request);
     }
 
     /**
-     * Maneja excepciones de mensaje HTTP no legible
+     * JSON sintacticamente invalido o incompatible con el DTO. No se reenvia
+     * {@code ex.getMessage()} porque incluye la ruta de clases Java del DTO destino.
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
-            HttpMessageNotReadableException ex,
-            HttpServletRequest request) {
-
-        logger.error("Mensaje HTTP no legible: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                "El formato de la petición es inválido",
-                "MALFORMED_JSON",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ErrorResponse> handleMessageNotReadable(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.MALFORMED_JSON,
+                "El cuerpo de la petición no es un JSON válido.", ex, request);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.ILLEGAL_ARGUMENT, ex.getMessage(), ex, request);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(
+            IllegalStateException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.BAD_REQUEST, ex.getMessage(), ex, request);
+    }
+
+    // =====================================================================
+    // Autenticacion y autorizacion
+    // =====================================================================
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(
+            BadCredentialsException ex, HttpServletRequest request) {
+        // Mensaje deliberadamente ambiguo: distinguir "usuario inexistente" de "contrasena
+        // incorrecta" permitiria enumerar cuentas registradas.
+        return clientError(ApiErrorCode.BAD_CREDENTIALS, "Usuario o contraseña incorrectos.", ex, request);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(
+            AuthenticationException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.AUTHENTICATION_ERROR,
+                "No pudimos validar tu identidad. Volvé a iniciar sesión.", ex, request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.ACCESS_DENIED,
+                "No tenés permisos para acceder a este recurso.", ex, request);
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredJwt(
+            ExpiredJwtException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.INVALID_TOKEN, "Tu sesión expiró. Volvé a iniciar sesión.", ex, request);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ErrorResponse> handleJwt(
+            JwtException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.INVALID_TOKEN, "El token es inválido o expiró.", ex, request);
+    }
+
+    // =====================================================================
+    // Protocolo HTTP y ruteo
+    // =====================================================================
+
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    public ResponseEntity<ErrorResponse> handleNotFound(
+            Exception ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.ENDPOINT_NOT_FOUND, "El recurso solicitado no existe.", ex, request);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+
+        String message = String.format("El método %s no está permitido en este endpoint.", ex.getMethod());
+        return clientError(ApiErrorCode.METHOD_NOT_ALLOWED, message, ex, request);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMediaTypeNotSupported(
+            HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+        return clientError(ApiErrorCode.UNSUPPORTED_MEDIA_TYPE,
+                "El Content-Type de la petición no está soportado.", ex, request);
+    }
+
+    // =====================================================================
+    // Persistencia
+    // =====================================================================
+
     /**
-     * Maneja excepciones de integridad de datos (violación de constraints)
+     * Violacion de constraint en base. Se responde 409 y se traduce el caso mas frecuente
+     * (indice unico) a un mensaje entendible, sin filtrar el nombre del constraint.
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
-            DataIntegrityViolationException ex,
-            HttpServletRequest request) {
+            DataIntegrityViolationException ex, HttpServletRequest request) {
 
-        logger.error("Violación de integridad de datos: {}", ex.getMessage());
+        String traceId = newTraceId();
+        logger.error("[{}] Violación de integridad de datos en {} {}",
+                traceId, request.getMethod(), request.getRequestURI(), ex);
 
-        String message = "Error de integridad de datos";
-        if (ex.getMessage() != null && ex.getMessage().contains("Duplicate entry")) {
-            message = "El registro ya existe en la base de datos";
-        }
+        String rootCause = ex.getMostSpecificCause().getMessage();
+        boolean duplicated = rootCause != null
+                && (rootCause.contains("Duplicate entry") || rootCause.contains("Unique index"));
 
-        ErrorResponse error = new ErrorResponse(
-                false,
-                message,
-                "DATA_INTEGRITY_VIOLATION",
-                request.getRequestURI()
-        );
+        String message = duplicated
+                ? "Alguno de los datos ingresados ya está registrado."
+                : "Los datos enviados no cumplen las restricciones de la base de datos.";
 
-        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+        return build(ApiErrorCode.DATA_INTEGRITY_VIOLATION, message, traceId, request, null);
     }
 
     /**
-     * Maneja excepciones de credenciales incorrectas
+     * Dos operaciones concurrentes tocaron la misma fila versionada. Se responde 409 para que
+     * el cliente reintente en lugar de un 500 opaco.
      */
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleBadCredentials(
-            BadCredentialsException ex,
-            HttpServletRequest request) {
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLocking(
+            OptimisticLockingFailureException ex, HttpServletRequest request) {
 
-        logger.error("Credenciales incorrectas: {}", ex.getMessage());
+        String traceId = newTraceId();
+        logger.warn("[{}] Conflicto de concurrencia en {} {}: {}",
+                traceId, request.getMethod(), request.getRequestURI(), ex.getMessage());
 
-        ErrorResponse error = new ErrorResponse(
-                false,
-                "Credenciales incorrectas",
-                "BAD_CREDENTIALS",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+        return build(ApiErrorCode.CONFLICT,
+                "La operación se procesó en paralelo. Volvé a intentarlo.", traceId, request, null);
     }
 
-    /**
-     * Maneja excepciones de autenticación
-     */
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ErrorResponse> handleAuthentication(
-            AuthenticationException ex,
-            HttpServletRequest request) {
+    // =====================================================================
+    // Infraestructura
+    // =====================================================================
 
-        logger.error("Error de autenticación: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                "Error de autenticación",
-                "AUTHENTICATION_ERROR",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
-    }
-
-    /**
-     * Maneja excepciones de acceso denegado de Spring Security
-     */
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(
-            AccessDeniedException ex,
-            HttpServletRequest request) {
-
-        logger.error("Acceso denegado por Spring Security: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                "No tienes permisos para acceder a este recurso",
-                "ACCESS_DENIED",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
-    }
-
-    /**
-     * Maneja excepciones de JWT
-     */
-    @ExceptionHandler(JwtException.class)
-    public ResponseEntity<ErrorResponse> handleJwtException(
-            JwtException ex,
-            HttpServletRequest request) {
-
-        logger.error("Error de JWT: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                "Token inválido o expirado",
-                "INVALID_TOKEN",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
-    }
-
-    /**
-     * Maneja excepciones de handler no encontrado (404)
-     */
-    @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNoHandlerFound(
-            NoHandlerFoundException ex,
-            HttpServletRequest request) {
-
-        logger.error("Endpoint no encontrado: {}", ex.getRequestURL());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                "El endpoint solicitado no existe",
-                "ENDPOINT_NOT_FOUND",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-    }
-
-    /**
-     * Maneja excepciones de mensajes de email
-     */
     @ExceptionHandler(MessagingException.class)
-    public ResponseEntity<ErrorResponse> handleMessagingException(
-            MessagingException ex,
-            HttpServletRequest request) {
-
-        logger.error("Error al enviar email: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                "Error al enviar el email",
-                "EMAIL_ERROR",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<ErrorResponse> handleMessaging(
+            MessagingException ex, HttpServletRequest request) {
+        return serverError(ApiErrorCode.EMAIL_ERROR,
+                "No pudimos enviar el email. Intentá de nuevo más tarde.", ex, request);
     }
 
-    /**
-     * Maneja excepciones de codificación no soportada
-     */
     @ExceptionHandler(UnsupportedEncodingException.class)
-    public ResponseEntity<ErrorResponse> handleUnsupportedEncodingException(
-            UnsupportedEncodingException ex,
-            HttpServletRequest request) {
-
-        logger.error("Codificación no soportada: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                "Error de codificación",
-                "ENCODING_ERROR",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<ErrorResponse> handleUnsupportedEncoding(
+            UnsupportedEncodingException ex, HttpServletRequest request) {
+        return serverError(ApiErrorCode.ENCODING_ERROR, GENERIC_SERVER_ERROR, ex, request);
     }
 
     /**
-     * Maneja excepciones de argumentos ilegales
-     */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
-            IllegalArgumentException ex,
-            HttpServletRequest request) {
-
-        logger.error("Argumento ilegal: {}", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                false,
-                ex.getMessage(),
-                "ILLEGAL_ARGUMENT",
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * Maneja todas las excepciones genéricas no capturadas
+     * Ultima red de contencion. Cualquier excepcion no prevista se registra completa y el
+     * cliente solo recibe un mensaje genérico mas el {@code traceId} para reportarlo.
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(
-            Exception ex,
-            HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleUnexpected(
+            Exception ex, HttpServletRequest request) {
+        return serverError(ApiErrorCode.INTERNAL_SERVER_ERROR, GENERIC_SERVER_ERROR, ex, request);
+    }
 
-        logger.error("Error interno del servidor: ", ex);
+    // =====================================================================
+    // Construccion de la respuesta
+    // =====================================================================
 
-        ErrorResponse error = new ErrorResponse(
-                false,
-                "Error interno del servidor",
-                "INTERNAL_SERVER_ERROR",
-                request.getRequestURI()
-        );
+    private ResponseEntity<ErrorResponse> clientError(ApiErrorCode code, String message,
+                                                      Exception ex, HttpServletRequest request) {
+        return clientError(code, message, ex, request, null);
+    }
 
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    private ResponseEntity<ErrorResponse> clientError(ApiErrorCode code, String message,
+                                                      Exception ex, HttpServletRequest request,
+                                                      List<ApiFieldError> fieldErrors) {
+        String traceId = newTraceId();
+        logger.warn("[{}] {} en {} {}: {}", traceId, code, request.getMethod(),
+                request.getRequestURI(), message);
+        logger.debug("[{}] Detalle de {}", traceId, code, ex);
+        return build(code, message, traceId, request, fieldErrors);
+    }
+
+    private ResponseEntity<ErrorResponse> serverError(ApiErrorCode code, String message,
+                                                      Exception ex, HttpServletRequest request) {
+        String traceId = newTraceId();
+        logger.error("[{}] {} en {} {}", traceId, code, request.getMethod(),
+                request.getRequestURI(), ex);
+        return build(code, message, traceId, request, null);
+    }
+
+    private ResponseEntity<ErrorResponse> build(ApiErrorCode code, String message, String traceId,
+                                                HttpServletRequest request,
+                                                List<ApiFieldError> fieldErrors) {
+        String safeMessage = (message == null || message.isBlank())
+                ? code.status().getReasonPhrase()
+                : message;
+
+        return ResponseEntity
+                .status(code.status())
+                .body(ErrorResponse.of(code, safeMessage, traceId, request, fieldErrors));
+    }
+
+    /**
+     * Resume las violaciones en una sola linea para clientes que solo muestran
+     * {@code message}, sin obligarlos a recorrer {@code fieldErrors}.
+     */
+    private String summarize(List<ApiFieldError> fieldErrors) {
+        if (fieldErrors.isEmpty()) {
+            return "Los datos enviados no son válidos.";
+        }
+        if (fieldErrors.size() == 1) {
+            ApiFieldError only = fieldErrors.get(0);
+            return only.field() == null || only.field().isBlank()
+                    ? only.message()
+                    : only.field() + ": " + only.message();
+        }
+        return "Hay " + fieldErrors.size() + " campos con datos inválidos.";
+    }
+
+    private String lastNode(ConstraintViolation<?> violation) {
+        String path = violation.getPropertyPath().toString();
+        int lastDot = path.lastIndexOf('.');
+        return lastDot >= 0 ? path.substring(lastDot + 1) : path;
+    }
+
+    private String newTraceId() {
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }

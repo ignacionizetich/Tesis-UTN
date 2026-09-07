@@ -10,6 +10,7 @@ import com.EDJ.ArCash.Models.Imp.CardStatus;
 import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.Repository.VirtualCardRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class VirtualCardServiceImpl implements VirtualCardService {
 
     private static final double DEFAULT_LIMIT_ARS = 50_000.0;
@@ -38,16 +40,7 @@ public class VirtualCardServiceImpl implements VirtualCardService {
     private final CardCryptoService cardCryptoService;
     private final CardNumberGenerator cardNumberGenerator;
 
-    public VirtualCardServiceImpl(
-            VirtualCardRepository virtualCardRepository,
-            AccountRepository accountRepository,
-            CardCryptoService cardCryptoService,
-            CardNumberGenerator cardNumberGenerator) {
-        this.virtualCardRepository = virtualCardRepository;
-        this.accountRepository = accountRepository;
-        this.cardCryptoService = cardCryptoService;
-        this.cardNumberGenerator = cardNumberGenerator;
-    }
+
 
     @Transactional
     public VirtualCard createForAccount(Account account) {
@@ -75,9 +68,7 @@ public class VirtualCardServiceImpl implements VirtualCardService {
 
     @Transactional
     public VirtualCard updateStatus(VirtualCard card, CardStatus status) {
-        if (card.getStatus() == CardStatus.CANCELLED) {
-            throw new IllegalStateException("La tarjeta está dada de baja.");
-        }
+        requireOperable(card);
         if (status != CardStatus.ACTIVE && status != CardStatus.PAUSED) {
             throw new IllegalArgumentException("Estado inválido");
         }
@@ -87,11 +78,25 @@ public class VirtualCardServiceImpl implements VirtualCardService {
 
     @Transactional
     public VirtualCard updateLimit(VirtualCard card, double dailyLimit) {
+        requireOperable(card);
+        card.setDailyLimit(dailyLimit);
+        return virtualCardRepository.save(card);
+    }
+
+    /**
+     * Exige que la tarjeta pueda operar antes de modificarla.
+     *
+     * <p>Una tarjeta vencida no se puede usar, asi que reactivarla o cambiarle el limite dejaria
+     * al titular creyendo que quedo habilitada. El camino correcto es reemitirla, y por eso
+     * {@link #reissue} no pasa por este control.
+     */
+    private void requireOperable(VirtualCard card) {
         if (card.getStatus() == CardStatus.CANCELLED) {
             throw new IllegalStateException("La tarjeta está dada de baja.");
         }
-        card.setDailyLimit(dailyLimit);
-        return virtualCardRepository.save(card);
+        if (isExpired(card)) {
+            throw new IllegalStateException("La tarjeta está vencida. Reemitila para seguir usándola.");
+        }
     }
 
     @Transactional

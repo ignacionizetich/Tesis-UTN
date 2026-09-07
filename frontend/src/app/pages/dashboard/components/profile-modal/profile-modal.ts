@@ -14,6 +14,8 @@ import { ToastService } from '../../../../services/toast/toast.service';
 import { ModalService } from '../../../../services/modal/modal.service';
 import { formatDni as formatDniAr } from '../../../../shared/utils/dni-format';
 import { logger } from '../../../../shared/utils/logger';
+import { AUTH_RULES } from '../../../../shared/validators/auth.validators';
+import { errorMessage } from '../../../../shared/utils/error-message';
 
 @Component({
   selector: 'app-profile-modal',
@@ -96,11 +98,13 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   }
 
   async saveUsername(): Promise<void> {
-    const regex = /^(?=.*[A-Za-z])[A-Za-z\d]{4,25}$/;
+    const username = this.newUsername.trim();
+    const tooShort = username.length < AUTH_RULES.usernameMinLength;
+    const tooLong = username.length > AUTH_RULES.usernameMaxLength;
 
-    if (!regex.test(this.newUsername) || /^\d+$/.test(this.newUsername)) {
+    if (tooShort || tooLong || !AUTH_RULES.username.test(username)) {
       this.toast.show(
-        'Formato inválido. Solo letras y números, al menos una letra',
+        'Usá entre 3 y 25 caracteres: letras, números y . _ - como separadores',
         'error'
       );
       return;
@@ -108,12 +112,12 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
 
     this.savingUsername = true;
     try {
-      await this.userDataStore.updateUsername(this.newUsername);
+      await this.userDataStore.updateUsername(username);
       this.toast.show('Nombre de usuario actualizado correctamente', 'success');
       this.editingUsername = false;
     } catch (error) {
       logger.error('Error updating username:', error);
-      this.toast.show('Error al actualizar el nombre de usuario', 'error');
+      this.toast.show(errorMessage(error, 'Error al actualizar el nombre de usuario'), 'error');
     } finally {
       this.savingUsername = false;
     }
@@ -151,7 +155,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
       this.editingAlias = false;
     } catch (error) {
       logger.error('Error updating alias:', error);
-      this.toast.show('Error al actualizar el alias', 'error');
+      this.toast.show(errorMessage(error, 'Error al actualizar el alias'), 'error');
     } finally {
       this.savingAlias = false;
     }

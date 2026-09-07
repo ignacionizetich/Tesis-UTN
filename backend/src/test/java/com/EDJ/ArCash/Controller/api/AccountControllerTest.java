@@ -28,7 +28,11 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -56,19 +60,34 @@ class AccountControllerTest {
     // --- PUT /{id}/balance ---
 
     @Test
-    @DisplayName("Ingresar un monto negativo devuelve 400")
+    @DisplayName("Ingresar un monto negativo devuelve 400 sin llegar al servicio")
     void balanceConMontoNegativoDevuelve400() throws Exception {
-        when(accountService.deposit(ID_CUENTA_ARS, ID_USUARIO, -1.0))
-                .thenReturn(DepositResult.montoNegativo(-1.0));
-
+        // El monto lo valida @MoneyAmount en el borde, asi que el servicio ya no recibe
+        // importes negativos y su rama MONTO_NEGATIVO queda como defensa en profundidad.
         mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"balance\":-1}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("El monto a ingresar no puede ser negativo."))
-                .andExpect(jsonPath("$.newBalance").value(-1.0));
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("balance"));
+
+        verify(accountService, never()).deposit(anyLong(), anyLong(), anyDouble());
+    }
+
+    @Test
+    @DisplayName("Ingresar un monto con más de 2 decimales devuelve 400")
+    void balanceConDemasiadosDecimalesDevuelve400() throws Exception {
+        mockMvc.perform(put("/api/accounts/{id}/balance", ID_CUENTA_ARS)
+                        .with(comoUsuarioAutenticado())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"balance\":10.005}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("balance"));
+
+        verify(accountService, never()).deposit(anyLong(), anyLong(), anyDouble());
     }
 
     @Test
@@ -154,7 +173,8 @@ class AccountControllerTest {
         mockMvc.perform(get("/api/accounts/{id}/showBalance", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado()))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.error").value("El usuario no es propietario de la cuenta"));
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message").value("El usuario no es propietario de la cuenta"));
     }
 
     // --- PUT /{id}/changeAlias ---
@@ -238,7 +258,8 @@ class AccountControllerTest {
         mockMvc.perform(get("/api/accounts/{id}/qr-data", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado()))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("Cuenta no encontrada"));
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("Cuenta no encontrada"));
 
         when(accountService.getQrDataForOwner(ID_CUENTA_ARS, ID_USUARIO))
                 .thenReturn(QrDataResult.noEsPropietario());
@@ -246,7 +267,8 @@ class AccountControllerTest {
         mockMvc.perform(get("/api/accounts/{id}/qr-data", ID_CUENTA_ARS)
                         .with(comoUsuarioAutenticado()))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.error").value("El usuario no es propietario de la cuenta"));
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message").value("El usuario no es propietario de la cuenta"));
     }
 
     // --- GET /user-accounts ---

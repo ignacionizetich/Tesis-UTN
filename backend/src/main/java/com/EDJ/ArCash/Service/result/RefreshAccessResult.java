@@ -5,6 +5,7 @@ public final class RefreshAccessResult {
     public enum Kind {
         MISSING,
         INVALID,
+        DISABLED,
         OK
     }
 
@@ -24,6 +25,12 @@ public final class RefreshAccessResult {
 
     public static RefreshAccessResult invalid() {
         return new RefreshAccessResult(Kind.INVALID, null, "Refresh token inválido o expirado");
+    }
+
+    /** El refresh token era valido, pero la cuenta dejo de estar habilitada. */
+    public static RefreshAccessResult disabled() {
+        return new RefreshAccessResult(Kind.DISABLED, null,
+                "Tu cuenta está deshabilitada. Contactá a soporte técnico.");
     }
 
     public static RefreshAccessResult ok(String accessToken) {

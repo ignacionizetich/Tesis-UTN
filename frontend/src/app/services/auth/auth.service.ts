@@ -6,6 +6,13 @@ import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { SessionCleanupService } from '../session-cleanup/session-cleanup.service';
 import { SessionStore } from '../../core/session/session.store';
+import {
+  ApiMessageResponse,
+  LoginResponse,
+  RefreshTokenResponse,
+  RegisterResponse,
+} from '../../models/auth';
+import { httpStatus } from '../../shared/utils/error-message';
 
 @Injectable({
   providedIn: 'root'
@@ -20,19 +27,19 @@ export class AuthService {
     private sessionStore: SessionStore
   ) {}
 
-  registerUser(user: User) {
-    return this.http.post<any>(`${this.baseUrl}/user/create`, user);
+  registerUser(user: User): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(`${this.baseUrl}/user/create`, user);
   }
 
   /** Login HTTP sin persistir (tests / casos especiales). */
-  loginUser(credentials: { username: string; password: string }) {
-    return this.http.post<any>(`${this.baseUrl}/auth/login`, credentials, {
+  loginUser(credentials: { username: string; password: string }): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, credentials, {
       withCredentials: true
     });
   }
 
   /** Login + limpia cache en memoria + persiste JWT/accountId/role. */
-  loginAndPersist(credentials: { username: string; password: string }): Observable<any> {
+  loginAndPersist(credentials: { username: string; password: string }): Observable<LoginResponse> {
     return this.loginUser(credentials).pipe(
       tap((response) => {
         this.sessionCleanup.clearAll();
@@ -49,16 +56,17 @@ export class AuthService {
     return this.sessionStore.hasAccessToken();
   }
 
-  sendRecoverMail(email: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/auth/send-recover-mail`, { email });
+  sendRecoverMail(email: string): Observable<ApiMessageResponse> {
+    return this.http.post<ApiMessageResponse>(`${this.baseUrl}/auth/send-recover-mail`, { email });
   }
 
-  refreshToken(): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/auth/refresh`, {}, {
+  refreshToken(): Observable<RefreshTokenResponse> {
+    return this.http.post<RefreshTokenResponse>(`${this.baseUrl}/auth/refresh`, {}, {
       withCredentials: true
     }).pipe(
-      catchError((error: any) => {
-        if (error.status === 401 || error.status === 498) {
+      catchError((error: unknown) => {
+        const status = httpStatus(error);
+        if (status === 401 || status === 498) {
           this.clearLocalSession();
         }
         return throwError(() => error);
@@ -66,8 +74,8 @@ export class AuthService {
     );
   }
 
-  logoutUser(): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/auth/logout`, {}, {
+  logoutUser(): Observable<ApiMessageResponse> {
+    return this.http.post<ApiMessageResponse>(`${this.baseUrl}/auth/logout`, {}, {
       withCredentials: true
     });
   }

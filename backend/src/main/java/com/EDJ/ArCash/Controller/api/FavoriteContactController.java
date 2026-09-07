@@ -2,6 +2,8 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.AuthDTO.AddFavoriteContactRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.FavoriteContactResponse;
+import com.EDJ.ArCash.DTO.AuthDTO.FavoriteListResponse;
+import com.EDJ.ArCash.DTO.AuthDTO.FavoriteMutationResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.UpdateFavoriteContactRequest;
 import com.EDJ.ArCash.Models.FavoriteContact;
 import com.EDJ.ArCash.Security.CustomUserDetails;
@@ -19,7 +21,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/favorites")
@@ -39,7 +40,7 @@ public class FavoriteContactController {
             @ApiResponse(responseCode = "400", description = "Error en los datos proporcionados"),
             @ApiResponse(responseCode = "401", description = "Token no proporcionado o inválido")
     })
-    public ResponseEntity<?> addFavoriteContact(
+    public ResponseEntity<FavoriteMutationResponse> addFavoriteContact(
             @Valid @RequestBody AddFavoriteContactRequest request,
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
@@ -58,17 +59,12 @@ public class FavoriteContactController {
         );
 
         if (result) {
-            return ResponseEntity.ok(Map.of(
-                    "status", "SUCCESS",
-                    "message", "Contacto agregado a favoritos correctamente"
-            ));
+            return ResponseEntity.ok(
+                    FavoriteMutationResponse.success("Contacto agregado a favoritos correctamente"));
         }
 
         return ResponseEntity.badRequest()
-                .body(Map.of(
-                        "status", "ERROR",
-                        "message", "No se pudo agregar el contacto a favoritos"
-                ));
+                .body(FavoriteMutationResponse.error("No se pudo agregar el contacto a favoritos"));
     }
 
     @GetMapping("/list")
@@ -77,18 +73,16 @@ public class FavoriteContactController {
             @ApiResponse(responseCode = "200", description = "Lista obtenida correctamente"),
             @ApiResponse(responseCode = "401", description = "Token no proporcionado o inválido")
     })
-    public ResponseEntity<?> getFavoriteContacts(@AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<FavoriteListResponse> getFavoriteContacts(
+            @AuthenticationPrincipal CustomUserDetails principal) {
         if (principal == null) {
-            return createUnauthorizedResponse("Token no proporcionado o inválido");
+            return unauthorizedList();
         }
 
         Long userId = principal.getUser().getId();
         List<FavoriteContact> favorites = favoriteContactService.getFavoriteContactsByUser(userId);
 
-        return ResponseEntity.ok(Map.of(
-                "status", "SUCCESS",
-                "favorites", toResponse(favorites)
-        ));
+        return ResponseEntity.ok(FavoriteListResponse.of(toResponse(favorites)));
     }
 
     @GetMapping("/list/recent")
@@ -97,19 +91,16 @@ public class FavoriteContactController {
             @ApiResponse(responseCode = "200", description = "Lista obtenida correctamente"),
             @ApiResponse(responseCode = "401", description = "Token no proporcionado o inválido")
     })
-    public ResponseEntity<?> getFavoriteContactsOrderedByUsage(
+    public ResponseEntity<FavoriteListResponse> getFavoriteContactsOrderedByUsage(
             @AuthenticationPrincipal CustomUserDetails principal) {
         if (principal == null) {
-            return createUnauthorizedResponse("Token no proporcionado o inválido");
+            return unauthorizedList();
         }
 
         Long userId = principal.getUser().getId();
         List<FavoriteContact> favorites = favoriteContactService.getFavoriteContactsByUserOrderedByUsage(userId);
 
-        return ResponseEntity.ok(Map.of(
-                "status", "SUCCESS",
-                "favorites", toResponse(favorites)
-        ));
+        return ResponseEntity.ok(FavoriteListResponse.of(toResponse(favorites)));
     }
 
     @DeleteMapping("/{favoriteId}")
@@ -119,7 +110,7 @@ public class FavoriteContactController {
             @ApiResponse(responseCode = "400", description = "No se pudo eliminar el contacto"),
             @ApiResponse(responseCode = "401", description = "Token no proporcionado o inválido")
     })
-    public ResponseEntity<?> removeFavoriteContact(
+    public ResponseEntity<FavoriteMutationResponse> removeFavoriteContact(
             @PathVariable Long favoriteId,
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
@@ -131,17 +122,12 @@ public class FavoriteContactController {
         boolean result = favoriteContactService.removeFavoriteContact(userId, favoriteId);
 
         if (result) {
-            return ResponseEntity.ok(Map.of(
-                    "status", "SUCCESS",
-                    "message", "Contacto eliminado de favoritos correctamente"
-            ));
+            return ResponseEntity.ok(
+                    FavoriteMutationResponse.success("Contacto eliminado de favoritos correctamente"));
         }
 
         return ResponseEntity.badRequest()
-                .body(Map.of(
-                        "status", "ERROR",
-                        "message", "No se pudo eliminar el contacto favorito"
-                ));
+                .body(FavoriteMutationResponse.error("No se pudo eliminar el contacto favorito"));
     }
 
     @PutMapping("/update/{contactId}")
@@ -152,7 +138,7 @@ public class FavoriteContactController {
             @ApiResponse(responseCode = "404", description = "Contacto no encontrado"),
             @ApiResponse(responseCode = "401", description = "Token no proporcionado o inválido")
     })
-    public ResponseEntity<?> updateFavoriteContact(
+    public ResponseEntity<FavoriteMutationResponse> updateFavoriteContact(
             @Parameter(description = "ID del contacto favorito", required = true)
             @PathVariable Long contactId,
             @Valid @RequestBody UpdateFavoriteContactRequest request,
@@ -166,9 +152,9 @@ public class FavoriteContactController {
                 contactId, principal.getUser().getId(), request.contactAlias(), request.description());
 
         return switch (result.getKind()) {
-            case OK -> ResponseEntity.ok(result.toBody("SUCCESS"));
-            case BAD_REQUEST -> ResponseEntity.status(400).body(result.toBody("ERROR"));
-            case NOT_FOUND -> ResponseEntity.status(404).body(result.toBody("ERROR"));
+            case OK -> ResponseEntity.ok(result.toBody(true));
+            case BAD_REQUEST -> ResponseEntity.badRequest().body(result.toBody(false));
+            case NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(result.toBody(false));
         };
     }
 
@@ -178,11 +164,13 @@ public class FavoriteContactController {
                 .toList();
     }
 
-    private ResponseEntity<?> createUnauthorizedResponse(String message) {
+    private ResponseEntity<FavoriteMutationResponse> createUnauthorizedResponse(String message) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of(
-                        "status", "ERROR",
-                        "message", message
-                ));
+                .body(FavoriteMutationResponse.error(message));
+    }
+
+    private ResponseEntity<FavoriteListResponse> unauthorizedList() {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new FavoriteListResponse("ERROR", List.of()));
     }
 }

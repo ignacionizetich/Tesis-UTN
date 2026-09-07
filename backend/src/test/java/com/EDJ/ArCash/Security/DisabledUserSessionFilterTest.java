@@ -94,7 +94,11 @@ class DisabledUserSessionFilterTest {
         mockMvc.perform(get("/api/accounts/user-accounts")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Cuenta deshabilitada"));
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("ACCOUNT_DISABLED"))
+                .andExpect(jsonPath("$.message").value(
+                        "Tu cuenta está deshabilitada. Contactá a soporte técnico."))
+                .andExpect(jsonPath("$.traceId").isNotEmpty());
     }
 
     private RefreshToken persistirRefreshActivo() {

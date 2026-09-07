@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping(value = "/api/user", produces = "application/json")
@@ -56,7 +57,7 @@ public class UserController {
             )
     })
     @PostMapping("/create")
-    public ResponseEntity<RegisterResponse> register(@RequestBody RegistrerRequest dto) {
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegistrerRequest dto) {
         RegisterResult result = userService.registerFromRequest(dto);
         RegisterResponse body = result.toResponse();
         return switch (result.getKind()) {

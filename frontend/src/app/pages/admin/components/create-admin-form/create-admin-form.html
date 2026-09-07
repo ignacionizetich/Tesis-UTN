@@ -82,9 +82,7 @@
         @if (form.get('dni')?.hasError('required')) {
         <small class="error-message">El DNI es requerido.</small>
         } @if (form.get('dni')?.hasError('pattern')) {
-        <small class="error-message">Debe ser un DNI de 8 dígitos sin puntos.</small>
-        } @if (form.get('dni')?.hasError('minlength') || form.get('dni')?.hasError('maxlength')) {
-        <small class="error-message">El DNI debe tener exactamente 8 dígitos.</small>
+        <small class="error-message">Debe ser un DNI de 7 u 8 dígitos, sin puntos.</small>
         }
       </div>
       }
@@ -97,8 +95,8 @@
           class="effect-1"
           type="text"
           formControlName="username"
-          placeholder="usuario123"
-          maxlength="10"
+          placeholder="juan.perez.01"
+          maxlength="25"
         />
       </div>
       @if (form.get('username')?.invalid && form.get('username')?.touched) {
@@ -109,11 +107,12 @@
         <small class="error-message">El nombre de usuario debe tener al menos 3 caracteres.</small>
         } @if (form.get('username')?.hasError('maxlength')) {
         <small class="error-message"
-          >El nombre de usuario no puede tener más de 10 caracteres.</small
+          >El nombre de usuario no puede tener más de 25 caracteres.</small
         >
         } @if (form.get('username')?.hasError('pattern')) {
         <small class="error-message"
-          >Solo se permiten letras, números, guiones y guiones bajos.</small
+          >Letras, números, punto, guion y guion bajo. Debe incluir una letra y no puede empezar
+          ni terminar con un separador.</small
         >
         }
       </div>
@@ -229,7 +228,19 @@
           <small class="error-message"
             >Debe contener al menos un carácter especial (!@#$%^&*...).</small
           >
+          } @if (form.get('passwords.password')?.hasError('whitespace')) {
+          <small class="error-message">No puede contener espacios.</small>
+          } @if (form.get('passwords.password')?.hasError('maxLength')) {
+          <small class="error-message">No puede superar los 72 caracteres.</small>
+          } @if (form.get('passwords.password')?.hasError('common')) {
+          <small class="error-message">Es una contraseña demasiado común. Elegí otra.</small>
           }
+        </div>
+        } @if (passwordIdentityConflict && form.get('passwords.password')?.touched) {
+        <div class="error-container">
+          <small class="error-message"
+            >La contraseña no puede repetir el {{ passwordIdentityConflict }}.</small
+          >
         </div>
         }
       </div>

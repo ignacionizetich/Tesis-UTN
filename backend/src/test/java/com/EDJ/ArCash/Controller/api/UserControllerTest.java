@@ -37,11 +37,10 @@ class UserControllerTest {
     private UserService userService;
 
     @Test
-    @DisplayName("Campos obligatorios faltantes: 400 Todos los campos son obligatorios")
+    @DisplayName("Campos obligatorios faltantes: 400 en el borde, sin llegar al servicio")
     void camposObligatoriosFaltantes() throws Exception {
-        when(userService.registerFromRequest(any(RegistrerRequest.class)))
-                .thenReturn(RegisterResult.validation("Todos los campos son obligatorios."));
-
+        // Bean Validation rechaza el cuerpo antes de invocar el servicio, asi que el registro
+        // ya no depende de que UserService recuerde comprobar cada campo.
         mockMvc.perform(post("/api/user/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -49,7 +48,54 @@ class UserControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Todos los campos son obligatorios."));
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors").isArray());
+
+        verify(userService, never()).registerFromRequest(any(RegistrerRequest.class));
+    }
+
+    @Test
+    @DisplayName("Contraseña igual al nombre de usuario: 400 y el registro no se ejecuta")
+    void passwordIgualAlNombreDeUsuario() throws Exception {
+        mockMvc.perform(post("/api/user/create")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name":"Ana",
+                                  "lastName":"Gomez",
+                                  "dni":"30111222",
+                                  "email":"ana@test.com",
+                                  "password":"Ana.Gomez1!",
+                                  "alias":"ana.gomez"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("password"));
+
+        verify(userService, never()).registerFromRequest(any(RegistrerRequest.class));
+    }
+
+    @Test
+    @DisplayName("Contraseña débil: 400 detallando los requisitos incumplidos")
+    void passwordDebil() throws Exception {
+        mockMvc.perform(post("/api/user/create")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name":"Ana",
+                                  "lastName":"Gomez",
+                                  "dni":"30111222",
+                                  "email":"ana@test.com",
+                                  "password":"secreta",
+                                  "alias":"ana.gomez"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("password"));
+
+        verify(userService, never()).registerFromRequest(any(RegistrerRequest.class));
     }
 
     @Test
@@ -149,7 +195,7 @@ class UserControllerTest {
                   "lastName":"Gomez",
                   "dni":"30111222",
                   "email":"ana@test.com",
-                  "password":"secreta",
+                  "password":"Arcash#2026kt",
                   "alias":"ana.gomez"
                 }
                 """;

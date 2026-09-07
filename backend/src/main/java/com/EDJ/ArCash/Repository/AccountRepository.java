@@ -5,6 +5,7 @@ import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.User;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -54,5 +55,30 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Account a WHERE a.user = :user AND a.accountType = :currency")
     boolean existsByUserAndAccountType(@Param("user") User user, @Param("currency") Currency currency);
 
+    /**
+     * Acredita un importe sumando en la base de datos, no en memoria.
+     *
+     * <p>Leer el saldo, sumarle el monto en Java y guardar la cuenta pierde acreditaciones
+     * concurrentes: dos hilos leen el mismo saldo inicial y el ultimo en guardar sobreescribe
+     * al otro. Delegar la suma al motor hace que cada UPDATE parta del valor ya comprometido.
+     *
+     * @return cantidad de filas afectadas: 0 si la cuenta no existe.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Account a SET a.balance = a.balance + :amount WHERE a.idAccount = :id")
+    int creditBalance(@Param("id") Long id, @Param("amount") double amount);
 
+    /**
+     * Debita un importe solo si el saldo alcanza, comprobandolo dentro del mismo UPDATE.
+     *
+     * <p>La condicion {@code a.balance >= :amount} viaja en el WHERE a proposito: si primero se
+     * consultara el saldo y despues se descontara, dos debitos simultaneos podrian pasar ambos
+     * el control y dejar la cuenta en negativo. Aca el motor evalua saldo y descuento de forma
+     * atomica, asi que el segundo debito no afecta ninguna fila.
+     *
+     * @return cantidad de filas afectadas: 0 si la cuenta no existe o no tiene saldo suficiente.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Account a SET a.balance = a.balance - :amount WHERE a.idAccount = :id AND a.balance >= :amount")
+    int debitBalance(@Param("id") Long id, @Param("amount") double amount);
 }

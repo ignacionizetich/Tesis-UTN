@@ -1,6 +1,6 @@
 package com.EDJ.ArCash.Service.result;
 
-import java.util.Map;
+import com.EDJ.ArCash.DTO.common.ApiMessageResponse;
 
 public final class ResendEmailResult {
 
@@ -34,7 +34,7 @@ public final class ResendEmailResult {
         return kind;
     }
 
-    public Map<String, Object> toBody() {
-        return Map.of("success", kind == Kind.OK, "message", message);
+    public ApiMessageResponse toBody() {
+        return new ApiMessageResponse(kind == Kind.OK, message);
     }
 }

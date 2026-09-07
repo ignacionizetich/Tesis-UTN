@@ -62,7 +62,9 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/refresh"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Refresh token requerido"));
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Refresh token requerido"));
     }
 
     @Test
@@ -72,7 +74,9 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/refresh").cookie(new Cookie("refreshToken", "bad")))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Refresh token inválido o expirado"));
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message").value("Refresh token inválido o expirado"));
     }
 
     @Test

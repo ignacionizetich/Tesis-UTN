@@ -4,6 +4,7 @@ import com.EDJ.ArCash.DTO.AuthDTO.TaxPesosResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TaxUsdResponse;
 import com.EDJ.ArCash.Service.result.TaxCalculationResult;
 import com.EDJ.ArCash.Service.interfaces.TaxService;
+import com.EDJ.ArCash.exception.personalizated.BadRequestException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -41,19 +42,20 @@ public class TaxController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    example = "{\"error\": \"El monto en ARS no puede ser cero o negativo.\"}"
+                                    example = "{\"success\": false, \"code\": \"BAD_REQUEST\","
+                                            + " \"message\": \"El monto en ARS no puede ser cero o negativo.\"}"
                             )
                     )
             )
     })
     @GetMapping("/calculateARS")
-    public ResponseEntity<?> calcularARS(
+    public ResponseEntity<TaxPesosResponse> calcularARS(
             @Parameter(description = "Monto en ARS", required = true, example = "10000")
             @RequestParam double montoARS) {
         TaxCalculationResult result = taxService.calcularPesosRequest(montoARS);
         return switch (result.getKind()) {
             case OK_ARS -> ResponseEntity.ok(result.getArs());
-            case INVALID -> ResponseEntity.badRequest().body(result.toErrorBody());
+            case INVALID -> throw new BadRequestException(result.getError());
             case OK_USD -> throw new IllegalStateException("resultado inesperado");
         };
     }
@@ -74,19 +76,20 @@ public class TaxController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    example = "{\"error\": \"El monto en USD no puede ser cero.\"}"
+                                    example = "{\"success\": false, \"code\": \"BAD_REQUEST\","
+                                            + " \"message\": \"El monto en USD no puede ser cero.\"}"
                             )
                     )
             )
     })
     @GetMapping("/calculateUSD")
-    public ResponseEntity<?> calcularUSD(
+    public ResponseEntity<TaxUsdResponse> calcularUSD(
             @Parameter(description = "Monto en USD", required = true, example = "100")
             @RequestParam double montoUSD) {
         TaxCalculationResult result = taxService.calcularUsdRequest(montoUSD);
         return switch (result.getKind()) {
             case OK_USD -> ResponseEntity.ok(result.getUsd());
-            case INVALID -> ResponseEntity.badRequest().body(result.toErrorBody());
+            case INVALID -> throw new BadRequestException(result.getError());
             case OK_ARS -> throw new IllegalStateException("resultado inesperado");
         };
     }

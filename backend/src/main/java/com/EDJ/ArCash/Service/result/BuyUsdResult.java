@@ -1,9 +1,7 @@
 package com.EDJ.ArCash.Service.result;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.EDJ.ArCash.DTO.AuthDTO.BuyUsdResponse;
+import com.EDJ.ArCash.DTO.common.ApiMessageResponse;
 
 public final class BuyUsdResult {
 
@@ -106,11 +104,8 @@ public final class BuyUsdResult {
         );
     }
 
-    /** Cuerpo de error HTTP actual: solo success + message. */
-    public Map<String, Object> toErrorMap() {
-        Map<String, Object> map = new LinkedHashMap<>();
-        map.put("success", false);
-        map.put("message", message);
-        return map;
+    /** Cuerpo de error HTTP: solo success + message, sin los saldos de una compra exitosa. */
+    public ApiMessageResponse toErrorBody() {
+        return ApiMessageResponse.failure(message);
     }
 }

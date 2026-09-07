@@ -41,6 +41,8 @@ export interface ExecuteTransferParams {
   currency: 'ARS' | 'USD';
   /** Cuenta origen (ARS/USD). Si falta, usa accountId de sesión. */
   originAccountId?: string | number | null;
+  /** Comisión de conversión propia (0 si la transferencia es misma moneda). */
+  taxRate?: number;
 }
 
 export interface ExecuteTransferResult {
@@ -178,26 +180,32 @@ export class TransferFlowService {
   validateAmount(
     amount: number | null,
     balance: number,
-    currency?: 'ARS' | 'USD'
+    currency?: 'ARS' | 'USD',
+    options?: { taxRate?: number }
   ): asserts amount is number {
-    if (amount == null || amount <= 0) {
+    if (amount == null || amount < 0.01) {
       throw new TransferFlowError(
         'INVALID_AMOUNT',
         'Por favor ingrese un monto válido'
       );
     }
-    if (amount > balance) {
+    const taxRate = options?.taxRate ?? 0;
+    const required = taxRate > 0 ? amount * (1 + taxRate) : amount;
+    if (required > balance) {
       const label =
         currency === 'USD'
           ? 'dólares'
           : currency === 'ARS'
             ? 'pesos'
             : 'cuenta';
+      const commission = required - amount;
       throw new TransferFlowError(
         'INSUFFICIENT_FUNDS',
-        currency
-          ? `Saldo insuficiente en tu cuenta de ${label}`
-          : 'Saldo insuficiente',
+        taxRate > 0
+          ? `Saldo insuficiente. Necesitás ${required.toFixed(2)} (incluye ${commission.toFixed(2)} de comisión)`
+          : currency
+            ? `Saldo insuficiente en tu cuenta de ${label}`
+            : 'Saldo insuficiente',
         currency
       );
     }
@@ -206,7 +214,9 @@ export class TransferFlowService {
   async executeTransfer(
     params: ExecuteTransferParams
   ): Promise<ExecuteTransferResult> {
-    this.validateAmount(params.amount, params.balance, params.currency);
+    this.validateAmount(params.amount, params.balance, params.currency, {
+      taxRate: params.taxRate,
+    });
 
     const { id, idNumber } = await this.resolveDestinationId(params.destination);
 

@@ -61,6 +61,8 @@ export class TransferWizardComponent implements OnInit {
   @Input() seed: TransferWizardSeed | null = null;
   /** Moneda preferida al abrir (p. ej. toggle del dashboard). */
   @Input() preferredCurrency: 'ARS' | 'USD' | null = null;
+  /** Comisión de conversión a cuenta propia. El backend la cobra encima del monto. */
+  @Input() taxRate = 0.03;
 
   @Output() closed = new EventEmitter<void>();
   @Output() transferCompleted = new EventEmitter<TransferData & { idaccount: number }>();
@@ -156,11 +158,15 @@ export class TransferWizardComponent implements OnInit {
   get canTransfer(): boolean {
     return (
       !!this.montoTransfer &&
-      this.montoTransfer > 0 &&
+      this.montoTransfer >= 0.01 &&
       !this.isTransfiriendo &&
       this.uiPhase === 'flow' &&
       (!this.isCrossCurrency || this.isOwnDestinationAccount)
     );
+  }
+
+  get conversionTaxRate(): number {
+    return this.isCrossCurrency && this.isOwnDestinationAccount ? this.taxRate : 0;
   }
 
   get completedReceiptReady(): boolean {
@@ -273,7 +279,8 @@ export class TransferWizardComponent implements OnInit {
       this.transferFlow.validateAmount(
         this.montoTransfer,
         this.getSelectedAccountBalance(),
-        fundsCurrency
+        fundsCurrency,
+        { taxRate: this.conversionTaxRate }
       );
     } catch (error: unknown) {
       if (error instanceof TransferFlowError) {
@@ -303,6 +310,7 @@ export class TransferWizardComponent implements OnInit {
         balance: this.getSelectedAccountBalance(),
         currency: this.transferCurrency,
         originAccountId: this.getSelectedAccountId(),
+        taxRate: this.conversionTaxRate,
       });
 
       await Promise.all([

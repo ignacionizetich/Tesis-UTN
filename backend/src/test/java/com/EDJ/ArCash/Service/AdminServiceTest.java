@@ -49,11 +49,7 @@ class AdminServiceTest {
         accountService = mock(AccountService.class);
         sessionService = mock(SessionService.class);
         passwordEncoder = mock(PasswordEncoder.class);
-        adminService = new AdminServiceImpl();
-        ReflectionTestUtils.setField(adminService, "userRepository", userRepository);
-        ReflectionTestUtils.setField(adminService, "accountService", accountService);
-        ReflectionTestUtils.setField(adminService, "sessionService", sessionService);
-        ReflectionTestUtils.setField(adminService, "passwordEncoder", passwordEncoder);
+        adminService = new AdminServiceImpl(userRepository, accountService, sessionService, passwordEncoder);
 
         when(passwordEncoder.encode(any())).thenReturn("hash");
         when(userRepository.existsByAlias(any())).thenReturn(false);

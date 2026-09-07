@@ -48,7 +48,8 @@ class TaxControllerTest {
     void calculateArsRechazaMontoCero() throws Exception {
         mockMvc.perform(get("/api/impuestos/calculateARS").param("montoARS", "0"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("El monto en ARS no puede ser cero o negativo."));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.message").value("El monto en ARS no puede ser cero o negativo."));
     }
 
     @Test
@@ -57,7 +58,8 @@ class TaxControllerTest {
     void calculateArsRechazaMontoNegativo() throws Exception {
         mockMvc.perform(get("/api/impuestos/calculateARS").param("montoARS", "-5"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("El monto en ARS no puede ser cero o negativo."));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.message").value("El monto en ARS no puede ser cero o negativo."));
     }
 
     @Test
@@ -94,7 +96,8 @@ class TaxControllerTest {
         mockMvc.perform(get("/api/impuestos/calculateUSD").param("montoUSD", "0"))
                 .andExpect(status().isBadRequest())
                 // El texto no menciona negativos aunque el if tambien los rechaza.
-                .andExpect(jsonPath("$.error").value("El monto en USD no puede ser cero."));
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.message").value("El monto en USD no puede ser cero."));
     }
 
     @Test
@@ -106,16 +109,19 @@ class TaxControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("calculateARS sin el parametro montoARS devuelve 500, no 400")
-    void calculateArsSinParametroDevuelve500() throws Exception {
-        // El @ExceptionHandler(Exception.class) de GlobalExceptionHandler atrapa la
-        // MissingServletRequestParameterException antes de que Spring la resuelva como 400,
-        // y ademas el cuerpo no tiene la misma forma que el 400 manual del controller.
+    @DisplayName("calculateARS sin el parametro montoARS devuelve 400 con el codigo MISSING_PARAMETER")
+    void calculateArsSinParametroDevuelve400() throws Exception {
+        // Un parametro obligatorio ausente es un error del cliente. Antes lo atrapaba el
+        // @ExceptionHandler(Exception.class) y salia como 500, escondiendo un 400 detras de
+        // un "error interno" y ensuciando las metricas de errores del servidor.
         mockMvc.perform(get("/api/impuestos/calculateARS"))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Error interno del servidor"))
-                .andExpect(jsonPath("$.error").value("INTERNAL_SERVER_ERROR"))
-                .andExpect(jsonPath("$.path").value("/api/impuestos/calculateARS"));
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("MISSING_PARAMETER"))
+                .andExpect(jsonPath("$.message").value("Falta el parámetro obligatorio 'montoARS'."))
+                .andExpect(jsonPath("$.path").value("/api/impuestos/calculateARS"))
+                .andExpect(jsonPath("$.method").value("GET"))
+                .andExpect(jsonPath("$.traceId").isNotEmpty());
     }
 }

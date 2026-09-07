@@ -6,21 +6,19 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Repository.CredentialRepository;
 import com.EDJ.ArCash.Repository.UserRepository;
 import com.EDJ.ArCash.Security.CustomUserDetails; // <-- La clave es que devuelva ESTA clase
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class UserDetailServiceImp implements UserDetailService {
 
     private final UserRepository userRepository;
     private final CredentialRepository credentialRepository;
 
-    public UserDetailServiceImp(UserRepository userRepository, CredentialRepository credentialRepository) {
-        this.userRepository = userRepository;
-        this.credentialRepository = credentialRepository;
-    }
 
     @Override
     public UserDetails loadUserByUsername(String usernameOrId) throws UsernameNotFoundException {

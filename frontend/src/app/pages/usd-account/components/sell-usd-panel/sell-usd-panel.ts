@@ -62,15 +62,16 @@ export class SellUsdPanelComponent implements OnInit {
   get activeRate(): number {
     return this.quote?.compra && this.quote.compra > 0
       ? this.quote.compra
-      : this.exchangeRate;
+      : 0;
   }
 
   get canSubmit(): boolean {
     return (
       !!this.amountToSellUsd &&
-      this.amountToSellUsd > 0 &&
+      this.amountToSellUsd >= 0.01 &&
       !this.isSellingUsd &&
       !this.isLoadingQuote &&
+      !this.quoteError &&
       this.activeRate > 0
     );
   }
@@ -83,8 +84,12 @@ export class SellUsdPanelComponent implements OnInit {
       this.recalculate();
     } catch (error) {
       logger.error('No se pudo cargar la cotización:', error);
+      this.quote = null;
       this.quoteError = true;
-      this.toast.show('No se pudo cargar la cotización. Usamos una estimación local.', 'error');
+      this.toast.show(
+        errorMessage(error, 'No se pudo cargar la cotización. Reintentá en unos momentos.'),
+        'error'
+      );
     } finally {
       this.isLoadingQuote = false;
     }
@@ -136,7 +141,12 @@ export class SellUsdPanelComponent implements OnInit {
   }
 
   async submit(): Promise<void> {
-    if (!this.amountToSellUsd || this.amountToSellUsd <= 0) {
+    if (this.quoteError || this.activeRate <= 0) {
+      this.toast.show('No hay cotización disponible. Reintentá antes de vender.', 'error');
+      return;
+    }
+
+    if (!this.amountToSellUsd || this.amountToSellUsd < 0.01) {
       this.toast.show('Ingresá un monto válido', 'error');
       return;
     }

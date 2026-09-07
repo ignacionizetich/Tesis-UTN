@@ -5,6 +5,8 @@ import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.result.AccountBalanceView;
 import com.EDJ.ArCash.Service.interfaces.AccountService;
+import com.EDJ.ArCash.exception.personalizated.ForbiddenException;
+import com.EDJ.ArCash.exception.personalizated.ResourceNotFoundException;
 import com.EDJ.ArCash.Service.result.AliasChangeResult;
 import com.EDJ.ArCash.Service.result.DepositResult;
 import com.EDJ.ArCash.Service.result.OpenUsdResult;
@@ -16,13 +18,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping(value = "/api/accounts", produces = "application/json")
@@ -66,7 +68,7 @@ public class AccountController {
     @PutMapping("/{id}/balance")
     public ResponseEntity<AccountResponse> updateBalance(
             @PathVariable Long id,
-            @RequestBody AccountRequest accountRequest,
+            @Valid @RequestBody AccountRequest accountRequest,
             @AuthenticationPrincipal CustomUserDetails principal) {
 
         DepositResult resultado = accountService.deposit(
@@ -106,22 +108,19 @@ public class AccountController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    example = "{\"error\": \"El usuario no es propietario de la cuenta\"}"
+                                    example = "{\"success\": false, \"code\": \"FORBIDDEN\","
+                                            + " \"message\": \"El usuario no es propietario de la cuenta\"}"
                             )
                     )
             )
     })
     @GetMapping("/{id}/showBalance")
-    public ResponseEntity<?> getAccount(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails principal) {
-        Optional<AccountBalanceView> vista =
-                accountService.getOwnedBalance(id, principal.getUser().getId());
+    public ResponseEntity<AccountBalanceView> getAccount(
+            @PathVariable Long id, @AuthenticationPrincipal CustomUserDetails principal) {
+        AccountBalanceView vista = accountService.getOwnedBalance(id, principal.getUser().getId())
+                .orElseThrow(() -> new ForbiddenException("El usuario no es propietario de la cuenta"));
 
-        if (vista.isEmpty()) {
-            return ResponseEntity.status(403)
-                    .body(Map.of("error", "El usuario no es propietario de la cuenta"));
-        }
-
-        return ResponseEntity.ok(vista.get().toResponseMap());
+        return ResponseEntity.ok(vista);
     }
 
     @Operation(
@@ -148,7 +147,7 @@ public class AccountController {
     @PutMapping("/{id}/changeAlias")
     public ResponseEntity<AliasResponse> changeAlias(
             @PathVariable Long id,
-            @RequestBody AliasRequest aliasRequest,
+            @Valid @RequestBody AliasRequest aliasRequest,
             @AuthenticationPrincipal CustomUserDetails principal){
         Long userId = principal.getUser().getId();
 
@@ -195,15 +194,15 @@ public class AccountController {
             )
     })
     @GetMapping("/{id}/qr-data")
-    public ResponseEntity<Map<String, Object>> getQrData(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<QrDataResult.QrPayload> getQrData(
+            @PathVariable Long id, @AuthenticationPrincipal CustomUserDetails principal) {
         QrDataResult resultado = accountService.getQrDataForOwner(id, principal.getUser().getId());
 
         return switch (resultado.getKind()) {
-            case CUENTA_NO_ENCONTRADA -> ResponseEntity.status(404)
-                    .body(Map.of("error", "Cuenta no encontrada"));
-            case NO_ES_PROPIETARIO -> ResponseEntity.status(403)
-                    .body(Map.of("error", "El usuario no es propietario de la cuenta"));
-            case OK -> ResponseEntity.ok(resultado.getPayload().toResponseMap());
+            case CUENTA_NO_ENCONTRADA -> throw new ResourceNotFoundException("Cuenta no encontrada");
+            case NO_ES_PROPIETARIO ->
+                    throw new ForbiddenException("El usuario no es propietario de la cuenta");
+            case OK -> ResponseEntity.ok(resultado.getPayload());
         };
     }
 
@@ -230,12 +229,14 @@ public class AccountController {
     }
 
     @PostMapping("/usd")
-    public ResponseEntity<?> openUsdAccount(@AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<OpenUsdAccountResponse> openUsdAccount(
+            @AuthenticationPrincipal CustomUserDetails principal) {
         OpenUsdResult resultado = accountService.openUsdAccount(principal.getUser());
         return switch (resultado.getKind()) {
             case OK -> ResponseEntity.ok(resultado.toSuccessBody());
-            case ALREADY_EXISTS -> ResponseEntity.status(409).body(resultado.toErrorBody());
-            case ERROR -> ResponseEntity.status(500).body(resultado.toErrorBody());
+            case ALREADY_EXISTS -> ResponseEntity.status(HttpStatus.CONFLICT).body(resultado.toErrorBody());
+            case ERROR -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(resultado.toErrorBody());
         };
     }
 

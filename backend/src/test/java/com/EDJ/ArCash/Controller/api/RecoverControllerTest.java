@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -149,7 +150,7 @@ class RecoverControllerTest {
     }
 
     @Test
-    @DisplayName("Reset excepcion: 500 mensaje fijo")
+    @DisplayName("Reset excepcion: 500 generico con traceId y sin filtrar la causa")
     void resetExcepcionDevuelve500() throws Exception {
         when(credentialsService.actualizarPassword("tok", "a", "a"))
                 .thenThrow(new RuntimeException("boom"));
@@ -160,7 +161,13 @@ class RecoverControllerTest {
                         .param("confirmPassword", "a"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
                 .andExpect(jsonPath("$.message").value(
-                        "Error interno del servidor. Por favor, inténtalo de nuevo."));
+                        "Ocurrió un error inesperado. Volvé a intentarlo en unos minutos."))
+                // El traceId es lo que permite correlacionar el reporte del usuario con el log.
+                .andExpect(jsonPath("$.traceId").isNotEmpty())
+                // "boom" queda solo en el log del servidor.
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("boom"))));
     }
 }

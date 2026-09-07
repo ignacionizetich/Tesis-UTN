@@ -82,7 +82,7 @@ class ApiAdminControllerCreateAdminTest {
         admin.setAlias("root.create");
         admin.setEnabled(true);
         admin.setActive(true);
-        admin.setPermissions(Permissions.ADMIN);
+        admin.setPermissions(Permissions.ROOT);
         admin = userRepository.save(admin);
 
         Credentials credentials = new Credentials(admin, "root.create", passwordEncoder.encode("clave"));
@@ -100,11 +100,12 @@ class ApiAdminControllerCreateAdminTest {
         refreshTokenRepository.save(refreshToken);
         refreshTokenRepository.flush();
 
-        adminAccessToken = jwtService.generateToken(String.valueOf(admin.getId()), "ADMIN");
+        // El alta de administradores es exclusiva de ROOT (@PreAuthorize en el controller).
+        adminAccessToken = jwtService.generateToken(String.valueOf(admin.getId()), "ROOT");
     }
 
     @Test
-    @DisplayName("409 por conflicto: mensaje/campo esperados y SIN clave detalle")
+    @DisplayName("409 por conflicto: el campo culpable viaja en fieldErrors y SIN clave detalle")
     void conflicto409SinDetalle() throws Exception {
         when(adminService.createAdmin(any())).thenReturn(
                 AdminCreateResult.conflict("username", "nombre de usuario no está disponible"));
@@ -114,13 +115,15 @@ class ApiAdminControllerCreateAdminTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(BODY))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.mensaje").value("nombre de usuario no está disponible"))
-                .andExpect(jsonPath("$.campo").value("username"))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("CONFLICT"))
+                .andExpect(jsonPath("$.message").value("nombre de usuario no está disponible"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("username"))
                 .andExpect(jsonPath("$.detalle").doesNotExist());
     }
 
     @Test
-    @DisplayName("409 generico de carrera: mensaje fijo y SIN clave detalle")
+    @DisplayName("409 generico de carrera: mensaje fijo, sin fieldErrors ni clave detalle")
     void conflictoGenerico409SinDetalle() throws Exception {
         when(adminService.createAdmin(any())).thenReturn(AdminCreateResult.conflictGeneric());
 
@@ -129,8 +132,10 @@ class ApiAdminControllerCreateAdminTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(BODY))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.mensaje").value("Error de duplicación en la base de datos"))
-                .andExpect(jsonPath("$.campo").doesNotExist())
+                .andExpect(jsonPath("$.code").value("CONFLICT"))
+                .andExpect(jsonPath("$.message").value("Error de duplicación en la base de datos"))
+                // Sin campo atribuible, fieldErrors se omite en lugar de mandar una lista vacia.
+                .andExpect(jsonPath("$.fieldErrors").doesNotExist())
                 .andExpect(jsonPath("$.detalle").doesNotExist());
     }
 
@@ -144,14 +149,16 @@ class ApiAdminControllerCreateAdminTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(BODY))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.mensaje").value("Error interno del servidor"))
+                .andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
+                .andExpect(jsonPath("$.message").value("Error interno del servidor"))
                 .andExpect(jsonPath("$.detalle").doesNotExist())
+                // El nombre de la constraint de la DB no puede llegar al cliente.
                 .andExpect(content().string(org.hamcrest.Matchers.not(
                         org.hamcrest.Matchers.containsString("UK22orgon"))));
     }
 
     @Test
-    @DisplayName("Alta exitosa: 200 con el mismo texto plano")
+    @DisplayName("Alta exitosa: 200 con el mensaje en JSON, no como texto plano")
     void altaExitosa() throws Exception {
         when(adminService.createAdmin(any())).thenReturn(AdminCreateResult.success());
 
@@ -160,6 +167,7 @@ class ApiAdminControllerCreateAdminTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(BODY))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Usuario administrador creado correctamente"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Usuario administrador creado correctamente"));
     }
 }

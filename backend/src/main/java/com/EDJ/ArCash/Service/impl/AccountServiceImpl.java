@@ -13,12 +13,15 @@ import com.EDJ.ArCash.Repository.AccountRepository;
 import com.EDJ.ArCash.observer.Event;
 import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
@@ -27,17 +30,7 @@ public class AccountServiceImpl implements AccountService {
     private final AliasFormatValidator aliasFormatValidator;
     private final VirtualCardService virtualCardService;
 
-    public AccountServiceImpl(AccountRepository accountRepository,
-                          EventPublisher eventPublisher,
-                          AccountIdentifierGenerator identifierGenerator,
-                          AliasFormatValidator aliasFormatValidator,
-                          VirtualCardService virtualCardService) {
-        this.accountRepository = accountRepository;
-        this.eventPublisher = eventPublisher;
-        this.identifierGenerator = identifierGenerator;
-        this.aliasFormatValidator = aliasFormatValidator;
-        this.virtualCardService = virtualCardService;
-    }
+
 
     public void createAccount(User user) {
         Account account = new Account();
@@ -48,7 +41,7 @@ public class AccountServiceImpl implements AccountService {
         account.setAccountCvu(identifierGenerator.generateUniqueCvu());
         accountRepository.save(account);
         virtualCardService.createForAccount(account);
-        
+
         // Publicar evento de cuenta creada
         Event event = new Event(EventType.ACCOUNT_CREATED);
         event.addData("user", user);
@@ -100,6 +93,13 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    /**
+     * Acredita un deposito en una cuenta propia.
+     *
+     * <p>Es transaccional para que la acreditacion y la lectura del saldo resultante sean parte
+     * de la misma unidad de trabajo: sin eso se podria informar un saldo que ya cambio.
+     */
+    @Transactional
     public DepositResult deposit(Long accountId, Long userId, double amount) {
         if (amount < 0) {
             return DepositResult.montoNegativo(amount);
@@ -170,18 +170,25 @@ public class AccountServiceImpl implements AccountService {
         ));
     }
 
+    /**
+     * Suma (o resta, si el monto es negativo) sobre el saldo de una cuenta.
+     *
+     * <p>La operacion la resuelve la base de datos en un solo UPDATE. Un debito solo se aplica
+     * si el saldo alcanza, de modo que dos debitos simultaneos no pueden dejar la cuenta en
+     * rojo: el segundo no afecta ninguna fila y devuelve {@code false}.
+     *
+     * @return {@code false} si la cuenta no existe o si el debito excede el saldo disponible.
+     */
+    @Transactional
     public boolean updateBalance(double balanceToAdd, Long id){
-        Optional<Account> optionalAccount = accountRepository.findByIdAccount(id);
-
-        if (optionalAccount.isEmpty()) {
-            return false;
-        } else {
-            Account account = optionalAccount.get();
-            double newBalance = account.getBalance() + balanceToAdd;
-            account.setBalance(newBalance);
-            accountRepository.save(account);
-            return true;
+        if (balanceToAdd == 0) {
+            // Nada que mover: se confirma solo si la cuenta existe, para no mentirle al llamador.
+            return accountRepository.findByIdAccount(id).isPresent();
         }
+        int filasAfectadas = balanceToAdd > 0
+                ? accountRepository.creditBalance(id, balanceToAdd)
+                : accountRepository.debitBalance(id, -balanceToAdd);
+        return filasAfectadas > 0;
     }
 
    public Optional<Account> findAccountByID(long id){
