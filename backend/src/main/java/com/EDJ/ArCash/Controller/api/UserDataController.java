@@ -4,6 +4,7 @@ import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.result.UserDataView;
 import com.EDJ.ArCash.Service.interfaces.UserService;
+import com.EDJ.ArCash.exception.personalizated.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/api/user", produces = "application/json")
@@ -46,20 +46,17 @@ public class UserDataController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    example = "{\"error\": \"Cuenta no encontrada para el usuario\"}"
+                                    example = "{\"success\": false, \"code\": \"NOT_FOUND\","
+                                            + " \"message\": \"Cuenta no encontrada para el usuario\"}"
                             )
                     )
             )
     })
     @GetMapping("/data")
-    public ResponseEntity<?> getUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<UserDTO> getUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        Optional<UserDataView> data = userService.getUserData(user);
-        if (data.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(java.util.Map.of("error", "Cuenta no encontrada para el usuario"));
-        }
-        UserDataView view = data.get();
+        UserDataView view = userService.getUserData(user)
+                .orElseThrow(() -> new ResourceNotFoundException("Cuenta no encontrada para el usuario"));
         return ResponseEntity.ok(new UserDTO(
                 view.getName(),
                 view.getLastName(),

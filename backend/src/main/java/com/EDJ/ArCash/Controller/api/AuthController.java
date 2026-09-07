@@ -2,8 +2,12 @@ package com.EDJ.ArCash.Controller.api;
 
 import com.EDJ.ArCash.DTO.AuthDTO.LoginRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.LoginResponse;
+import com.EDJ.ArCash.DTO.AuthDTO.RecoverMailRequest;
+import com.EDJ.ArCash.DTO.AuthDTO.RefreshTokenResponse;
+import com.EDJ.ArCash.DTO.AuthDTO.SessionStatusResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.UsernameRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.UsernameResponse;
+import com.EDJ.ArCash.DTO.common.ApiMessageResponse;
 import com.EDJ.ArCash.Models.Imp.LogoutStatus;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.interfaces.AuthService;
@@ -13,6 +17,9 @@ import com.EDJ.ArCash.Service.result.SessionCheckResult;
 import com.EDJ.ArCash.Service.interfaces.UserService;
 import com.EDJ.ArCash.Service.result.UsernameChangeResult;
 import com.EDJ.ArCash.Service.strategy.AuthenticationResult;
+import com.EDJ.ArCash.exception.personalizated.BadRequestException;
+import com.EDJ.ArCash.exception.personalizated.DisabledAccountException;
+import com.EDJ.ArCash.exception.personalizated.UnauthorizedException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,6 +36,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping(value = "/api/auth", produces = "application/json")
@@ -63,7 +71,7 @@ public class AuthController {
             )
     })
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
       try {
 
         LoginResponse loginResponse = authService.login(loginRequest);
@@ -164,7 +172,7 @@ public class AuthController {
             )
     })
     @GetMapping("/check-session")
-    public ResponseEntity<?> checkSession(
+    public ResponseEntity<SessionStatusResponse> checkSession(
             @Parameter(description = "Token JWT de autenticación", example = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         SessionCheckResult result = authService.checkSession(authHeader);
@@ -202,8 +210,9 @@ public class AuthController {
             )
     })
     @PostMapping("/send-recover-mail")
-    public ResponseEntity<?> sendRecoverEmail(@RequestBody Map<String, String> body) {
-        RecoverMailResult result = authService.sendRecoverMail(body.get("email"));
+    public ResponseEntity<ApiMessageResponse> sendRecoverEmail(
+            @Valid @RequestBody RecoverMailRequest request) {
+        RecoverMailResult result = authService.sendRecoverMail(request.email());
         return switch (result.getKind()) {
             case OK -> ResponseEntity.ok(result.toBody());
             case NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(result.toBody());
@@ -234,7 +243,7 @@ public class AuthController {
     })
     @PutMapping("/changeUsername")
     public ResponseEntity<?> changeUsername(
-            @RequestBody UsernameRequest usernameRequest,
+            @Valid @RequestBody UsernameRequest usernameRequest,
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
         UsernameChangeResult result = userService.changeUsername(
@@ -267,7 +276,8 @@ public class AuthController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    example = "{\"error\": \"Refresh token requerido\"}"
+                                    example = "{\"success\": false, \"code\": \"BAD_REQUEST\","
+                                            + " \"message\": \"Refresh token requerido\"}"
                             )
                     )
             ),
@@ -277,18 +287,21 @@ public class AuthController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    example = "{\"error\": \"Refresh token inválido o expirado\"}"
+                                    example = "{\"success\": false, \"code\": \"UNAUTHORIZED\","
+                                            + " \"message\": \"Refresh token inválido o expirado\"}"
                             )
                     )
             )
     })
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshAccessToken(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
+    public ResponseEntity<RefreshTokenResponse> refreshAccessToken(
+            @CookieValue(value = "refreshToken", required = false) String refreshToken) {
         RefreshAccessResult result = authService.refreshAccessToken(refreshToken);
         return switch (result.getKind()) {
-            case MISSING -> ResponseEntity.badRequest().body(Map.of("error", result.getError()));
-            case INVALID -> ResponseEntity.status(401).body(Map.of("error", result.getError()));
-            case OK -> ResponseEntity.ok(Map.of("accessToken", result.getAccessToken()));
+            case MISSING -> throw new BadRequestException(result.getError());
+            case INVALID -> throw new UnauthorizedException(result.getError());
+            case DISABLED -> throw new DisabledAccountException(result.getError());
+            case OK -> ResponseEntity.ok(new RefreshTokenResponse(result.getAccessToken()));
         };
     }
 

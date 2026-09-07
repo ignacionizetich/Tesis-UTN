@@ -48,24 +48,17 @@ public class CotizacionController {
             )
     })
     @GetMapping("/dolar")
-    public ResponseEntity<?> obtenerDolarOficial() {
-        try {
-            ApiUsdResponse snap = cotizationUsdService.obtenerSnapshot();
-            CotizacionDolarResponse body = CotizacionDolarResponse.builder()
-                    .moneda(snap.getMoneda())
-                    .casa(snap.getCasa())
-                    .nombre(snap.getNombre())
-                    .compra(snap.getCompra())
-                    .venta(snap.getVenta())
-                    .fechaActualizacion(snap.getFechaActualizacion())
-                    .build();
-            return ResponseEntity.ok(body);
-        } catch (ExchangeRateUnavailableException ex) {
-            return ResponseEntity.status(503).body(Map.of(
-                    "error", ex.getMessage() != null
-                            ? ex.getMessage()
-                            : "No se pudo obtener la cotizacion del dolar."
-            ));
-        }
+    public ResponseEntity<CotizacionDolarResponse> obtenerDolarOficial() {
+        // ExchangeRateUnavailableException la traduce GlobalExceptionHandler a un 503 con el
+        // mismo formato que el resto de los errores de la API.
+        ApiUsdResponse snap = cotizationUsdService.obtenerSnapshot();
+        return ResponseEntity.ok(CotizacionDolarResponse.builder()
+                .moneda(snap.getMoneda())
+                .casa(snap.getCasa())
+                .nombre(snap.getNombre())
+                .compra(snap.getCompra())
+                .venta(snap.getVenta())
+                .fechaActualizacion(snap.getFechaActualizacion())
+                .build());
     }
 }

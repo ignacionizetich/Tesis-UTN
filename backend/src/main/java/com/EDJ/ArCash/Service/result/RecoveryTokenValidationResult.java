@@ -1,6 +1,6 @@
 package com.EDJ.ArCash.Service.result;
 
-import java.util.Map;
+import com.EDJ.ArCash.DTO.AuthDTO.RecoveryTokenValidationResponse;
 
 /**
  * Validacion de token de recuperacion (GET validate-recovery-token).
@@ -41,7 +41,7 @@ public final class RecoveryTokenValidationResult {
         return kind;
     }
 
-    public Map<String, Object> toBody() {
-        return Map.of("valid", valid, "message", message);
+    public RecoveryTokenValidationResponse toBody() {
+        return new RecoveryTokenValidationResponse(valid, message);
     }
 }

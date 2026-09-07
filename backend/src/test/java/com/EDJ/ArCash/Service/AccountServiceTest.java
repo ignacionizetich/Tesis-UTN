@@ -143,34 +143,42 @@ class AccountServiceTest {
     // --- updateBalance ---
 
     @Test
-    @DisplayName("El ingreso de dinero suma al saldo existente en vez de reemplazarlo")
+    @DisplayName("El ingreso delega la suma a la base, sin leer y reescribir el saldo")
     void updateBalanceSumaAlSaldoExistente() {
-        Account cuenta = cuenta(usuario());
-        cuenta.setBalance(100.0);
-        when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.of(cuenta));
+        // Sumar en memoria pierde acreditaciones concurrentes: por eso se espera un UPDATE
+        // que arranque del saldo ya comprometido en lugar de un save() de la entidad.
+        when(accountRepository.creditBalance(ID_CUENTA, 50.0)).thenReturn(1);
 
         assertTrue(accountService.updateBalance(50.0, ID_CUENTA));
 
-        assertEquals(150.0, cuenta.getBalance());
-        verify(accountRepository).save(cuenta);
+        verify(accountRepository).creditBalance(ID_CUENTA, 50.0);
+        verify(accountRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("El primitivo updateBalance no valida el monto: un negativo descuenta saldo")
+    @DisplayName("Un monto negativo se traduce a un debito con control de saldo")
     void updateBalanceAceptaMontosNegativos() {
-        Account cuenta = cuenta(usuario());
-        cuenta.setBalance(100.0);
-        when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.of(cuenta));
+        when(accountRepository.debitBalance(ID_CUENTA, 30.0)).thenReturn(1);
 
-        // La validacion de monto negativo vive en deposit(); este metodo sigue siendo el primitivo.
         assertTrue(accountService.updateBalance(-30.0, ID_CUENTA));
-        assertEquals(70.0, cuenta.getBalance());
+
+        // El monto llega en positivo: el signo lo aporta el UPDATE que resta.
+        verify(accountRepository).debitBalance(ID_CUENTA, 30.0);
+    }
+
+    @Test
+    @DisplayName("Un debito sin saldo suficiente no afecta filas y devuelve false")
+    void updateBalanceRechazaDebitoSinSaldo() {
+        // La condicion de saldo vive en el WHERE del UPDATE: si no alcanza, 0 filas afectadas.
+        when(accountRepository.debitBalance(ID_CUENTA, 500.0)).thenReturn(0);
+
+        assertFalse(accountService.updateBalance(-500.0, ID_CUENTA));
     }
 
     @Test
     @DisplayName("Devuelve false si la cuenta no existe")
     void updateBalanceDevuelveFalseSiLaCuentaNoExiste() {
-        when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.empty());
+        when(accountRepository.creditBalance(ID_CUENTA, 50.0)).thenReturn(0);
 
         assertFalse(accountService.updateBalance(50.0, ID_CUENTA));
         verify(accountRepository, never()).save(any());
@@ -189,18 +197,22 @@ class AccountServiceTest {
     }
 
     @Test
-    @DisplayName("deposit ok: ownership + suma + saldo fresco")
+    @DisplayName("deposit ok: ownership + acreditacion + saldo releido de la base")
     void depositExitosoDevuelveSaldoActualizado() {
         User propietario = usuario();
-        Account cuenta = cuenta(propietario);
-        cuenta.setBalance(500.0);
-        when(accountRepository.findByIdAccount(ID_CUENTA)).thenReturn(Optional.of(cuenta));
+        Account antes = cuenta(propietario);
+        antes.setBalance(500.0);
+        Account despues = cuenta(propietario);
+        despues.setBalance(600.0);
+        // La primera lectura valida la propiedad; la segunda trae el saldo que dejo el UPDATE.
+        when(accountRepository.findByIdAccount(ID_CUENTA))
+                .thenReturn(Optional.of(antes), Optional.of(despues));
+        when(accountRepository.creditBalance(ID_CUENTA, 100.0)).thenReturn(1);
 
         DepositResult resultado = accountService.deposit(ID_CUENTA, ID_USUARIO, 100.0);
 
         assertEquals(DepositResult.Kind.OK, resultado.getKind());
         assertEquals(600.0, resultado.getBalance());
-        assertEquals(600.0, cuenta.getBalance());
     }
 
     @Test

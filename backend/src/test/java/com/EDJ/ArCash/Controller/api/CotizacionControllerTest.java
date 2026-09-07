@@ -63,7 +63,8 @@ class CotizacionControllerTest {
 
         mockMvc.perform(get("/api/cotizacion/dolar"))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.error").value("sin cotizacion"));
+                .andExpect(jsonPath("$.code").value("EXCHANGE_RATE_UNAVAILABLE"))
+                .andExpect(jsonPath("$.message").value("sin cotizacion"));
     }
 
     @Test

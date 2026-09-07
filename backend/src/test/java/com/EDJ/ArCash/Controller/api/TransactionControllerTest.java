@@ -316,7 +316,8 @@ class TransactionControllerTest {
 
         mockMvc.perform(get("/api/transactions/search/{input}", "ghost"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("Cuenta no encontrada."));
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("Cuenta no encontrada."));
     }
 
     private User usuario(long id) {

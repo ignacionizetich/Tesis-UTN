@@ -3,8 +3,6 @@ package com.EDJ.ArCash.Service.result;
 import com.EDJ.ArCash.DTO.AuthDTO.TaxPesosResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.TaxUsdResponse;
 
-import java.util.Map;
-
 /**
  * Calculo de impuestos con validacion de monto (antes en TaxController).
  */
@@ -52,7 +50,7 @@ public final class TaxCalculationResult {
         return usd;
     }
 
-    public Map<String, String> toErrorBody() {
-        return Map.of("error", error);
+    public String getError() {
+        return error;
     }
 }

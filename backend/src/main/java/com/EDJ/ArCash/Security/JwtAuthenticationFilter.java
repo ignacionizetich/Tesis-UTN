@@ -2,7 +2,9 @@ package com.EDJ.ArCash.Security;
 
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Service.interfaces.SessionService;
+import com.EDJ.ArCash.exception.response.ApiErrorCode;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -33,6 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final UserDetailsService userDetailsService;
   private final JwtService jwtService;
   private final SessionService sessionService;
+  private final ApiErrorWriter apiErrorWriter;
 
   /**
    * Debe coincidir con el permitAll de SecurityConfig. En estas rutas el
@@ -61,10 +65,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   public JwtAuthenticationFilter(UserDetailsService userDetailsService,
                                  JwtService jwtService,
-                                 SessionService sessionService) {
+                                 SessionService sessionService,
+                                 ApiErrorWriter apiErrorWriter) {
     this.userDetailsService = userDetailsService;
     this.jwtService = jwtService;
     this.sessionService = sessionService;
+    this.apiErrorWriter = apiErrorWriter;
   }
 
   @Override
@@ -95,9 +101,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       String tokenType = claims.get(JwtService.CLAIM_TYPE, String.class);
       if (!JwtService.TYPE_ACCESS.equals(tokenType)) {
         logger.warn("Token rechazado: type esperado '{}', recibido '{}'", JwtService.TYPE_ACCESS, tokenType);
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json");
-        response.getWriter().write("{\"error\": \"Token de acceso inválido\"}");
+        reject(request, response, ApiErrorCode.INVALID_TOKEN,
+          "El token enviado no es un token de acceso.");
         return;
       }
 
@@ -109,17 +114,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (!user.isActive()) {
           logger.warn("Cuenta deshabilitada para usuario {}", userId);
-          response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-          response.setContentType("application/json");
-          response.getWriter().write("{\"error\": \"Cuenta deshabilitada\"}");
+          reject(request, response, ApiErrorCode.ACCOUNT_DISABLED,
+            "Tu cuenta está deshabilitada. Contactá a soporte técnico.");
           return;
         }
 
         if (!sessionService.tieneSesionActiva(userId)) {
           logger.warn("Sesion finalizada para usuario {}", userId);
-          response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-          response.setContentType("application/json");
-          response.getWriter().write("{\"error\": \"Sesión finalizada\"}");
+          reject(request, response, ApiErrorCode.SESSION_ENDED,
+            "Tu sesión finalizó. Volvé a iniciar sesión.");
           return;
         }
 
@@ -135,14 +138,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
       }
-    } catch (JwtException e) {
-      logger.error("Error validando el token JWT: {}", e.getMessage());
-      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      response.getWriter().write("{\"error\": \"Token JWT inválido o expirado\"}");
+    } catch (ExpiredJwtException e) {
+      logger.warn("Token JWT expirado: {}", e.getMessage());
+      reject(request, response, ApiErrorCode.INVALID_TOKEN,
+        "Tu sesión expiró. Volvé a iniciar sesión.");
+      return;
+    } catch (JwtException | IllegalArgumentException e) {
+      // IllegalArgumentException la lanza jjwt cuando el token viene vacio o mal formado.
+      logger.warn("Token JWT inválido: {}", e.getMessage());
+      reject(request, response, ApiErrorCode.INVALID_TOKEN, "El token es inválido o expiró.");
       return;
     }
 
     filterChain.doFilter(request, response);
+  }
+
+  /**
+   * Corta la cadena con un {@code ErrorResponse}. Se delega en {@link ApiErrorWriter} para que
+   * el cuerpo sea byte a byte el mismo que emite el {@code GlobalExceptionHandler}.
+   */
+  private void reject(HttpServletRequest request,
+                      HttpServletResponse response,
+                      ApiErrorCode code,
+                      String message) throws IOException {
+    SecurityContextHolder.clearContext();
+    apiErrorWriter.write(request, response, code, message,
+      UUID.randomUUID().toString().substring(0, 8));
   }
 
   /**

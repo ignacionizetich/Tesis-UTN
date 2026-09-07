@@ -8,13 +8,14 @@ import com.EDJ.ArCash.Models.Imp.LoanInstallmentStatus;
 import com.EDJ.ArCash.Security.CustomUserDetails;
 import com.EDJ.ArCash.Service.interfaces.LoanRateConfigService;
 import com.EDJ.ArCash.Service.interfaces.LoanService;
+import com.EDJ.ArCash.exception.personalizated.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping(value = "/api/loans", produces = "application/json")
@@ -44,53 +45,41 @@ public class LoanController {
     }
 
     @PostMapping("/simulate")
-    public ResponseEntity<?> simulate(@RequestBody LoanSimulateRequest request) {
-        try {
-            LoanService.SimulationResult sim =
-                    loanService.simulate(request.getPrincipal(), request.getInstallments());
-            return ResponseEntity.ok(toSimulation(sim));
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-        }
+    public ResponseEntity<LoanSimulationResponse> simulate(
+            @Valid @RequestBody LoanSimulateRequest request) {
+        LoanService.SimulationResult sim =
+                loanService.simulate(request.getPrincipal(), request.getInstallments());
+        return ResponseEntity.ok(toSimulation(sim));
     }
 
     @PostMapping
-    public ResponseEntity<?> accept(
+    public ResponseEntity<LoanDetailResponse> accept(
             @AuthenticationPrincipal CustomUserDetails principal,
-            @RequestBody LoanSimulateRequest request) {
-        try {
-            Loan loan = loanService.accept(
-                    principal.getUser(), request.getPrincipal(), request.getInstallments());
-            return ResponseEntity.ok(toDetail(loan));
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-        }
+            @Valid @RequestBody LoanSimulateRequest request) {
+        Loan loan = loanService.accept(
+                principal.getUser(), request.getPrincipal(), request.getInstallments());
+        return ResponseEntity.ok(toDetail(loan));
     }
 
     @GetMapping("/{loanId}")
-    public ResponseEntity<?> detail(
+    public ResponseEntity<LoanDetailResponse> detail(
             @AuthenticationPrincipal CustomUserDetails principal,
             @PathVariable Long loanId) {
-        return loanService.findOwned(loanId, principal.getUser().getId())
-                .<ResponseEntity<?>>map(loan -> ResponseEntity.ok(toDetail(loan)))
-                .orElseGet(() -> ResponseEntity.status(404).body(Map.of("error", "Préstamo no encontrado")));
+        return ResponseEntity.ok(toDetail(requireOwnedLoan(loanId, principal.getUser().getId())));
     }
 
     @PostMapping("/{loanId}/pay")
-    public ResponseEntity<?> payNext(
+    public ResponseEntity<LoanDetailResponse> payNext(
             @AuthenticationPrincipal CustomUserDetails principal,
             @PathVariable Long loanId) {
-        User user = principal.getUser();
-        return loanService.findOwned(loanId, user.getId())
-                .map(loan -> {
-                    try {
-                        Loan updated = loanService.payNext(loan);
-                        return ResponseEntity.ok(toDetail(updated));
-                    } catch (IllegalStateException ex) {
-                        return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-                    }
-                })
-                .orElseGet(() -> ResponseEntity.status(404).body(Map.of("error", "Préstamo no encontrado")));
+        Loan loan = requireOwnedLoan(loanId, principal.getUser().getId());
+        return ResponseEntity.ok(toDetail(loanService.payNext(loan)));
+    }
+
+    /** Un prestamo de otro usuario responde 404 igual que uno inexistente, sin filtrar su existencia. */
+    private Loan requireOwnedLoan(Long loanId, Long userId) {
+        return loanService.findOwned(loanId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Préstamo no encontrado"));
     }
 
     private LoanSimulationResponse toSimulation(LoanService.SimulationResult sim) {

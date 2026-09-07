@@ -1,8 +1,9 @@
 package com.EDJ.ArCash.Controller.api;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.EDJ.ArCash.DTO.AuthDTO.RecoveryTokenValidationResponse;
+import com.EDJ.ArCash.DTO.common.ApiMessageResponse;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,7 +37,8 @@ public class RecoverController {
             description = "Valida si un token de recuperación es válido y no ha sido usado."
     )
     @GetMapping("/validate-recovery-token")
-    public ResponseEntity<Map<String, Object>> validateRecoveryToken(@RequestParam("token") String token) {
+    public ResponseEntity<RecoveryTokenValidationResponse> validateRecoveryToken(
+            @RequestParam("token") String token) {
         RecoveryTokenValidationResult result = authService.validateRecoveryToken(token);
         return switch (result.getKind()) {
             case VALID -> ResponseEntity.ok(result.toBody());
@@ -55,27 +57,22 @@ public class RecoverController {
             @ApiResponse(responseCode = "401", description = "Token inválido o expirado")
     })
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, Object>> resetPassword(
+    public ResponseEntity<ApiMessageResponse> resetPassword(
             @RequestParam("token") String token,
             @RequestParam("password") String password,
             @RequestParam("confirmPassword") String confirmPassword) {
 
-        Map<String, Object> response = new HashMap<>();
+        // Sin try/catch: un fallo inesperado lo traduce GlobalExceptionHandler, que ademas
+        // deja el stack trace y el traceId en el log en lugar de tragarse la causa.
+        ResetPasswordResult resultado =
+                credentialsService.actualizarPassword(token, password, confirmPassword);
+        ApiMessageResponse body =
+                new ApiMessageResponse(resultado.isSuccess(), resultado.getMessage());
 
-        try {
-            ResetPasswordResult resultado = credentialsService.actualizarPassword(token, password, confirmPassword);
-            response.put("success", resultado.isSuccess());
-            response.put("message", resultado.getMessage());
-
-            return switch (resultado.getKind()) {
-                case OK -> ResponseEntity.ok(response);
-                case UNAUTHORIZED -> ResponseEntity.status(401).body(response);
-                case BAD_REQUEST -> ResponseEntity.status(400).body(response);
-            };
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error interno del servidor. Por favor, inténtalo de nuevo.");
-            return ResponseEntity.status(500).body(response);
-        }
+        return switch (resultado.getKind()) {
+            case OK -> ResponseEntity.ok(body);
+            case UNAUTHORIZED -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+            case BAD_REQUEST -> ResponseEntity.badRequest().body(body);
+        };
     }
 }

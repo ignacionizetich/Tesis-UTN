@@ -15,6 +15,7 @@ import com.EDJ.ArCash.observer.EventPublisher;
 import com.EDJ.ArCash.observer.EventType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -92,6 +93,13 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    /**
+     * Acredita un deposito en una cuenta propia.
+     *
+     * <p>Es transaccional para que la acreditacion y la lectura del saldo resultante sean parte
+     * de la misma unidad de trabajo: sin eso se podria informar un saldo que ya cambio.
+     */
+    @Transactional
     public DepositResult deposit(Long accountId, Long userId, double amount) {
         if (amount < 0) {
             return DepositResult.montoNegativo(amount);
@@ -162,18 +170,25 @@ public class AccountServiceImpl implements AccountService {
         ));
     }
 
+    /**
+     * Suma (o resta, si el monto es negativo) sobre el saldo de una cuenta.
+     *
+     * <p>La operacion la resuelve la base de datos en un solo UPDATE. Un debito solo se aplica
+     * si el saldo alcanza, de modo que dos debitos simultaneos no pueden dejar la cuenta en
+     * rojo: el segundo no afecta ninguna fila y devuelve {@code false}.
+     *
+     * @return {@code false} si la cuenta no existe o si el debito excede el saldo disponible.
+     */
+    @Transactional
     public boolean updateBalance(double balanceToAdd, Long id){
-        Optional<Account> optionalAccount = accountRepository.findByIdAccount(id);
-
-        if (optionalAccount.isEmpty()) {
-            return false;
-        } else {
-            Account account = optionalAccount.get();
-            double newBalance = account.getBalance() + balanceToAdd;
-            account.setBalance(newBalance);
-            accountRepository.save(account);
-            return true;
+        if (balanceToAdd == 0) {
+            // Nada que mover: se confirma solo si la cuenta existe, para no mentirle al llamador.
+            return accountRepository.findByIdAccount(id).isPresent();
         }
+        int filasAfectadas = balanceToAdd > 0
+                ? accountRepository.creditBalance(id, balanceToAdd)
+                : accountRepository.debitBalance(id, -balanceToAdd);
+        return filasAfectadas > 0;
     }
 
    public Optional<Account> findAccountByID(long id){

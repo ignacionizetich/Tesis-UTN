@@ -28,6 +28,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -145,6 +146,46 @@ class VirtualCardServiceTest {
         VirtualCard renewed = virtualCardService.reissue(card);
         assertEquals(CardStatus.ACTIVE, renewed.getStatus());
         assertTrue(renewed.getExpYear() >= java.time.LocalDate.now().getYear());
+    }
+
+    @Test
+    @DisplayName("Tarjeta vencida: no se reactiva ni se le cambia el límite, hay que reemitirla")
+    void tarjetaVencidaNoSeModifica() {
+        // Cambiarle el estado o el limite a una tarjeta vencida deja al titular creyendo que
+        // quedo operativa. El unico camino valido es reemitirla.
+        User user = userRepository.save(newUser("card.user.g"));
+        Account account = accountRepository.save(newAccount(user, Currency.ARS));
+        VirtualCard card = virtualCardService.createForAccount(account);
+        card.setExpMonth(1);
+        card.setExpYear(2020);
+        virtualCardRepository.save(card);
+
+        IllegalStateException estado = assertThrows(IllegalStateException.class,
+                () -> virtualCardService.updateStatus(card, CardStatus.ACTIVE));
+        assertTrue(estado.getMessage().contains("vencida"));
+
+        IllegalStateException limite = assertThrows(IllegalStateException.class,
+                () -> virtualCardService.updateLimit(card, 50_000));
+        assertTrue(limite.getMessage().contains("vencida"));
+    }
+
+    @Test
+    @DisplayName("Reveal de tarjeta vencida responde 400 aunque haya unlock token")
+    void revealDeTarjetaVencidaDevuelve400() throws Exception {
+        User user = userRepository.save(newUser("card.user.h"));
+        Account account = accountRepository.save(newAccount(user, Currency.ARS));
+        VirtualCard card = virtualCardService.createForAccount(account);
+        card.setExpMonth(1);
+        card.setExpYear(2020);
+        virtualCardRepository.save(card);
+
+        CardPinService.PinResult set = cardPinService.setPin(user, "778899", "778899", null);
+        assertTrue(set.success());
+
+        mockMvc.perform(get("/api/cards/{id}/reveal", card.getId())
+                        .header("X-Card-Unlock", set.unlockToken())
+                        .with(comoUsuarioAutenticado(user)))
+                .andExpect(status().isBadRequest());
     }
 
     private RequestPostProcessor comoUsuarioAutenticado(User user) {

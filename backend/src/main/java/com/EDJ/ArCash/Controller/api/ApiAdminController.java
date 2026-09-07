@@ -5,10 +5,13 @@ import com.EDJ.ArCash.DTO.AuthDTO.AdminRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.LoanRatesResponse;
 import com.EDJ.ArCash.DTO.AuthDTO.LoanRatesUpdateRequest;
 import com.EDJ.ArCash.DTO.AuthDTO.UserResponse;
+import com.EDJ.ArCash.DTO.common.ApiMessageResponse;
 import com.EDJ.ArCash.Service.result.AdminCreateResult;
 import com.EDJ.ArCash.Service.interfaces.AdminService;
 import com.EDJ.ArCash.Service.interfaces.LoanRateConfigService;
 import com.EDJ.ArCash.Service.interfaces.MetricsService;
+import com.EDJ.ArCash.exception.personalizated.ConflictException;
+import com.EDJ.ArCash.exception.personalizated.InternalServerException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,9 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping(value = "/api/admin")
@@ -64,12 +66,10 @@ public class ApiAdminController {
     description = "Actualiza las tasas mensuales por plazo (3, 6 y 12 cuotas)."
   )
   @PutMapping("/loan-rates")
-  public ResponseEntity<?> updateLoanRates(@RequestBody LoanRatesUpdateRequest request) {
-    try {
-      return ResponseEntity.ok(loanRateConfigService.updateRates(request));
-    } catch (IllegalArgumentException ex) {
-      return ResponseEntity.badRequest().body(Map.of("mensaje", ex.getMessage()));
-    }
+  public ResponseEntity<LoanRatesResponse> updateLoanRates(
+      @Valid @RequestBody LoanRatesUpdateRequest request) {
+    // IllegalArgumentException ya se traduce a un 400 con el formato estandar de error.
+    return ResponseEntity.ok(loanRateConfigService.updateRates(request));
   }
 
   @Operation(
@@ -163,22 +163,17 @@ public class ApiAdminController {
   )
   @PreAuthorize("hasAuthority('ROLE_ROOT')")
   @PostMapping("/users/create-admin")
-  public ResponseEntity<?> createAdminUser(@RequestBody AdminRequest adminRequest) {
+  public ResponseEntity<ApiMessageResponse> createAdminUser(
+      @Valid @RequestBody AdminRequest adminRequest) {
     AdminCreateResult resultado = adminService.createAdmin(adminRequest);
 
     return switch (resultado.getKind()) {
-      case SUCCESS -> ResponseEntity.ok("Usuario administrador creado correctamente");
-      case CONFLICT -> {
-        Map<String, String> body = new HashMap<>();
-        body.put("mensaje", resultado.getMensaje());
-        if (resultado.getCampo() != null) {
-          body.put("campo", resultado.getCampo());
-        }
-        yield ResponseEntity.status(409).body(body);
-      }
-      case ERROR -> ResponseEntity.status(500).body(Map.of(
-        "mensaje", resultado.getMensaje()
-      ));
+      case SUCCESS -> ResponseEntity.ok(
+        ApiMessageResponse.success("Usuario administrador creado correctamente"));
+      // El conflicto lleva el campo culpable (username, email o dni) para que el formulario
+      // pueda marcarlo; los errores viajan con el formato unico de la API.
+      case CONFLICT -> throw new ConflictException(resultado.getMensaje(), resultado.getCampo());
+      case ERROR -> throw new InternalServerException(resultado.getMensaje());
     };
   }
 

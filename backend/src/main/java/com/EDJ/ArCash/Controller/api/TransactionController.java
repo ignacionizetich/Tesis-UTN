@@ -14,6 +14,8 @@ import com.EDJ.ArCash.Service.result.OwnedBuyUsdResult;
 import com.EDJ.ArCash.Service.result.OwnedSellUsdResult;
 import com.EDJ.ArCash.Service.result.OwnedTransferResult;
 import com.EDJ.ArCash.Service.interfaces.TransactionService;
+import com.EDJ.ArCash.DTO.common.ApiMessageResponse;
+import com.EDJ.ArCash.exception.personalizated.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,13 +23,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping(value = "/api/transactions", produces = "application/json")
@@ -51,7 +53,7 @@ public class TransactionController {
                     required = true,
                     content = @Content(schema = @Schema(implementation = TranscationRequest.class))
             )
-            @RequestBody TranscationRequest transcationRequest,
+            @Valid @RequestBody TranscationRequest transcationRequest,
             @AuthenticationPrincipal CustomUserDetails principal) {
 
         // Inalcanzable en produccion: SecurityConfig.anyRequest().authenticated().
@@ -75,13 +77,11 @@ public class TransactionController {
     }
 
     @GetMapping("/search/{input}")
-    public ResponseEntity<?> searchAccount(
+    public ResponseEntity<AccountSearchResponse> searchAccount(
             @Parameter(description = "Alias o CVU de la cuenta", required = true) @PathVariable String input) {
-        Optional<AccountSearchResponse> found = accountService.searchByAliasOrCvu(input);
-        if (found.isPresent()) {
-            return ResponseEntity.ok(found.get());
-        }
-        return ResponseEntity.status(404).body(Map.of("error", "Cuenta no encontrada."));
+        AccountSearchResponse found = accountService.searchByAliasOrCvu(input)
+                .orElseThrow(() -> new ResourceNotFoundException("Cuenta no encontrada."));
+        return ResponseEntity.ok(found);
     }
 
     @GetMapping("/{id}/getTransactions")
@@ -128,24 +128,24 @@ public class TransactionController {
                     required = true,
                     content = @Content(schema = @Schema(implementation = BuyUsdRequest.class))
             )
-            @RequestBody BuyUsdRequest request,
+            @Valid @RequestBody BuyUsdRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
 
         // Inalcanzable en produccion: SecurityConfig.anyRequest().authenticated().
         // Se preserva para tests con addFilters=false (mismo criterio Fase 4).
         if (principal == null) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("success", false, "message", "Token no proporcionado o inválido"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiMessageResponse.failure("Token no proporcionado o inválido"));
         }
 
         OwnedBuyUsdResult owned = transactionService.buyUsdForOwner(
                 principal.getUser().getId(), accountArsId, accountUsdId, request.getAmountArs());
 
         return switch (owned.getKind()) {
-            case ARS_NOT_FOUND -> ResponseEntity.status(404).body(owned.toErrorBody());
-            case FORBIDDEN -> ResponseEntity.status(403).body(owned.toErrorBody());
+            case ARS_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(owned.toErrorBody());
+            case FORBIDDEN -> ResponseEntity.status(HttpStatus.FORBIDDEN).body(owned.toErrorBody());
             case OK -> ResponseEntity.ok(owned.getResult().toResponse());
-            case FAIL -> ResponseEntity.status(400).body(owned.getResult().toErrorMap());
+            case FAIL -> ResponseEntity.badRequest().body(owned.getResult().toErrorBody());
         };
     }
 
@@ -187,24 +187,24 @@ public class TransactionController {
                     required = true,
                     content = @Content(schema = @Schema(implementation = SellUsdRequest.class))
             )
-            @RequestBody SellUsdRequest request,
+            @Valid @RequestBody SellUsdRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
 
         // Inalcanzable en produccion: SecurityConfig.anyRequest().authenticated().
         // Se preserva para tests con addFilters=false (mismo criterio Fase 4).
         if (principal == null) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("success", false, "message", "Token no proporcionado o inválido"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiMessageResponse.failure("Token no proporcionado o inválido"));
         }
 
         OwnedSellUsdResult owned = transactionService.sellUsdForOwner(
                 principal.getUser().getId(), accountUsdId, accountArsId, request.getAmountUsd());
 
         return switch (owned.getKind()) {
-            case USD_NOT_FOUND -> ResponseEntity.status(404).body(owned.toErrorBody());
-            case FORBIDDEN -> ResponseEntity.status(403).body(owned.toErrorBody());
+            case USD_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(owned.toErrorBody());
+            case FORBIDDEN -> ResponseEntity.status(HttpStatus.FORBIDDEN).body(owned.toErrorBody());
             case OK -> ResponseEntity.ok(owned.getResult().toResponse());
-            case FAIL -> ResponseEntity.status(400).body(owned.getResult().toErrorMap());
+            case FAIL -> ResponseEntity.badRequest().body(owned.getResult().toErrorBody());
         };
     }
 }

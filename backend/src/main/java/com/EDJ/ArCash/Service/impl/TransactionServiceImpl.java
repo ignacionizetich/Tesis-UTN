@@ -123,6 +123,12 @@ public class TransactionServiceImpl implements TransactionService {
         Account cuentaOrigen = optionalOrigen.get();
         Account cuentaDestino = optionalDestino.get();
 
+        // El filtro JWT solo controla al que hace el pedido. Sin este control, el dinero
+        // puede caer en la cuenta de un usuario deshabilitado, que no va a poder retirarlo.
+        if (!estaHabilitada(cuentaDestino)) {
+            return TransferOperationResult.fail("La cuenta de destino no está habilitada para recibir transferencias");
+        }
+
         if (cuentaOrigen.getAccountType() != cuentaDestino.getAccountType()) {
             return transactionWithConversionDetails(cuentaOrigen, cuentaDestino, monto);
         }
@@ -141,78 +147,145 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Transactional
     public boolean transactionSameCurrency(Account cuentaOrigen, Account cuentaDestino, double monto) {
-        Transaction transaction = new Transaction();
-
         // Transferencia a uno mismo: marcar como fallida, no mover dinero
         if (cuentaOrigen.getIdAccount().equals(cuentaDestino.getIdAccount())) {
-            transaction.setIdOrigin(cuentaOrigen);
-            transaction.setIdDestination(cuentaDestino);
-            transaction.setBalance(monto);
-            transaction.setState("FAILED");
-            transaction.setCurrency(cuentaOrigen.getAccountType());
-            transactionRepository.save(transaction);
+            registrarFallida(cuentaOrigen, cuentaDestino, monto, cuentaOrigen.getAccountType(), null);
             return false;
         }
 
-        if (cuentaOrigen.getBalance() < monto) {
-            transaction.setIdOrigin(cuentaOrigen);
-            transaction.setIdDestination(cuentaDestino);
-            transaction.setBalance(monto);
-            transaction.setState("FAILED");
-            transaction.setCurrency(cuentaOrigen.getAccountType());
-            transactionRepository.save(transaction);
+        Currency moneda = cuentaOrigen.getAccountType();
+        String aliasDestino = cuentaDestino.getAccountNickname();
+        var titular = cuentaOrigen.getUser();
+
+        if (!debitar(cuentaOrigen.getIdAccount(), monto)) {
+            registrarFallida(cuentaOrigen, cuentaDestino, monto, moneda, null);
             return false;
-        } else {
-            cuentaOrigen.setBalance(cuentaOrigen.getBalance() - monto);
-            cuentaDestino.setBalance(cuentaDestino.getBalance() + monto);
-            transaction.setIdOrigin(cuentaOrigen);
-            transaction.setIdDestination(cuentaDestino);
-            transaction.setBalance(monto);
-            transaction.setState("COMPLETED");
-            transaction.setCurrency(cuentaOrigen.getAccountType());
-            accountRepository.save(cuentaOrigen);
-            accountRepository.save(cuentaDestino);
-            transactionRepository.save(transaction);
-
-            Event event = new Event(EventType.TRANSACTION_COMPLETED);
-            event.addData("user", cuentaOrigen.getUser());
-            event.addData("amount", monto);
-            event.addData("destinationAlias", cuentaDestino.getAccountNickname());
-            event.addData("currency", cuentaOrigen.getAccountType().toString());
-            event.addData("converted", false);
-            event.addData("operationType", "TRANSFER");
-            eventPublisher.publish(event);
-
-            return true;
         }
+        acreditar(cuentaDestino.getIdAccount(), monto);
+
+        Transaction transaction = nuevoMovimiento(
+                cuentaOrigen.getIdAccount(), cuentaDestino.getIdAccount(), monto, moneda);
+        transaction.setState("COMPLETED");
+        transactionRepository.save(transaction);
+
+        Event event = new Event(EventType.TRANSACTION_COMPLETED);
+        event.addData("user", titular);
+        event.addData("amount", monto);
+        event.addData("destinationAlias", aliasDestino);
+        event.addData("currency", moneda.toString());
+        event.addData("converted", false);
+        event.addData("operationType", "TRANSFER");
+        eventPublisher.publish(event);
+
+        return true;
+    }
+
+    // =====================================================================
+    // Movimiento de saldos
+    // =====================================================================
+
+    /**
+     * Descuenta un importe del origen solo si el saldo alcanza.
+     *
+     * <p>El control de saldo lo hace la base dentro del mismo UPDATE. Comprobar antes en Java y
+     * descontar despues permitiria que dos transferencias simultaneas pasaran las dos el
+     * control y dejaran la cuenta en negativo.
+     *
+     * @return {@code false} si no habia saldo suficiente (o la cuenta no existe).
+     */
+    private boolean debitar(Long cuentaId, double monto) {
+        return accountRepository.debitBalance(cuentaId, monto) > 0;
+    }
+
+    private void acreditar(Long cuentaId, double monto) {
+        accountRepository.creditBalance(cuentaId, monto);
+    }
+
+    /**
+     * Relee una cuenta despues de mover saldos.
+     *
+     * <p>Los UPDATE atomicos limpian el contexto de persistencia, asi que las instancias
+     * cargadas antes quedan con el saldo viejo y desasociadas de la sesion.
+     */
+    private Account releer(Long cuentaId) {
+        return accountRepository.findByIdAccount(cuentaId).orElseThrow();
+    }
+
+    /** Movimiento con las cuentas releidas, para no asociar entidades desasociadas. */
+    private Transaction nuevoMovimiento(Long origenId, Long destinoId, double monto, Currency moneda) {
+        Transaction transaction = new Transaction();
+        transaction.setIdOrigin(releer(origenId));
+        transaction.setIdDestination(releer(destinoId));
+        transaction.setBalance(monto);
+        transaction.setCurrency(moneda);
+        return transaction;
+    }
+
+    /** Una cuenta opera solo si su titular sigue habilitado. */
+    private boolean estaHabilitada(Account cuenta) {
+        return cuenta.getUser() != null && cuenta.getUser().isActive();
+    }
+
+    /** Rechazo por saldo en una conversion ARS→USD: deja el movimiento fallido y el detalle. */
+    private TransferOperationResult rechazarPorSaldoArs(
+            Account cuentaOrigen,
+            Account cuentaDestino,
+            double monto,
+            DebitPreview preview,
+            double saldoOrigen) {
+        registrarFallida(cuentaOrigen, cuentaDestino, monto, Currency.ARS, Currency.ARS);
+        String message = String.format(
+                "Saldo insuficiente. Para enviar $%.2f ARS necesitas $%.2f ARS (incluye $%.2f de comisión). Tu saldo actual es $%.2f ARS",
+                monto, preview.totalDebitado(), preview.taxAmount(), saldoOrigen);
+        return TransferOperationResult.failInsufficient(
+                message, preview.totalDebitado(), saldoOrigen, preview.taxAmount());
+    }
+
+    /** Rechazo por saldo en una conversion USD→ARS. */
+    private TransferOperationResult rechazarPorSaldoUsd(
+            Account cuentaOrigen,
+            Account cuentaDestino,
+            double monto,
+            UsdDebitPreview preview,
+            double saldoOrigen) {
+        registrarFallida(cuentaOrigen, cuentaDestino, monto, Currency.USD, Currency.USD);
+        String message = String.format(
+                "Saldo insuficiente. Para enviar U$S%.2f necesitas U$S%.2f (incluye U$S%.2f de comisión). Tu saldo actual es U$S%.2f",
+                monto, preview.totalDebitado(), preview.taxAmount(), saldoOrigen);
+        return TransferOperationResult.failInsufficient(
+                message, preview.totalDebitado(), saldoOrigen, preview.taxAmount());
+    }
+
+    /** Deja rastro de un intento rechazado: el historial tiene que mostrar tambien lo que falló. */
+    private void registrarFallida(
+            Account cuentaOrigen,
+            Account cuentaDestino,
+            double monto,
+            Currency moneda,
+            Currency monedaOriginal) {
+        Transaction transaction = nuevoMovimiento(
+                cuentaOrigen.getIdAccount(), cuentaDestino.getIdAccount(), monto, moneda);
+        transaction.setState("FAILED");
+        if (monedaOriginal != null) {
+            transaction.setOriginalAmount(monto);
+            transaction.setOriginalCurrency(monedaOriginal);
+        }
+        transactionRepository.save(transaction);
     }
 
   @Transactional
   public TransferOperationResult transactionWithConversionDetails(Account cuentaOrigen, Account cuentaDestino, double monto) {
-    Transaction transaction = new Transaction();
-
     boolean esArsAUsd = cuentaOrigen.getAccountType() == Currency.ARS && cuentaDestino.getAccountType() == Currency.USD;
     boolean esUsdAArs = cuentaOrigen.getAccountType() == Currency.USD && cuentaDestino.getAccountType() == Currency.ARS;
 
     if (!esArsAUsd && !esUsdAArs) {
-      transaction.setIdOrigin(cuentaOrigen);
-      transaction.setIdDestination(cuentaDestino);
-      transaction.setBalance(monto);
-      transaction.setState("FAILED");
-      transaction.setCurrency(cuentaOrigen.getAccountType());
-      transactionRepository.save(transaction);
+      registrarFallida(cuentaOrigen, cuentaDestino, monto, cuentaOrigen.getAccountType(), null);
       return TransferOperationResult.fail("Combinación de monedas no soportada");
     }
 
     if (!cuentaOrigen.getUser().getId().equals(cuentaDestino.getUser().getId())) {
-      transaction.setIdOrigin(cuentaOrigen);
-      transaction.setIdDestination(cuentaDestino);
-      transaction.setBalance(monto);
-      transaction.setState("FAILED");
-      transaction.setCurrency(cuentaOrigen.getAccountType());
-      transaction.setOriginalAmount(monto);
-      transaction.setOriginalCurrency(cuentaOrigen.getAccountType());
-      transactionRepository.save(transaction);
+      registrarFallida(cuentaOrigen, cuentaDestino, monto,
+        cuentaOrigen.getAccountType(), cuentaOrigen.getAccountType());
       return TransferOperationResult.fail(
         "Para convertir entre ARS y USD, la cuenta destino debe ser tuya. " +
           "Para transferir a otro usuario, elegí una cuenta en la misma moneda que la suya."
@@ -220,61 +293,52 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     if (esArsAUsd) {
-      return convertArsToUsd(cuentaOrigen, cuentaDestino, monto, transaction);
+      return convertArsToUsd(cuentaOrigen, cuentaDestino, monto);
     } else {
-      return convertUsdToArs(cuentaOrigen, cuentaDestino, monto, transaction);
+      return convertUsdToArs(cuentaOrigen, cuentaDestino, monto);
     }
   }
 
-  private TransferOperationResult convertArsToUsd(Account cuentaOrigen, Account cuentaDestino, double monto, Transaction transaction) {
+  private TransferOperationResult convertArsToUsd(Account cuentaOrigen, Account cuentaDestino, double monto) {
     DebitPreview preview = arsToUsdConversionService.previewDebit(monto);
+    double saldoOrigen = cuentaOrigen.getBalance();
+    var titular = cuentaOrigen.getUser();
+    String aliasDestino = cuentaDestino.getAccountNickname();
 
-    if (cuentaOrigen.getBalance() < preview.totalDebitado()) {
-      transaction.setIdOrigin(cuentaOrigen);
-      transaction.setIdDestination(cuentaDestino);
-      transaction.setBalance(monto);
-      transaction.setState("FAILED");
-      transaction.setCurrency(Currency.ARS);
-      transaction.setOriginalAmount(monto);
-      transaction.setOriginalCurrency(Currency.ARS);
-      transactionRepository.save(transaction);
-
-      String message = String.format(
-        "Saldo insuficiente. Para enviar $%.2f ARS necesitas $%.2f ARS (incluye $%.2f de comisión). Tu saldo actual es $%.2f ARS",
-        monto, preview.totalDebitado(), preview.taxAmount(), cuentaOrigen.getBalance());
-      return TransferOperationResult.failInsufficient(
-        message, preview.totalDebitado(), cuentaOrigen.getBalance(), preview.taxAmount());
+    // Corte temprano con el saldo ya leido: evita pedirle la cotizacion al proveedor externo
+    // por una operacion que de todos modos no se puede pagar.
+    if (saldoOrigen < preview.totalDebitado()) {
+      return rechazarPorSaldoArs(cuentaOrigen, cuentaDestino, monto, preview, saldoOrigen);
     }
 
     ArsToUsdConversion conversion = arsToUsdConversionService.calculate(monto);
 
-    cuentaOrigen.setBalance(cuentaOrigen.getBalance() - conversion.totalDebitado());
-    cuentaDestino.setBalance(cuentaDestino.getBalance() + conversion.amountUsd());
+    // El descuento real vuelve a comprobar el saldo dentro del UPDATE: es lo que impide que
+    // dos conversiones simultaneas pasen las dos el corte de arriba y dejen la cuenta en rojo.
+    if (!debitar(cuentaOrigen.getIdAccount(), conversion.totalDebitado())) {
+      return rechazarPorSaldoArs(cuentaOrigen, cuentaDestino, monto, preview, saldoOrigen);
+    }
+    acreditar(cuentaDestino.getIdAccount(), conversion.amountUsd());
 
-    transaction.setIdOrigin(cuentaOrigen);
-    transaction.setIdDestination(cuentaDestino);
-    transaction.setBalance(conversion.amountUsd());
+    Transaction transaction = nuevoMovimiento(
+      cuentaOrigen.getIdAccount(), cuentaDestino.getIdAccount(), conversion.amountUsd(), Currency.USD);
     transaction.setOriginalAmount(conversion.amountArs());
     transaction.setOriginalCurrency(Currency.ARS);
-    transaction.setCurrency(Currency.USD);
     transaction.setExchangeRate(conversion.exchangeRate());
     transaction.setTaxAmount(conversion.taxAmount());
     transaction.setTaxPercentage(conversion.taxPercentage());
     transaction.setState("COMPLETED");
-
-    accountRepository.save(cuentaOrigen);
-    accountRepository.save(cuentaDestino);
     transactionRepository.save(transaction);
 
     Event event = new Event(EventType.TRANSACTION_COMPLETED);
-    event.addData("user", cuentaOrigen.getUser());
+    event.addData("user", titular);
     event.addData("amount", conversion.amountArs());
     event.addData("amountUsd", conversion.amountUsd());
     event.addData("exchangeRate", conversion.exchangeRate());
     event.addData("taxAmount", conversion.taxAmount());
     event.addData("taxPercentage", conversion.taxPercentage());
     event.addData("totalDebitado", conversion.totalDebitado());
-    event.addData("destinationAlias", cuentaDestino.getAccountNickname());
+    event.addData("destinationAlias", aliasDestino);
     event.addData("currency", "USD");
     event.addData("converted", true);
     event.addData("operationType", "CONVERSION");
@@ -283,55 +347,42 @@ public class TransactionServiceImpl implements TransactionService {
     return TransferOperationResult.ok("Transferencia completada exitosamente");
   }
 
-  private TransferOperationResult convertUsdToArs(Account cuentaOrigen, Account cuentaDestino, double monto, Transaction transaction) {
+  private TransferOperationResult convertUsdToArs(Account cuentaOrigen, Account cuentaDestino, double monto) {
     UsdDebitPreview preview = usdToArsConversionService.previewDebit(monto);
+    double saldoOrigen = cuentaOrigen.getBalance();
+    var titular = cuentaOrigen.getUser();
+    String aliasDestino = cuentaDestino.getAccountNickname();
 
-    if (cuentaOrigen.getBalance() < preview.totalDebitado()) {
-      transaction.setIdOrigin(cuentaOrigen);
-      transaction.setIdDestination(cuentaDestino);
-      transaction.setBalance(monto);
-      transaction.setState("FAILED");
-      transaction.setCurrency(Currency.USD);
-      transaction.setOriginalAmount(monto);
-      transaction.setOriginalCurrency(Currency.USD);
-      transactionRepository.save(transaction);
-
-      String message = String.format(
-        "Saldo insuficiente. Para enviar U$S%.2f necesitas U$S%.2f (incluye U$S%.2f de comisión). Tu saldo actual es U$S%.2f",
-        monto, preview.totalDebitado(), preview.taxAmount(), cuentaOrigen.getBalance());
-      return TransferOperationResult.failInsufficient(
-        message, preview.totalDebitado(), cuentaOrigen.getBalance(), preview.taxAmount());
+    if (saldoOrigen < preview.totalDebitado()) {
+      return rechazarPorSaldoUsd(cuentaOrigen, cuentaDestino, monto, preview, saldoOrigen);
     }
 
     UsdToArsConversion conversion = usdToArsConversionService.calculate(monto);
 
-    cuentaOrigen.setBalance(cuentaOrigen.getBalance() - conversion.totalDebitado());
-    cuentaDestino.setBalance(cuentaDestino.getBalance() + conversion.amountArs());
+    if (!debitar(cuentaOrigen.getIdAccount(), conversion.totalDebitado())) {
+      return rechazarPorSaldoUsd(cuentaOrigen, cuentaDestino, monto, preview, saldoOrigen);
+    }
+    acreditar(cuentaDestino.getIdAccount(), conversion.amountArs());
 
-    transaction.setIdOrigin(cuentaOrigen);
-    transaction.setIdDestination(cuentaDestino);
-    transaction.setBalance(conversion.amountArs());
+    Transaction transaction = nuevoMovimiento(
+      cuentaOrigen.getIdAccount(), cuentaDestino.getIdAccount(), conversion.amountArs(), Currency.ARS);
     transaction.setOriginalAmount(conversion.amountUsd());
     transaction.setOriginalCurrency(Currency.USD);
-    transaction.setCurrency(Currency.ARS);
     transaction.setExchangeRate(conversion.exchangeRate());
     transaction.setTaxAmount(conversion.taxAmount());
     transaction.setTaxPercentage(conversion.taxPercentage());
     transaction.setState("COMPLETED");
-
-    accountRepository.save(cuentaOrigen);
-    accountRepository.save(cuentaDestino);
     transactionRepository.save(transaction);
 
     Event event = new Event(EventType.TRANSACTION_COMPLETED);
-    event.addData("user", cuentaOrigen.getUser());
+    event.addData("user", titular);
     event.addData("amount", conversion.amountUsd());
     event.addData("amountArs", conversion.amountArs());
     event.addData("exchangeRate", conversion.exchangeRate());
     event.addData("taxAmount", conversion.taxAmount());
     event.addData("taxPercentage", conversion.taxPercentage());
     event.addData("totalDebitado", conversion.totalDebitado());
-    event.addData("destinationAlias", cuentaDestino.getAccountNickname());
+    event.addData("destinationAlias", aliasDestino);
     event.addData("currency", "ARS");
     event.addData("converted", true);
     event.addData("operationType", "CONVERSION");
@@ -368,42 +419,46 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         DebitPreview preview = arsToUsdConversionService.previewDebit(amountArs);
+        Long arsId = cuentaArs.getIdAccount();
+        Long usdId = cuentaUsd.getIdAccount();
+        var titular = cuentaArs.getUser();
+        String aliasDestino = cuentaUsd.getAccountNickname();
 
+        String saldoInsuficiente = "Saldo insuficiente. Necesitas $"
+                + String.format("%.2f", preview.totalDebitado())
+                + " ARS (incluye $" + String.format("%.2f", preview.taxAmount()) + " de comisión)";
+
+        // Corte temprano para no consultar la cotizacion si el saldo ya no alcanza.
         if (cuentaArs.getBalance() < preview.totalDebitado()) {
-            return BuyUsdResult.fail("Saldo insuficiente. Necesitas $" + String.format("%.2f", preview.totalDebitado()) +
-                    " ARS (incluye $" + String.format("%.2f", preview.taxAmount()) + " de comisión)");
+            return BuyUsdResult.fail(saldoInsuficiente);
         }
 
         ArsToUsdConversion conversion = arsToUsdConversionService.calculate(amountArs);
 
-        cuentaArs.setBalance(cuentaArs.getBalance() - conversion.totalDebitado());
-        cuentaUsd.setBalance(cuentaUsd.getBalance() + conversion.amountUsd());
+        // El UPDATE revalida el saldo: dos compras simultaneas no pueden sobregirar la cuenta.
+        if (!debitar(arsId, conversion.totalDebitado())) {
+            return BuyUsdResult.fail(saldoInsuficiente);
+        }
+        acreditar(usdId, conversion.amountUsd());
 
-        Transaction transaction = new Transaction();
-        transaction.setIdOrigin(cuentaArs);
-        transaction.setIdDestination(cuentaUsd);
-        transaction.setBalance(conversion.amountUsd());
+        Transaction transaction = nuevoMovimiento(arsId, usdId, conversion.amountUsd(), Currency.USD);
         transaction.setOriginalAmount(conversion.amountArs());
         transaction.setOriginalCurrency(Currency.ARS);
-        transaction.setCurrency(Currency.USD);
         transaction.setExchangeRate(conversion.exchangeRate());
         transaction.setTaxAmount(conversion.taxAmount());
         transaction.setTaxPercentage(conversion.taxPercentage());
         transaction.setState("COMPLETED");
-
-        accountRepository.save(cuentaArs);
-        accountRepository.save(cuentaUsd);
         transactionRepository.save(transaction);
 
         Event event = new Event(EventType.TRANSACTION_COMPLETED);
-        event.addData("user", cuentaArs.getUser());
+        event.addData("user", titular);
         event.addData("amount", conversion.amountArs());
         event.addData("amountUsd", conversion.amountUsd());
         event.addData("exchangeRate", conversion.exchangeRate());
         event.addData("taxAmount", conversion.taxAmount());
         event.addData("taxPercentage", conversion.taxPercentage());
         event.addData("totalDebitado", conversion.totalDebitado());
-        event.addData("destinationAlias", cuentaUsd.getAccountNickname());
+        event.addData("destinationAlias", aliasDestino);
         event.addData("currency", "USD");
         event.addData("converted", true);
         event.addData("operationType", "BUY_USD");
@@ -417,8 +472,9 @@ public class TransactionServiceImpl implements TransactionService {
                 conversion.taxAmount(),
                 conversion.taxPercentage(),
                 conversion.totalDebitado(),
-                cuentaArs.getBalance(),
-                cuentaUsd.getBalance()
+                // Saldos releidos de la base: son los que quedaron tras los UPDATE.
+                releer(arsId).getBalance(),
+                releer(usdId).getBalance()
         );
     }
 
@@ -445,43 +501,46 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         UsdDebitPreview preview = usdToArsConversionService.previewDebit(amountUsd);
+        Long usdId = cuentaUsd.getIdAccount();
+        Long arsId = cuentaArs.getIdAccount();
+        var titular = cuentaUsd.getUser();
+        String aliasDestino = cuentaArs.getAccountNickname();
+
+        String saldoInsuficiente = "Saldo insuficiente. Necesitas $"
+                + String.format("%.2f", preview.totalDebitado())
+                + " USD (incluye $" + String.format("%.2f", preview.taxAmount()) + " de comisión)";
 
         if (cuentaUsd.getBalance() < preview.totalDebitado()) {
             persistSellFailed(cuentaUsd, cuentaArs, amountUsd);
-            return SellUsdResult.fail("Saldo insuficiente. Necesitas $" + String.format("%.2f", preview.totalDebitado()) +
-                    " USD (incluye $" + String.format("%.2f", preview.taxAmount()) + " de comisión)");
+            return SellUsdResult.fail(saldoInsuficiente);
         }
 
         UsdToArsConversion conversion = usdToArsConversionService.calculate(amountUsd);
 
-        cuentaUsd.setBalance(cuentaUsd.getBalance() - conversion.totalDebitado());
-        cuentaArs.setBalance(cuentaArs.getBalance() + conversion.amountArs());
+        if (!debitar(usdId, conversion.totalDebitado())) {
+            persistSellFailed(cuentaUsd, cuentaArs, amountUsd);
+            return SellUsdResult.fail(saldoInsuficiente);
+        }
+        acreditar(arsId, conversion.amountArs());
 
-        Transaction transaction = new Transaction();
-        transaction.setIdOrigin(cuentaUsd);
-        transaction.setIdDestination(cuentaArs);
-        transaction.setBalance(conversion.amountArs());
+        Transaction transaction = nuevoMovimiento(usdId, arsId, conversion.amountArs(), Currency.ARS);
         transaction.setOriginalAmount(conversion.amountUsd());
         transaction.setOriginalCurrency(Currency.USD);
-        transaction.setCurrency(Currency.ARS);
         transaction.setExchangeRate(conversion.exchangeRate());
         transaction.setTaxAmount(conversion.taxAmount());
         transaction.setTaxPercentage(conversion.taxPercentage());
         transaction.setState("COMPLETED");
-
-        accountRepository.save(cuentaUsd);
-        accountRepository.save(cuentaArs);
         transactionRepository.save(transaction);
 
         Event event = new Event(EventType.TRANSACTION_COMPLETED);
-        event.addData("user", cuentaUsd.getUser());
+        event.addData("user", titular);
         event.addData("amount", conversion.amountArs());
         event.addData("amountUsd", conversion.amountUsd());
         event.addData("exchangeRate", conversion.exchangeRate());
         event.addData("taxAmount", conversion.taxAmount());
         event.addData("taxPercentage", conversion.taxPercentage());
         event.addData("totalDebitado", conversion.totalDebitado());
-        event.addData("destinationAlias", cuentaArs.getAccountNickname());
+        event.addData("destinationAlias", aliasDestino);
         event.addData("currency", "ARS");
         event.addData("converted", true);
         event.addData("operationType", "SELL_USD");
@@ -495,21 +554,13 @@ public class TransactionServiceImpl implements TransactionService {
                 conversion.taxAmount(),
                 conversion.taxPercentage(),
                 conversion.totalDebitado(),
-                cuentaArs.getBalance(),
-                cuentaUsd.getBalance()
+                releer(arsId).getBalance(),
+                releer(usdId).getBalance()
         );
     }
 
     private void persistSellFailed(Account cuentaUsd, Account cuentaArs, double amountUsd) {
-        Transaction transaction = new Transaction();
-        transaction.setIdOrigin(cuentaUsd);
-        transaction.setIdDestination(cuentaArs);
-        transaction.setBalance(amountUsd);
-        transaction.setState("FAILED");
-        transaction.setCurrency(Currency.USD);
-        transaction.setOriginalAmount(amountUsd);
-        transaction.setOriginalCurrency(Currency.USD);
-        transactionRepository.save(transaction);
+        registrarFallida(cuentaUsd, cuentaArs, amountUsd, Currency.USD, Currency.USD);
     }
 
     public List<TransactionDTO> listaTransacciones(Long id) {

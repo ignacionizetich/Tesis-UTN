@@ -69,7 +69,8 @@ class UserDataControllerTest {
 
         mockMvc.perform(get("/api/user/data").with(comoUsuarioAutenticado()))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("Cuenta no encontrada para el usuario"));
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("Cuenta no encontrada para el usuario"));
     }
 
     @Test

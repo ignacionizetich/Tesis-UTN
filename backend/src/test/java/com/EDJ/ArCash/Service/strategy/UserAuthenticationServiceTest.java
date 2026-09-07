@@ -73,7 +73,7 @@ class UserAuthenticationServiceTest {
         AuthenticationResult resultado = service.authenticate(pedido());
 
         assertFalse(resultado.isSuccess());
-        assertEquals("Usuario no habilitado", resultado.getErrorMessage());
+        assertEquals(AuthenticationResult.USER_DISABLED_MESSAGE, resultado.getErrorMessage());
     }
 
     @Test

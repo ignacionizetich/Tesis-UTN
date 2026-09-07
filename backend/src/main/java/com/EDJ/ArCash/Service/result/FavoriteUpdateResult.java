@@ -1,6 +1,6 @@
 package com.EDJ.ArCash.Service.result;
 
-import java.util.Map;
+import com.EDJ.ArCash.DTO.AuthDTO.FavoriteMutationResponse;
 
 /**
  * Update de favorito: incluye la regla "al menos un campo".
@@ -39,7 +39,13 @@ public final class FavoriteUpdateResult {
         return kind;
     }
 
-    public Map<String, String> toBody(String status) {
-        return Map.of("status", status, "message", message);
+    public String getMessage() {
+        return message;
+    }
+
+    public FavoriteMutationResponse toBody(boolean success) {
+        return success
+                ? FavoriteMutationResponse.success(message)
+                : FavoriteMutationResponse.error(message);
     }
 }

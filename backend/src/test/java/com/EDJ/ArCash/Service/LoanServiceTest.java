@@ -2,6 +2,7 @@ package com.EDJ.ArCash.Service;
 
 import com.EDJ.ArCash.Service.interfaces.LoanRateConfigService;
 import com.EDJ.ArCash.Service.interfaces.LoanService;
+import com.EDJ.ArCash.Service.impl.LoanServiceImpl;
 import com.EDJ.ArCash.Models.Account;
 import com.EDJ.ArCash.Models.User;
 import com.EDJ.ArCash.Models.Imp.Currency;
@@ -88,6 +89,43 @@ class LoanServiceTest {
 
         loanService.accept(user, 5_000, 3);
         assertThrows(IllegalStateException.class, () -> loanService.accept(user, 5_000, 3));
+    }
+
+    @Test
+    @DisplayName("Reintentar el pago con un préstamo desactualizado no vuelve a cobrar la misma cuota")
+    void reintentarPagoNoCobraLaCuotaDosVeces() {
+        // El cliente puede mandar dos veces el pago de la cuota 1. La segunda llega con el
+        // prestamo tal como estaba antes, con la cuota todavia PENDING: si no se reservara la
+        // cuota dentro del UPDATE, el titular pagaria dos veces la misma.
+        User user = userRepository.save(newUser("loan.user.c"));
+        Account ars = new Account();
+        ars.setUser(user);
+        ars.setAccountType(Currency.ARS);
+        ars.setBalance(0);
+        ars.setAccountNickname("loan.ars.c");
+        ars.setAccountCvu("cvuloanc0003");
+        ars = accountRepository.save(ars);
+
+        var loan = loanService.accept(user, 10_000, 3);
+        loanService.payNext(loan);
+        double saldoTrasPrimerPago =
+                accountRepository.findByIdAccount(ars.getIdAccount()).orElseThrow().getBalance();
+
+        // `loan` sigue en memoria con la cuota 1 pendiente: simula el pedido duplicado.
+        assertThrows(IllegalStateException.class, () -> loanService.payNext(loan));
+
+        double saldoFinal =
+                accountRepository.findByIdAccount(ars.getIdAccount()).orElseThrow().getBalance();
+        assertEquals(saldoTrasPrimerPago, saldoFinal, 0.01);
+    }
+
+    @Test
+    @DisplayName("Cuotas cero o tasa negativa no producen cuotas absurdas")
+    void calculoRechazaCuotasCeroYTasaNegativa() {
+        assertThrows(IllegalArgumentException.class,
+                () -> LoanServiceImpl.frenchPayment(10_000, 0.03, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> LoanServiceImpl.frenchPayment(10_000, -0.03, 12));
     }
 
     private static User newUser(String alias) {

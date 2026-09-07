@@ -12,6 +12,7 @@ import com.EDJ.ArCash.Models.Imp.Currency;
 import com.EDJ.ArCash.Models.Imp.LoanInstallmentStatus;
 import com.EDJ.ArCash.Models.Imp.LoanStatus;
 import com.EDJ.ArCash.Repository.AccountRepository;
+import com.EDJ.ArCash.Repository.LoanInstallmentRepository;
 import com.EDJ.ArCash.Repository.LoanRepository;
 import com.EDJ.ArCash.Repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class LoanServiceImpl implements LoanService {
     private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final LoanRepository loanRepository;
+    private final LoanInstallmentRepository loanInstallmentRepository;
     private final AccountRepository accountRepository;
     private final AccountService accountService;
     private final TransactionRepository transactionRepository;
@@ -80,6 +82,12 @@ public class LoanServiceImpl implements LoanService {
         Account ars = accountRepository.findArsAccountByUserId(user.getId(), Currency.ARS)
                 .orElseThrow(() -> new IllegalStateException("No tenés cuenta en pesos."));
 
+        // La acreditacion va antes de armar el prestamo porque el UPDATE atomico limpia el
+        // contexto de persistencia: cualquier entidad cargada antes quedaria desasociada.
+        if (!accountService.updateBalance(sim.principal(), ars.getIdAccount())) {
+            throw new IllegalStateException("No se pudo acreditar el préstamo en tu cuenta.");
+        }
+
         Loan loan = new Loan();
         loan.setUser(user);
         loan.setAccount(ars);
@@ -101,9 +109,6 @@ public class LoanServiceImpl implements LoanService {
         }
 
         Loan saved = loanRepository.save(loan);
-        if (!accountService.updateBalance(sim.principal(), ars.getIdAccount())) {
-            throw new IllegalStateException("No se pudo acreditar el préstamo en tu cuenta.");
-        }
         // Releer cuenta con saldo actualizado para el movimiento
         Account refreshed = accountRepository.findByIdAccount(ars.getIdAccount()).orElse(ars);
         recordLedger(refreshed, refreshed, sim.principal(), OP_LOAN_CREDIT,
@@ -116,40 +121,69 @@ public class LoanServiceImpl implements LoanService {
         if (loan.getStatus() != LoanStatus.ACTIVE) {
             throw new IllegalStateException("El préstamo ya está cancelado.");
         }
-        LoanInstallment next = loan.getInstallments().stream()
+        LoanInstallment pendiente = loan.getInstallments().stream()
                 .filter(i -> i.getStatus() == LoanInstallmentStatus.PENDING)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No hay cuotas pendientes."));
 
-        Account account = loan.getAccount();
-        if (account.getBalance() < next.getAmount()) {
+        int numeroCuota = pendiente.getInstallmentNumber();
+        double monto = pendiente.getAmount();
+        Long cuentaId = loan.getAccount().getIdAccount();
+
+        // Reservar la cuota antes de debitar: dos pagos simultaneos pueden ver la misma cuota
+        // como pendiente, pero solo uno logra marcarla, asi que nadie la paga dos veces.
+        int reservada = loanInstallmentRepository.markAsPaidIfPending(
+                pendiente.getId(),
+                LocalDateTime.now().format(TS),
+                LoanInstallmentStatus.PAID,
+                LoanInstallmentStatus.PENDING);
+        if (reservada == 0) {
+            throw new IllegalStateException("La cuota ya fue pagada.");
+        }
+
+        // El debito comprueba el saldo dentro del propio UPDATE, asi que dos pagos simultaneos
+        // de la misma cuota no pueden dejar la cuenta en negativo: el segundo no afecta filas.
+        // Si falla, la excepcion revierte la transaccion y libera la reserva de la cuota.
+        if (!accountService.updateBalance(-monto, cuentaId)) {
             throw new IllegalStateException("Saldo insuficiente para pagar la cuota.");
         }
-        if (!accountService.updateBalance(-next.getAmount(), account.getIdAccount())) {
-            throw new IllegalStateException("No se pudo debitar la cuota.");
-        }
 
-        next.setStatus(LoanInstallmentStatus.PAID);
-        next.setPaidAt(LocalDateTime.now().format(TS));
+        // Los UPDATE anteriores limpiaron el contexto: hay que releer el prestamo para mutarlo.
+        Loan fresco = loanRepository.findById(loan.getId())
+                .orElseThrow(() -> new IllegalStateException("El préstamo ya no existe."));
 
-        boolean allPaid = loan.getInstallments().stream()
+        boolean todasPagas = fresco.getInstallments().stream()
                 .allMatch(i -> i.getStatus() == LoanInstallmentStatus.PAID);
-        if (allPaid) {
-            loan.setStatus(LoanStatus.PAID_OFF);
+        if (todasPagas) {
+            fresco.setStatus(LoanStatus.PAID_OFF);
         }
-        Loan saved = loanRepository.save(loan);
+        Loan saved = loanRepository.save(fresco);
 
-        Account refreshed = accountRepository.findByIdAccount(account.getIdAccount()).orElse(account);
+        Account refreshed = accountRepository.findByIdAccount(cuentaId).orElseThrow();
         recordLedger(
                 refreshed,
                 refreshed,
-                next.getAmount(),
+                monto,
                 OP_LOAN_PAYMENT,
-                "Cuota " + next.getInstallmentNumber() + "/" + loan.getInstallmentCount());
+                "Cuota " + numeroCuota + "/" + fresco.getInstallmentCount());
         return saved;
     }
 
+    /**
+     * Cuota fija del sistema frances.
+     *
+     * <p>Los guardas no son decorativos: con {@code n == 0} la division devolveria infinito y
+     * con una tasa negativa saldria una cuota menor al capital prestado. Ninguno de los dos
+     * casos llega por la API (las cuotas estan en una lista blanca y la tasa tiene limites al
+     * configurarse), pero una tasa corrupta en la base entraria por aca sin avisar.
+     */
     public static double frenchPayment(double principal, double monthlyRate, int n) {
+        if (n <= 0) {
+            throw new IllegalArgumentException("La cantidad de cuotas debe ser mayor a cero.");
+        }
+        if (monthlyRate < 0) {
+            throw new IllegalArgumentException("La tasa mensual no puede ser negativa.");
+        }
         if (monthlyRate == 0) {
             return principal / n;
         }

@@ -1,6 +1,6 @@
 package com.EDJ.ArCash.Service.result;
 
-import java.util.Map;
+import com.EDJ.ArCash.DTO.common.ApiMessageResponse;
 
 public final class OwnedBuyUsdResult {
 
@@ -49,7 +49,7 @@ public final class OwnedBuyUsdResult {
         return result != null ? result.getMessage() : message;
     }
 
-    public Map<String, Object> toErrorBody() {
-        return Map.of("success", false, "message", getMessage());
+    public ApiMessageResponse toErrorBody() {
+        return ApiMessageResponse.failure(getMessage());
     }
 }

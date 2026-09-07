@@ -70,11 +70,11 @@ class UserServiceTest {
         eventPublisher = mock(EventPublisher.class);
 
         userService = new UserServiceImpl(
-                passwordEncoder,
                 userRepository,
                 accountService,
                 accountRepository,
                 credentialRepository,
+                passwordEncoder,
                 emailService,
                 validationTokenService,
                 eventPublisher

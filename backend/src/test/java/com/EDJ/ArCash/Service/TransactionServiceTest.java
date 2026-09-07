@@ -27,6 +27,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,6 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -66,6 +70,9 @@ class TransactionServiceTest {
     private CotizationUsdService cotizationUsdService;
     private TransactionService transactionService;
 
+    /** Cuentas "en la base": el repositorio mockeado opera sobre este mapa. */
+    private final Map<Long, Account> cuentas = new HashMap<>();
+
     @BeforeEach
     void setUp() {
         accountRepository = mock(AccountRepository.class);
@@ -89,6 +96,32 @@ class TransactionServiceTest {
 
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
         when(accountRepository.save(any(Account.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        cuentas.clear();
+        when(accountRepository.findByIdAccount(anyLong()))
+                .thenAnswer(inv -> Optional.ofNullable(cuentas.get(inv.getArgument(0, Long.class))));
+
+        // Emula el UPDATE que suma en la base: devuelve las filas afectadas, no la entidad.
+        when(accountRepository.creditBalance(anyLong(), anyDouble())).thenAnswer(inv -> {
+            Account cuenta = cuentas.get(inv.getArgument(0, Long.class));
+            if (cuenta == null) {
+                return 0;
+            }
+            cuenta.setBalance(cuenta.getBalance() + inv.getArgument(1, Double.class));
+            return 1;
+        });
+
+        // Emula el UPDATE condicionado: sin saldo suficiente no afecta ninguna fila, que es
+        // justo lo que hace imposible el sobregiro por operaciones simultaneas.
+        when(accountRepository.debitBalance(anyLong(), anyDouble())).thenAnswer(inv -> {
+            Account cuenta = cuentas.get(inv.getArgument(0, Long.class));
+            double monto = inv.getArgument(1, Double.class);
+            if (cuenta == null || cuenta.getBalance() < monto) {
+                return 0;
+            }
+            cuenta.setBalance(cuenta.getBalance() - monto);
+            return 1;
+        });
     }
 
     @Test
@@ -135,6 +168,22 @@ class TransactionServiceTest {
     }
 
     @Test
+    @DisplayName("Dos transferencias que juntas exceden el saldo: la segunda se rechaza, sin sobregiro")
+    void dosTransferenciasNoPuedenSobregirarLaCuenta() {
+        // Con saldo 300 y dos transferencias de 200, comprobar el saldo en Java y descontar
+        // despues dejaria pasar las dos y la cuenta terminaria en -100. El descuento se
+        // condiciona dentro del UPDATE, asi que la segunda no afecta ninguna fila.
+        Account origen = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 300.0);
+        Account destino = cuenta(ID_USD, Currency.ARS, ID_OTRO, 0.0);
+
+        assertTrue(transactionService.transactionSameCurrency(origen, destino, 200.0));
+        assertFalse(transactionService.transactionSameCurrency(origen, destino, 200.0));
+
+        assertEquals(100.0, origen.getBalance(), DELTA);
+        assertEquals(200.0, destino.getBalance(), DELTA);
+    }
+
+    @Test
     @DisplayName("Self-transfer: guarda FAILED, no mueve saldo, return false")
     void selfTransferMarcaFailedYDevuelveFalse() {
         Account misma = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 500.0);
@@ -167,6 +216,27 @@ class TransactionServiceTest {
         ArgumentCaptor<Transaction> txnCaptor = ArgumentCaptor.forClass(Transaction.class);
         verify(transactionRepository).save(txnCaptor.capture());
         assertEquals("FAILED", txnCaptor.getValue().getState());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
+    @DisplayName("Destino de un usuario deshabilitado: rechaza sin mover saldo")
+    void transferenciaADestinoDeshabilitadoSeRechaza() {
+        // El filtro JWT solo valida al que hace el pedido, asi que el estado del titular del
+        // destino hay que controlarlo aca: si no, el dinero queda en una cuenta que no opera.
+        Account origen = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 1_000.0);
+        Account destino = cuenta(ID_USD, Currency.ARS, ID_OTRO, 0.0);
+        destino.getUser().setActive(false);
+
+        TransferOperationResult result =
+                transactionService.transactionWithDetails(ID_ARS, ID_USD, 100.0);
+
+        assertFalse(result.isSuccess());
+        assertEquals("La cuenta de destino no está habilitada para recibir transferencias",
+                result.getMessage());
+        assertEquals(1_000.0, origen.getBalance(), DELTA);
+        assertEquals(0.0, destino.getBalance(), DELTA);
+        verify(accountRepository, never()).debitBalance(anyLong(), anyDouble());
         verify(eventPublisher, never()).publish(any());
     }
 
@@ -227,22 +297,50 @@ class TransactionServiceTest {
     }
 
     @Test
-    @DisplayName("Conversion USD→ARS: FAILED y mensaje Solo se permite conversion de ARS a USD")
-    void conversionDireccionInvalida() {
-        Account usd = cuenta(ID_USD, Currency.USD, ID_USUARIO, 50.0);
-        Account ars = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 1_000.0);
+    @DisplayName("Conversion con monedas iguales: FAILED por combinacion no soportada")
+    void conversionCombinacionNoSoportada() {
+        Account origen = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 20_000.0);
+        Account destino = cuenta(ID_USD, Currency.ARS, ID_USUARIO, 1_000.0);
 
         TransferOperationResult result =
-                transactionService.transactionWithConversionDetails(usd, ars, 10.0);
+                transactionService.transactionWithConversionDetails(origen, destino, MONTO_ARS);
 
         assertFalse(result.isSuccess());
-        assertEquals("Solo se permite conversión de ARS a USD", result.getMessage());
+        assertEquals("Combinación de monedas no soportada", result.getMessage());
+        assertEquals(20_000.0, origen.getBalance(), DELTA);
+        assertEquals(1_000.0, destino.getBalance(), DELTA);
 
         ArgumentCaptor<Transaction> txnCaptor = ArgumentCaptor.forClass(Transaction.class);
         verify(transactionRepository).save(txnCaptor.capture());
         assertEquals("FAILED", txnCaptor.getValue().getState());
         verify(eventPublisher, never()).publish(any());
         verify(cotizationUsdService, never()).obtenerCotizacionVenta();
+    }
+
+    @Test
+    @DisplayName("Conversion USD→ARS entre cuentas propias: acredita pesos y publica CONVERSION")
+    void conversionUsdAArsExitosa() {
+        when(cotizationUsdService.obtenerCotizacionCompra()).thenReturn(TASA_COMPRA);
+        Account usd = cuenta(ID_USD, Currency.USD, ID_USUARIO, 500.0);
+        Account ars = cuenta(ID_ARS, Currency.ARS, ID_USUARIO, 1_000.0);
+
+        TransferOperationResult result =
+                transactionService.transactionWithConversionDetails(usd, ars, MONTO_USD);
+
+        assertTrue(result.isSuccess());
+        assertEquals(500.0 - TOTAL_DEBITO_USD, usd.getBalance(), DELTA);
+        assertEquals(1_000.0 + ARS_ESPERADOS, ars.getBalance(), DELTA);
+
+        ArgumentCaptor<Transaction> txnCaptor = ArgumentCaptor.forClass(Transaction.class);
+        verify(transactionRepository).save(txnCaptor.capture());
+        Transaction txn = txnCaptor.getValue();
+        assertEquals("COMPLETED", txn.getState());
+        assertEquals(Currency.ARS, txn.getCurrency());
+        assertEquals(Currency.USD, txn.getOriginalCurrency());
+
+        ArgumentCaptor<Event> eventoCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventPublisher).publish(eventoCaptor.capture());
+        assertEquals("CONVERSION", eventoCaptor.getValue().getData("operationType"));
     }
 
     @Test
@@ -255,7 +353,7 @@ class TransactionServiceTest {
                 transactionService.transactionWithConversionDetails(arsPropia, usdAjena, MONTO_ARS);
 
         assertFalse(result.isSuccess());
-        assertEquals("Las cuentas deben pertenecer al mismo usuario", result.getMessage());
+        assertTrue(result.getMessage().contains("la cuenta destino debe ser tuya"));
         assertEquals(20_000.0, arsPropia.getBalance(), DELTA);
         assertEquals(1.0, usdAjena.getBalance(), DELTA);
 
@@ -462,15 +560,18 @@ class TransactionServiceTest {
         verify(cotizationUsdService, never()).obtenerCotizacionCompra();
     }
 
+    /** Crea la cuenta y la deja disponible en la "base" simulada del repositorio. */
     private Account cuenta(long id, Currency tipo, long userId, double balance) {
         User user = new User();
         user.setId(userId);
+        user.setActive(true);
         Account account = new Account();
         account.setIdAccount(id);
         account.setUser(user);
         account.setAccountType(tipo);
         account.setBalance(balance);
         account.setAccountNickname("ALIAS." + id);
+        cuentas.put(id, account);
         return account;
     }
 }

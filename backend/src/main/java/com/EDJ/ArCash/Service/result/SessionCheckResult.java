@@ -1,6 +1,6 @@
 package com.EDJ.ArCash.Service.result;
 
-import java.util.Map;
+import com.EDJ.ArCash.DTO.AuthDTO.SessionStatusResponse;
 
 /**
  * Resultado de GET /api/auth/check-session.
@@ -39,7 +39,7 @@ public final class SessionCheckResult {
         return kind;
     }
 
-    public Map<String, String> toBody() {
-        return Map.of("status", status, "message", message);
+    public SessionStatusResponse toBody() {
+        return new SessionStatusResponse(status, message);
     }
 }
