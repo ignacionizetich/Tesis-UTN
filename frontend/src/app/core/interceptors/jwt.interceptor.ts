@@ -5,6 +5,10 @@ import { SessionStore } from '../session/session.store';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError, BehaviorSubject, filter, take, Observable } from 'rxjs';
 import { logger } from '../../shared/utils/logger';
+import { apiErrorCode, errorMessage } from '../../shared/utils/error-message';
+import { ApiErrorCodes } from '../../models/api-error';
+import { RefreshTokenResponse } from '../../models/auth';
+import { ToastService } from '../../services/toast/toast.service';
 
 // Variables globales para el estado de refresh
 let isRefreshing = false;
@@ -14,6 +18,7 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const sessionStore = inject(SessionStore);
   const router = inject(Router);
+  const toast = inject(ToastService);
 
   // Endpoints públicos: no adjuntar Bearer.
   // /auth/refresh debe ir sin access token (el BE lo ignora en permitAll, pero
@@ -57,10 +62,19 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
+      // Cuenta deshabilitada: el token es válido, el problema es la cuenta. Renovarlo va a
+      // fallar igual (el backend revalida el estado en /auth/refresh), así que se corta la
+      // sesión de una y se le explica al usuario en lugar de dejarlo en el login sin motivo.
+      if (apiErrorCode(error) === ApiErrorCodes.ACCOUNT_DISABLED) {
+        toast.show(errorMessage(error, 'Tu cuenta está deshabilitada.'), 'error');
+        handleFullLogout(authService, router);
+        return throwError(() => error);
+      }
+
       // Access vencido / inválido: el filtro BE responde 401; algunos flujos legacy usan 498.
       // En ambos casos intentamos renovar con la cookie de refresh.
       if (error.status === 401 || error.status === 498) {
-        return handleAccessTokenExpired(reqConToken, next, authService, sessionStore, router);
+        return handleAccessTokenExpired(reqConToken, next, authService, sessionStore, router, toast);
       }
 
       if (error.status === 409) {
@@ -77,14 +91,15 @@ function handleAccessTokenExpired(
   next: HttpHandlerFn,
   authService: AuthService,
   sessionStore: SessionStore,
-  router: Router
+  router: Router,
+  toast: ToastService
 ): Observable<HttpEvent<unknown>> {
   if (!isRefreshing) {
     isRefreshing = true;
     refreshTokenSubject.next(null);
 
     return authService.refreshToken().pipe(
-      switchMap((response: any) => {
+      switchMap((response: RefreshTokenResponse) => {
         isRefreshing = false;
 
         const newToken = response.accessToken;
@@ -99,8 +114,13 @@ function handleAccessTokenExpired(
 
         return next(newRequest);
       }),
-      catchError((error: any) => {
+      catchError((error: unknown) => {
         isRefreshing = false;
+        // Si la cuenta quedó deshabilitada mientras la sesión estaba abierta, el refresh
+        // también lo informa. Sin este aviso el usuario aparece en el login sin saber por qué.
+        if (apiErrorCode(error) === ApiErrorCodes.ACCOUNT_DISABLED) {
+          toast.show(errorMessage(error, 'Tu cuenta está deshabilitada.'), 'error');
+        }
         handleFullLogout(authService, router);
         return throwError(() => error);
       })

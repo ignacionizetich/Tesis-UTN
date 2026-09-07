@@ -111,6 +111,13 @@ export class LoansModalsComponent implements OnInit, OnDestroy {
 
   async acceptLoan(): Promise<void> {
     if (!this.simulation || this.busy) return;
+    if (this.activeLoan) {
+      this.toast.show(
+        'Ya tenés un préstamo activo. Cancelalo pagando las cuotas primero.',
+        'warning'
+      );
+      return;
+    }
     this.busy = true;
     try {
       const detail = await this.loanApi.accept(this.principal, this.installments);

@@ -15,12 +15,15 @@ import { AdminService } from '../../../../services/admin/admin.service';
 import { ToastService } from '../../../../services/toast/toast.service';
 import { AdminRequest } from '../../../../models/admin.interface';
 import {
+  AUTH_RULES,
   emailMatchValidator,
   passwordMatchValidator,
+  passwordNotSimilarToIdentityValidator,
   strongPasswordValidator,
 } from '../../../../shared/validators/auth.validators';
 import { maskEmail } from '../../../../shared/utils/email-mask';
 import { logger } from '../../../../shared/utils/logger';
+import { apiError, fieldErrorsOf } from '../../../../shared/utils/error-message';
 
 @Component({
   selector: 'app-create-admin-form',
@@ -49,36 +52,28 @@ export class CreateAdminFormComponent implements OnInit {
         '',
         [
           Validators.required,
-          Validators.pattern('[A-Za-zÁÉÍÓÚáéíóúÑñ\\s]{2,50}'),
-          Validators.minLength(2),
-          Validators.maxLength(50),
+          Validators.pattern(AUTH_RULES.personName),
+          Validators.minLength(AUTH_RULES.personNameMinLength),
+          Validators.maxLength(AUTH_RULES.personNameMaxLength),
         ],
       ],
       lastName: [
         '',
         [
           Validators.required,
-          Validators.pattern('[A-Za-zÁÉÍÓÚáéíóúÑñ\\s]{2,50}'),
-          Validators.minLength(2),
-          Validators.maxLength(50),
+          Validators.pattern(AUTH_RULES.personName),
+          Validators.minLength(AUTH_RULES.personNameMinLength),
+          Validators.maxLength(AUTH_RULES.personNameMaxLength),
         ],
       ],
-      dni: [
-        '',
-        [
-          Validators.required,
-          Validators.pattern('^\\d{8}$'),
-          Validators.minLength(8),
-          Validators.maxLength(8),
-        ],
-      ],
+      dni: ['', [Validators.required, Validators.pattern(AUTH_RULES.dni)]],
       username: [
         '',
         [
           Validators.required,
-          Validators.minLength(3),
-          Validators.maxLength(10),
-          Validators.pattern('^[a-zA-Z0-9_-]+$'),
+          Validators.minLength(AUTH_RULES.usernameMinLength),
+          Validators.maxLength(AUTH_RULES.usernameMaxLength),
+          Validators.pattern(AUTH_RULES.username),
         ],
       ],
       emails: this.fb.group(
@@ -104,7 +99,32 @@ export class CreateAdminFormComponent implements OnInit {
         },
         { validators: passwordMatchValidator }
       ),
+    }, {
+      // El backend aplica la misma restricción al alta de administradores.
+      validators: passwordNotSimilarToIdentityValidator([
+        'username',
+        'emails.email',
+        'dni',
+        'name',
+        'lastName',
+      ]),
     });
+  }
+
+  /** El campo de identidad que la contraseña está repitiendo, si hay alguno. */
+  get passwordIdentityConflict(): string | null {
+    const conflict = this.form?.errors?.['passwordLikeIdentity'];
+    if (!conflict) {
+      return null;
+    }
+    const labels: Record<string, string> = {
+      username: 'nombre de usuario',
+      'emails.email': 'email',
+      dni: 'DNI',
+      name: 'nombre',
+      lastName: 'apellido',
+    };
+    return labels[conflict.field] ?? 'datos personales';
   }
 
   createAdmin(): void {
@@ -170,36 +190,45 @@ export class CreateAdminFormComponent implements OnInit {
   }
 
   private handleCreateError(error: any, adminRequest: AdminRequest): void {
-    const backendMessage = error.error?.mensaje || error.error?.message;
+    // El backend indica el campo en conflicto en `fieldErrors`, así que se puede armar un
+    // mensaje concreto sin comparar el texto en castellano, que puede reescribirse.
+    const conflicto = fieldErrorsOf(error)[0]?.field;
 
+    if (conflicto === 'email') {
+      this.toast.show(
+        `El correo ${maskEmail(adminRequest.email)} ya está registrado en el sistema. Por favor, utiliza otro correo electrónico.`,
+        'warning'
+      );
+      return;
+    }
+    if (conflicto === 'username') {
+      this.toast.show(
+        `El nombre de usuario "${adminRequest.username}" no está disponible. Por favor, elige otro nombre de usuario.`,
+        'warning'
+      );
+      return;
+    }
+    if (conflicto === 'dni') {
+      this.toast.show(
+        `El DNI ${adminRequest.dni} ya está registrado en el sistema. Verifica los datos e intenta nuevamente.`,
+        'warning'
+      );
+      return;
+    }
+
+    // Validación de campos: el backend detalla cuáles fallaron.
+    const invalidos = fieldErrorsOf(error);
+    if (invalidos.length > 0) {
+      this.toast.show(
+        `Revisá estos campos: ${invalidos.map((f) => f.field).join(', ')}.`,
+        'warning'
+      );
+      return;
+    }
+
+    const backendMessage = apiError(error)?.message;
     if (backendMessage) {
-      if (backendMessage.includes('email ya se encuentra en uso')) {
-        const emailCensurado = maskEmail(adminRequest.email);
-        this.toast.show(
-          `El correo ${emailCensurado} ya está registrado en el sistema. Por favor, utiliza otro correo electrónico.`,
-          'warning'
-        );
-      } else if (backendMessage.includes('nombre de usuario no está disponible')) {
-        this.toast.show(
-          `El nombre de usuario "${adminRequest.username}" no está disponible. Por favor, elige otro nombre de usuario.`,
-          'warning'
-        );
-      } else if (backendMessage.includes('DNI ya está registrado')) {
-        this.toast.show(
-          `El DNI ${adminRequest.dni} ya está registrado en el sistema. Verifica los datos e intenta nuevamente.`,
-          'warning'
-        );
-      } else if (backendMessage.includes('campos son obligatorios')) {
-        this.toast.show(
-          'Todos los campos son obligatorios para crear un administrador.',
-          'warning'
-        );
-      } else {
-        this.toast.show(
-          `Error al crear administrador: ${backendMessage}`,
-          'error'
-        );
-      }
+      this.toast.show(`Error al crear administrador: ${backendMessage}`, 'error');
       return;
     }
 

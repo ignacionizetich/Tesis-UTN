@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VirtualCardApi } from '../../../../../../services/virtual-card/virtual-card.api';
 import { ToastService } from '../../../../../../services/toast/toast.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { cardPinIssues } from '../../../../../../shared/validators/auth.validators';
+import { httpStatus } from '../../../../../../shared/utils/error-message';
 
 @Component({
   selector: 'app-card-pin-modal',
@@ -35,16 +36,40 @@ export class CardPinModalComponent {
     }
   }
 
+  get pinError(): string | null {
+    if (!this.pin || this.pinConfigured) {
+      return null;
+    }
+    const issues = cardPinIssues(this.pin);
+    if (!issues) {
+      return null;
+    }
+    if (issues['pinFormat']) {
+      return 'El PIN debe tener exactamente 6 dígitos';
+    }
+    if (issues['pinRepeated']) {
+      return 'El PIN no puede tener todos los dígitos iguales';
+    }
+    if (issues['pinSequential']) {
+      return 'El PIN no puede ser una secuencia de dígitos consecutivos';
+    }
+    if (issues['pinCommon']) {
+      return 'El PIN elegido es demasiado común, probá con otro';
+    }
+    return 'Elegí un PIN más seguro';
+  }
+
   get canSubmit(): boolean {
     if (this.submitting) return false;
-    if (!/^\d{6}$/.test(this.pin)) return false;
-    if (!this.pinConfigured && this.pin !== this.confirmPin) return false;
-    return true;
+    if (this.pinConfigured) {
+      return /^\d{6}$/.test(this.pin);
+    }
+    return !cardPinIssues(this.pin) && this.pin === this.confirmPin;
   }
 
   async submit(): Promise<void> {
     if (!this.canSubmit) {
-      this.toast.show('Ingresá un PIN de 6 dígitos válido', 'error');
+      this.toast.show(this.pinError || 'Ingresá un PIN de 6 dígitos válido', 'error');
       return;
     }
     this.submitting = true;
@@ -63,11 +88,14 @@ export class CardPinModalComponent {
       this.toast.show(response.message || 'Listo', 'success');
       this.unlocked.emit();
     } catch (error: unknown) {
-      const msg =
-        error instanceof HttpErrorResponse
-          ? error.error?.message || error.error?.error
-          : null;
-      this.toast.show(msg || this.virtualCardApi.handleError(error, 'Error con el PIN'), 'error');
+      const locked = httpStatus(error) === 423;
+      this.toast.show(
+        this.virtualCardApi.handleError(
+          error,
+          locked ? 'PIN bloqueado. Probá de nuevo en unos minutos.' : 'Error con el PIN'
+        ),
+        'error'
+      );
     } finally {
       this.submitting = false;
     }

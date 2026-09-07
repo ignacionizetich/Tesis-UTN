@@ -25,7 +25,7 @@
                 <small>El nombre es requerido.</small>
               }
               @if (registerForm.get('nombre')?.hasError('pattern')) {
-                <small>Solo letras y espacios.</small>
+                <small>Solo letras, espacios, apóstrofos y guiones.</small>
               }
               @if (registerForm.get('nombre')?.hasError('minlength')) {
                 <small>Mínimo 2 caracteres.</small>
@@ -55,7 +55,7 @@
                 <small>El apellido es requerido.</small>
               }
               @if (registerForm.get('apellido')?.hasError('pattern')) {
-                <small>Solo letras y espacios.</small>
+                <small>Solo letras, espacios, apóstrofos y guiones.</small>
               }
               @if (registerForm.get('apellido')?.hasError('minlength')) {
                 <small>Mínimo 2 caracteres.</small>
@@ -91,7 +91,10 @@
                 registerForm.get('dni')?.hasError('minlength') ||
                 registerForm.get('dni')?.hasError('maxlength')
               ) {
-                <small>Debe tener exactamente 8 dígitos, sin puntos.</small>
+                <small>Debe tener 7 u 8 dígitos, sin puntos.</small>
+              }
+              @if (registerForm.get('dni')?.hasError('server')) {
+                <small>{{ registerForm.get('dni')?.errors?.['server'] }}</small>
               }
             </div>
           }
@@ -104,8 +107,8 @@
               id="reg-alias"
               type="text"
               formControlName="alias"
-              placeholder="usuario123"
-              maxlength="10"
+              placeholder="juan.perez.01"
+              maxlength="25"
               autocomplete="username"
             />
           </div>
@@ -118,10 +121,16 @@
                 <small>Mínimo 3 caracteres.</small>
               }
               @if (registerForm.get('alias')?.hasError('maxlength')) {
-                <small>Máximo 10 caracteres.</small>
+                <small>Máximo 25 caracteres.</small>
               }
               @if (registerForm.get('alias')?.hasError('pattern')) {
-                <small>Solo letras, números, guiones y guiones bajos.</small>
+                <small>
+                  Letras, números, punto, guion y guion bajo. Debe incluir una letra y no puede
+                  empezar ni terminar con un separador.
+                </small>
+              }
+              @if (registerForm.get('alias')?.hasError('server')) {
+                <small>{{ registerForm.get('alias')?.errors?.['server'] }}</small>
               }
             </div>
           }
@@ -151,6 +160,9 @@
                 registerForm.get('emails.email')?.hasError('pattern')
               ) {
                 <small>Ingresá un email válido.</small>
+              }
+              @if (registerForm.get('emails.email')?.hasError('server')) {
+                <small>{{ registerForm.get('emails.email')?.errors?.['server'] }}</small>
               }
             </div>
           }
@@ -239,6 +251,23 @@
               @if (registerForm.get('passwords.password')?.hasError('specialChar')) {
                 <small>Incluí un carácter especial (!@#$%…).</small>
               }
+              @if (registerForm.get('passwords.password')?.hasError('whitespace')) {
+                <small>No puede contener espacios.</small>
+              }
+              @if (registerForm.get('passwords.password')?.hasError('maxLength')) {
+                <small>No puede superar los 72 caracteres.</small>
+              }
+              @if (registerForm.get('passwords.password')?.hasError('common')) {
+                <small>Es una contraseña demasiado común. Elegí otra.</small>
+              }
+              @if (registerForm.get('passwords.password')?.hasError('server')) {
+                <small>{{ registerForm.get('passwords.password')?.errors?.['server'] }}</small>
+              }
+            </div>
+          }
+          @if (passwordIdentityConflict && registerForm.get('passwords.password')?.touched) {
+            <div class="field__errors" role="alert">
+              <small>La contraseña no puede repetir tu {{ passwordIdentityConflict }}.</small>
             </div>
           }
         </div>

@@ -95,6 +95,10 @@ export class CardDetailModalComponent implements OnInit, OnChanges, OnDestroy {
     return this.card.status === 'CANCELLED';
   }
 
+  get isExpired(): boolean {
+    return !!this.card.expired;
+  }
+
   get expLabel(): string {
     if (!this.reveal) {
       if (this.card.expMonth && this.card.expYear) {
@@ -175,7 +179,7 @@ export class CardDetailModalComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   async togglePause(): Promise<void> {
-    if (this.isCancelled) return;
+    if (this.isCancelled || this.isExpired) return;
     this.busy = true;
     try {
       const next = this.card.status === 'PAUSED' ? 'ACTIVE' : 'PAUSED';
@@ -236,6 +240,7 @@ export class CardDetailModalComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   startEditLimit(): void {
+    if (this.isExpired) return;
     this.limitDraft = this.card.dailyLimit;
     this.editingLimit = true;
   }
@@ -317,7 +322,7 @@ export class CardDetailModalComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private async loadSensitive(): Promise<void> {
-    if (this.isCancelled) {
+    if (this.isCancelled || this.isExpired) {
       this.reveal = null;
       this.revealError = false;
       this.loadingReveal = false;
@@ -335,7 +340,10 @@ export class CardDetailModalComponent implements OnInit, OnChanges, OnDestroy {
     } catch (error) {
       logger.error('Reveal falló', error);
       this.revealError = true;
-      this.toast.show('Sesión expirada. Volvé a ingresar el PIN.', 'error');
+      this.toast.show(
+        this.virtualCardApi.handleError(error, 'No se pudieron mostrar los datos de la tarjeta'),
+        'error'
+      );
       this.virtualCardApi.clearUnlock();
       this.back.emit();
     } finally {

@@ -24,12 +24,16 @@ export class ToastService {
 
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
+
+    // El ícono y el botón son marcado propio, así que van como HTML. El mensaje no: varios
+    // llamadores le interpolan datos que vienen del usuario o del backend, y con innerHTML
+    // cualquier `<img onerror=...>` en un alias o un email se ejecutaría al mostrar el toast.
     toast.innerHTML = `
       <div class="toast-content">
         <div class="toast-icon">
           ${this.getIcon(type)}
         </div>
-        <div class="toast-message">${message}</div>
+        <div class="toast-message"></div>
         <button class="toast-close" type="button" aria-label="Cerrar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -38,6 +42,11 @@ export class ToastService {
       </div>
       <div class="toast-progress"></div>
     `;
+
+    const messageSlot = toast.querySelector('.toast-message');
+    if (messageSlot) {
+      messageSlot.textContent = message;
+    }
 
     const closeBtn = toast.querySelector('.toast-close');
     closeBtn?.addEventListener('click', () => this.removeToast(toast));

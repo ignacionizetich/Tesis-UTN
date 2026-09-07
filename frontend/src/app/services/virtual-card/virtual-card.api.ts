@@ -10,6 +10,7 @@ import {
   VirtualCardSummary,
 } from '../../models/virtual-card';
 import { logger } from '../../shared/utils/logger';
+import { errorMessage } from '../../shared/utils/error-message';
 
 @Injectable({
   providedIn: 'root',
@@ -103,7 +104,6 @@ export class VirtualCardApi {
 
   handleError(error: unknown, fallback: string): string {
     logger.error(fallback, error);
-    const err = error as { error?: { message?: string; error?: string }; message?: string };
-    return err?.error?.message || err?.error?.error || err?.message || fallback;
+    return errorMessage(error, fallback);
   }
 }

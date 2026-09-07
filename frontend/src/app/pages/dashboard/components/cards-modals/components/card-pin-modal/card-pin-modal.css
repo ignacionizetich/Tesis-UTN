@@ -103,6 +103,12 @@
   margin-bottom: 0.85rem;
 }
 
+.card-pin-hint {
+  margin: -0.55rem 0 0.85rem;
+  font-size: 0.78rem;
+  color: #c0392b;
+}
+
 .card-pin-field:focus-within {
   border-color: var(--text-accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-accent) 16%, transparent);

@@ -6,6 +6,7 @@ import { ToastService } from '../../../../services/toast/toast.service';
 import { LoanRateItem } from '../../../../models/loan-rates';
 import { formatMoney } from '../../../../shared/utils/money-format';
 import { logger } from '../../../../shared/utils/logger';
+import { errorMessage } from '../../../../shared/utils/error-message';
 
 interface EditableRate {
   installments: number;
@@ -112,10 +113,7 @@ export class LoanRatesPanelComponent implements OnInit {
         },
         error: (err) => {
           this.saving = false;
-          const msg =
-            err?.error?.mensaje ||
-            err?.error?.message ||
-            'No se pudieron guardar las tasas';
+          const msg = errorMessage(err, 'No se pudieron guardar las tasas');
           logger.error('Error guardando tasas', err);
           this.toast.show(msg, 'error');
         },

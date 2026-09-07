@@ -76,8 +76,8 @@ export class CardsModalsComponent implements OnInit, OnDestroy {
 
   onSelectCard(card: VirtualCardSummary): void {
     this.selectedCard = card;
-    // Baja: no hace falta PIN para ver estado / solicitar nueva
-    if (card.status === 'CANCELLED') {
+    // Baja o vencida: no hace falta PIN. El backend rechaza revelar esos datos.
+    if (card.status === 'CANCELLED' || card.expired) {
       this.modalService.openModal('cardDetail');
       return;
     }

@@ -67,15 +67,16 @@ export class BuyUsdPanelComponent implements OnInit {
   get activeRate(): number {
     return this.quote?.venta && this.quote.venta > 0
       ? this.quote.venta
-      : this.exchangeRate;
+      : 0;
   }
 
   get canSubmit(): boolean {
     return (
       !!this.amountToBuyUsd &&
-      this.amountToBuyUsd > 0 &&
+      this.amountToBuyUsd >= 0.01 &&
       !this.isBuyingUsd &&
       !this.isLoadingQuote &&
+      !this.quoteError &&
       this.activeRate > 0
     );
   }
@@ -89,8 +90,12 @@ export class BuyUsdPanelComponent implements OnInit {
       this.recalculate();
     } catch (error) {
       logger.error('No se pudo cargar la cotización:', error);
+      this.quote = null;
       this.quoteError = true;
-      this.toast.show('No se pudo cargar la cotización. Usamos una estimación local.', 'error');
+      this.toast.show(
+        errorMessage(error, 'No se pudo cargar la cotización. Reintentá en unos momentos.'),
+        'error'
+      );
     } finally {
       this.isLoadingQuote = false;
     }
@@ -143,7 +148,12 @@ export class BuyUsdPanelComponent implements OnInit {
   }
 
   async submit(): Promise<void> {
-    if (!this.amountToBuyUsd || this.amountToBuyUsd <= 0) {
+    if (this.quoteError || this.activeRate <= 0) {
+      this.toast.show('No hay cotización disponible. Reintentá antes de comprar.', 'error');
+      return;
+    }
+
+    if (!this.amountToBuyUsd || this.amountToBuyUsd < 0.01) {
       this.toast.show('Ingresá un monto válido', 'error');
       return;
     }

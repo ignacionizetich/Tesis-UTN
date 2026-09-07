@@ -52,6 +52,22 @@ describe('TransferFlowService', () => {
     expect(() => service.validateAmount(0, 100)).toThrowError(TransferFlowError);
   });
 
+  it('validateAmount rechaza montos menores a 0.01', () => {
+    expect(() => service.validateAmount(0.001, 100)).toThrowError(TransferFlowError);
+  });
+
+  it('validateAmount incluye la comisión en el control de saldo', () => {
+    // 100 + 3% = 103. Con saldo 100 el cliente no debería dejar pasar la conversión.
+    try {
+      service.validateAmount(100, 100, 'ARS', { taxRate: 0.03 });
+      fail('expected throw');
+    } catch (e) {
+      expect(e instanceof TransferFlowError).toBeTrue();
+      expect((e as TransferFlowError).code).toBe('INSUFFICIENT_FUNDS');
+      expect((e as TransferFlowError).message).toContain('comisión');
+    }
+  });
+
   it('validateAmount rechaza saldo insuficiente', () => {
     try {
       service.validateAmount(50, 10, 'ARS');

@@ -77,7 +77,7 @@ describe('resendGuard', () => {
     expect(result).toBe(true);
   });
 
-  it('should block direct URL access and redirect to home', () => {
+  it('should block direct URL access and redirect to the landing page', () => {
     router.getCurrentNavigation.and.returnValue(null);
     Object.defineProperty(document, 'referrer', {
       value: 'https://google.com',
@@ -93,6 +93,6 @@ describe('resendGuard', () => {
     const result = executeGuard({} as any, {} as any);
     
     expect(result).toBe(false);
-    expect(router.navigate).toHaveBeenCalledWith(['/home']);
+    expect(router.navigate).toHaveBeenCalledWith(['/']);
   });
 });

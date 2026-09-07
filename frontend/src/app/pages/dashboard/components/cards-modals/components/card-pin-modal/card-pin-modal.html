@@ -46,6 +46,9 @@
           [disabled]="submitting"
         />
       </div>
+      @if (pinError) {
+      <p class="card-pin-hint">{{ pinError }}</p>
+      }
 
       @if (!pinConfigured) {
       <label class="card-pin-label" for="card-pin-confirm">Confirmá el PIN</label>
