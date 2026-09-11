@@ -1,0 +1,57 @@
+{
+  "folders": [
+    {
+      "name": "backend",
+      "path": "backend"
+    },
+    {
+      "name": "frontend",
+      "path": "frontend"
+    },
+    {
+      "name": "root",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "java.jdt.ls.java.home": "/Users/ignacionizetich/Library/Java/JavaVirtualMachines/ms-21.0.9/Contents/Home",
+    "java.configuration.runtimes": [
+      {
+        "name": "JavaSE-21",
+        "path": "/Users/ignacionizetich/Library/Java/JavaVirtualMachines/ms-21.0.9/Contents/Home",
+        "default": true
+      }
+    ],
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.maven.enabled": true,
+    "java.jdt.ls.lombokSupport.enabled": true,
+    "java.server.launchMode": "Standard",
+    "maven.pomfile.globPattern": "**/pom.xml"
+  },
+  "extensions": {
+    "recommendations": [
+      "vscjava.vscode-java-pack",
+      "vscjava.vscode-lombok",
+      "vmware.vscode-spring-boot",
+      "angular.ng-template"
+    ],
+    "unwantedRecommendations": [
+      "georgewfraser.vscode-javac",
+      "oracle.oracle-java"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "java",
+        "name": "ArCash Backend",
+        "request": "launch",
+        "mainClass": "com.EDJ.ArCash.ArCashApplication",
+        "projectName": "ArCash",
+        "cwd": "${workspaceFolder:backend}",
+        "envFile": "${workspaceFolder:backend}/.env"
+      }
+    ]
+  }
+}
